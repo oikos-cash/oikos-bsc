@@ -181,12 +181,15 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 					break;
 				}
 
-				if (['Pass - Verified', 'Already Verified'].includes(status)) {
+				if (status === 'Pass - Verified') {
+					console.log(green(` - Verified ${name}`));
+					tableData.push([name, address, 'Successfully verified']);
+				} else if (status === 'Already Verified') {
+					console.log(gray(` - Already verified ${name}`));
+					tableData.push([name, address, 'Already verified']);
+				} else {
 					console.log(gray(' - Sleeping for 5 seconds and re-checking.'));
 					await new Promise(resolve => setTimeout(resolve, 5000));
-				} else {
-					console.log(green(` - Verified ${name}`));
-					tableData.push([name, address, status]);
 				}
 			}
 		} else {

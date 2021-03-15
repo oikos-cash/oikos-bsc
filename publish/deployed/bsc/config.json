@@ -20,7 +20,7 @@
 	"ExchangeState": {
 		"deploy": true
 	},
-	"EtherCollateral": {
+	"BNBCollateral": {
 		"deploy": true
 	},
 	"FeePool": {

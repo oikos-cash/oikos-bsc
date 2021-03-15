@@ -44,10 +44,10 @@ const parameterNotice = props => {
 };
 
 const DEFAULTS = {
-	gasPrice: '1',
+	gasPrice: '20',
 	methodCallGasLimit: 250e3, // 250k
 	contractDeploymentGasLimit: 6.9e6, // TODO split out into seperate limits for different contracts, Proxys, Synths, Oikos
-	network: 'kovan',
+	network: 'bsc',
 	buildPath: path.join(__dirname, '..', '..', '..', BUILD_FOLDER),
 };
 
@@ -131,17 +131,13 @@ const deploy = async ({
 	const { account } = deployer;
 
 	const getExistingContract = ({ contract }) => {
-		if (typeof deployment.targets[contract] !== 'undefined') {
-			const { address, source } = deployment.targets[contract];
-			const { abi } = deployment.sources[source];
+		const { address, source } = deployment.targets[contract];
+		const { abi } = deployment.sources[source];
 
-			return deployer.getContract({
-				address,
-				abi,
-			});
-		} else {
-			console.log(`unable to get contract ${contract}`);
-		}
+		return deployer.getContract({
+			address,
+			abi,
+		});
 	};
 
 	let currentOikosSupply;
@@ -177,17 +173,11 @@ const deploy = async ({
 		const inflationStartDate = 1590969600;
 		currentLastMintEvent =
 			inflationStartDate + currentWeekOfInflation * secondsInWeek + mintingBuffer;
-
-		//if (network === 'bsc') {
-		//	currentWeekOfInflation = 40;
-		//	currentLastMintEvent = 1615204800;
-		//	currentOikosSupply = w3utils.toWei((157674278.846153846153846126).toString());
-		//}
 	} catch (err) {
 		if (network === 'local') {
-			//currentWeekOfInflation = 40;
-			//currentLastMintEvent = 1615204800;
-			//currentOikosSupply = w3utils.toWei((100e6).toString());
+			currentOikosSupply = w3utils.toWei((100e6).toString());
+			currentWeekOfInflation = 0;
+			currentLastMintEvent = 0;
 		} else {
 			console.error(
 				red(
@@ -219,7 +209,6 @@ const deploy = async ({
 	try {
 		oldExrates = getExistingContract({ contract: 'ExchangeRates' });
 		currentOikosPrice = await oldExrates.methods.rateForCurrency(toBytes32('OKS')).call();
-		oracleExrates = '0xFafD104549a63278E36EAaf3b199c2915A29CfFA';
 		if (!oracleExrates) {
 			oracleExrates = await oldExrates.methods.oracle().call();
 		}
@@ -764,7 +753,7 @@ const deploy = async ({
 			target: rewardsDistribution,
 			write: 'addRewardDistribution',
 			writeArg: ['0x22162970710B3bC99c0B1f3Dda70b510070eC3FD', w3utils.toWei('100000000')],
-		});		
+		});
 	}
 
 	// ----------------
@@ -839,8 +828,8 @@ const deploy = async ({
 		let originalTotalSupply = 0;
 		if (synthConfig.deploy) {
 			try {
-				//const oldSynth = getExistingContract({ contract: `Synth${currencyKey}` });
-				//originalTotalSupply = await oldSynth.methods.totalSupply().call();
+				const oldSynth = getExistingContract({ contract: `Synth${currencyKey}` });
+				originalTotalSupply = await oldSynth.methods.totalSupply().call();
 			} catch (err) {
 				if (network !== 'local' || network !== 'bsc') {
 					// only throw if not local - allows local environments to handle both new

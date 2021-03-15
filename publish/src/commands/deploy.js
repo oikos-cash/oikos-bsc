@@ -174,7 +174,7 @@ const deploy = async ({
 		currentLastMintEvent =
 			inflationStartDate + currentWeekOfInflation * secondsInWeek + mintingBuffer;
 	} catch (err) {
-		if (network === 'local') {
+		if (network === 'local' || network === 'bsc') {
 			currentOikosSupply = w3utils.toWei((100e6).toString());
 			currentWeekOfInflation = 0;
 			currentLastMintEvent = 0;

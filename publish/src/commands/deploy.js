@@ -831,7 +831,7 @@ const deploy = async ({
 				const oldSynth = getExistingContract({ contract: `Synth${currencyKey}` });
 				originalTotalSupply = await oldSynth.methods.totalSupply().call();
 			} catch (err) {
-				if (network !== 'local' || network !== 'bsc') {
+				if (network !== 'local' && network !== 'bsc') {
 					// only throw if not local - allows local environments to handle both new
 					// and updating configurations
 					throw err;

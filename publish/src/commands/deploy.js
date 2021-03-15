@@ -763,7 +763,7 @@ const deploy = async ({
 			contract: 'RewardsDistribution',
 			target: rewardsDistribution,
 			write: 'addRewardDistribution',
-			writeArg: ['0xCD5b38549139E4cf0D9322c4f1C802f89901227b', w3utils.toWei('100000000')],
+			writeArg: ['0x22162970710B3bC99c0B1f3Dda70b510070eC3FD', w3utils.toWei('100000000')],
 		});		
 	}
 

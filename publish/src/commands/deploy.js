@@ -106,7 +106,7 @@ const deploy = async ({
 	// flags available
 	const updatedConfig = JSON.parse(JSON.stringify(config));
 
-	console.log(updatedConfig)
+	console.log(updatedConfig);
 
 	const { providerUrl, privateKey: envPrivateKey, etherscanLinkPrefix } = loadConnections({
 		network,
@@ -130,20 +130,18 @@ const deploy = async ({
 
 	const { account } = deployer;
 
-	const getExistingContract = ({ contract }) => {	
-	
-		if (typeof deployment.targets[contract] !== "undefined" ) {
+	const getExistingContract = ({ contract }) => {
+		if (typeof deployment.targets[contract] !== 'undefined') {
 			const { address, source } = deployment.targets[contract];
 			const { abi } = deployment.sources[source];
-	
+
 			return deployer.getContract({
 				address,
 				abi,
 			});
 		} else {
-			console.log(`unable to get contract ${contract}`)
+			console.log(`unable to get contract ${contract}`);
 		}
-
 	};
 
 	let currentOikosSupply;
@@ -157,8 +155,7 @@ const deploy = async ({
 		const oldOikos = getExistingContract({ contract: 'Oikos' });
 
 		currentOikosSupply = await oldOikos.methods.totalSupply().call();
-		console.log(`current total supply ${currentOikosSupply}`)
-
+		console.log(`current total supply ${currentOikosSupply}`);
 
 		// inflationSupplyToDate = total supply - 100m
 		const inflationSupplyToDate = w3utils
@@ -186,7 +183,6 @@ const deploy = async ({
 		//	currentLastMintEvent = 1615204800;
 		//	currentOikosSupply = w3utils.toWei((157674278.846153846153846126).toString());
 		//}
-
 	} catch (err) {
 		if (network === 'local') {
 			//currentWeekOfInflation = 40;
@@ -207,7 +203,7 @@ const deploy = async ({
 		const oldFeePool = getExistingContract({ contract: 'FeePool' });
 		currentExchangeFee = await oldFeePool.methods.exchangeFeeRate().call();
 	} catch (err) {
-		if (network === 'local'  || network === 'bsc') {
+		if (network === 'local' || network === 'bsc') {
 			currentExchangeFee = w3utils.toWei('0.003'.toString());
 		} else {
 			console.error(
@@ -227,7 +223,7 @@ const deploy = async ({
 			oracleExrates = await oldExrates.methods.oracle().call();
 		}
 	} catch (err) {
-		if (network === 'local'  || network === 'bsc') {
+		if (network === 'local' || network === 'bsc') {
 			currentOikosPrice = w3utils.toWei('0.2');
 			oracleExrates = account;
 			oldExrates = undefined; // unset to signify that a fresh one will be deployed
@@ -269,8 +265,8 @@ const deploy = async ({
 
 	if (network == 'bsc') {
 		currentLastMintEvent = 0;
-		currentWeekOfInflation = 40
-		currentOikosSupply = w3utils.toWei(`${100e6}`)
+		currentWeekOfInflation = 0;
+		currentOikosSupply = w3utils.toWei(`${100e6}`);
 	}
 
 	parameterNotice({
@@ -565,7 +561,7 @@ const deploy = async ({
 		args: [account, account],
 	});
 
-	console.log(`Deploying Oikos contract with ${currentOikosSupply}`)
+	console.log(`Deploying Oikos contract with ${currentOikosSupply}`);
 	const oikos = await deployContract({
 		name: 'Oikos',
 		deps: ['ProxyOikos', 'TokenStateOikos', 'AddressResolver'],
@@ -838,7 +834,7 @@ const deploy = async ({
 				//const oldSynth = getExistingContract({ contract: `Synth${currencyKey}` });
 				//originalTotalSupply = await oldSynth.methods.totalSupply().call();
 			} catch (err) {
-				if (network !== 'local' || network !== "bsc") {
+				if (network !== 'local' || network !== 'bsc') {
 					// only throw if not local - allows local environments to handle both new
 					// and updating configurations
 					throw err;

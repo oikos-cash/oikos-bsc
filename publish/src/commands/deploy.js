@@ -45,8 +45,8 @@ const parameterNotice = props => {
 
 const DEFAULTS = {
 	gasPrice: '20',
-	methodCallGasLimit: 250e3, // 250k
-	contractDeploymentGasLimit: 6.9e6, // TODO split out into seperate limits for different contracts, Proxys, Synths, Oikos
+	methodCallGasLimit: 3 * 250e3, // 250k
+	contractDeploymentGasLimit: 3 * 6.9e6, // TODO split out into seperate limits for different contracts, Proxys, Synths, Oikos
 	network: 'bsc',
 	buildPath: path.join(__dirname, '..', '..', '..', BUILD_FOLDER),
 };
@@ -751,6 +751,8 @@ const deploy = async ({
 		await runStep({
 			contract: 'RewardsDistribution',
 			target: rewardsDistribution,
+			read: 'distributionsLength',
+			expected: input => input > 0,
 			write: 'addRewardDistribution',
 			writeArg: ['0x22162970710B3bC99c0B1f3Dda70b510070eC3FD', w3utils.toWei('100000000')],
 		});

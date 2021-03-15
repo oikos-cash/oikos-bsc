@@ -139,11 +139,10 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 					},
 				}
 			);
-			const ALREADY_VERIFIED_STRING = 'Already Verified';
 
 			console.log(gray(' - Got result:', result.data.result));
 
-			if (result.data.result === ALREADY_VERIFIED_STRING) {
+			if (result.data.result === 'Contract source code already verified') {
 				console.log(green(` - Verified ${name}`));
 				// Ugh, ok, you lie, but fine, skip and continue.
 				tableData.push([name, address, 'Successfully verified']);
@@ -182,12 +181,12 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 					break;
 				}
 
-				if (status !== 'Pass - Verified') {
+				if (['Pass - Verified', 'Already Verified'].includes(status)) {
 					console.log(gray(' - Sleeping for 5 seconds and re-checking.'));
 					await new Promise(resolve => setTimeout(resolve, 5000));
 				} else {
 					console.log(green(` - Verified ${name}`));
-					tableData.push([name, address, 'Successfully verified']);
+					tableData.push([name, address, status]);
 				}
 			}
 		} else {

@@ -33,7 +33,7 @@ contract TokenExchanger is Owned {
         return IERC20(integrationProxy).allowance(tokenOwner, spender);
     }
 
-    function checkBalanceSNXDirect(address account) public view oikosProxyIsSet returns (uint) {
+    function checkBalanceOKSDirect(address account) public view oikosProxyIsSet returns (uint) {
         return IERC20(oikos).balanceOf(account);
     }
 

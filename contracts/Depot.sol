@@ -267,7 +267,7 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
     /**
      * @notice Exchange ETH to OKS.
      */
-    function exchangeEtherForSNX()
+    function exchangeEtherForOKS()
         public
         payable
         rateNotStale(OKS)
@@ -297,7 +297,7 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
      * @param guaranteedEtherRate The ether exchange rate which must be honored or the call will revert.
      * @param guaranteedOikosRate The oikos exchange rate which must be honored or the call will revert.
      */
-    function exchangeEtherForSNXAtRate(uint guaranteedEtherRate, uint guaranteedOikosRate)
+    function exchangeEtherForOKSAtRate(uint guaranteedEtherRate, uint guaranteedOikosRate)
         public
         payable
         rateNotStale(OKS)
@@ -313,14 +313,14 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
             "Guaranteed oikos rate would not be received"
         );
 
-        return exchangeEtherForSNX();
+        return exchangeEtherForOKS();
     }
 
     /**
      * @notice Exchange oUSD for OKS
      * @param synthAmount The amount of synths the user wishes to exchange.
      */
-    function exchangeSynthsForSNX(uint synthAmount)
+    function exchangeSynthsForOKS(uint synthAmount)
         public
         rateNotStale(OKS)
         notPaused
@@ -350,7 +350,7 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
      * @param synthAmount The amount of synths the user wishes to exchange.
      * @param guaranteedRate A rate (oikos price) the caller wishes to insist upon.
      */
-    function exchangeSynthsForSNXAtRate(uint synthAmount, uint guaranteedRate)
+    function exchangeSynthsForOKSAtRate(uint synthAmount, uint guaranteedRate)
         public
         rateNotStale(OKS)
         notPaused
@@ -360,7 +360,7 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
     {
         require(guaranteedRate == exchangeRates().rateForCurrency(OKS), "Guaranteed rate would not be received");
 
-        return exchangeSynthsForSNX(synthAmount);
+        return exchangeSynthsForOKS(synthAmount);
     }
 
     /**

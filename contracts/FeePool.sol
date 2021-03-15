@@ -458,11 +458,11 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
 
     /**
      * @notice Record the reward payment in our recentFeePeriods.
-     * @param snxAmount The amount of OKS tokens.
+     * @param oksAmount The amount of OKS tokens.
      */
-    function _recordRewardPayment(uint snxAmount) internal returns (uint) {
+    function _recordRewardPayment(uint oksAmount) internal returns (uint) {
         // Don't assign to the parameter
-        uint remainingToAllocate = snxAmount;
+        uint remainingToAllocate = oksAmount;
 
         uint rewardPaid;
 
@@ -528,9 +528,9 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
     /**
     * @notice Send the rewards to claiming address - will be locked in rewardEscrow.
     * @param account The address to send the fees to.
-    * @param snxAmount The amount of OKS.
+    * @param oksAmount The amount of OKS.
     */
-    function _payRewards(address account, uint snxAmount) internal notFeeAddress(account) {
+    function _payRewards(address account, uint oksAmount) internal notFeeAddress(account) {
         require(account != address(0), "Account can't be 0");
         require(account != address(this), "Can't send rewards to fee pool");
         require(account != address(proxy), "Can't send rewards to proxy");
@@ -538,7 +538,7 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
 
         // Record vesting entry for claiming address and amount
         // OKS already minted to rewardEscrow balance
-        rewardEscrow().appendVestingEntry(account, snxAmount);
+        rewardEscrow().appendVestingEntry(account, oksAmount);
     }
 
     /**
@@ -880,10 +880,10 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
         proxy._emit(abi.encode(feePeriodId), 1, FEEPERIODCLOSED_SIG, 0, 0, 0);
     }
 
-    event FeesClaimed(address account, uint sUSDAmount, uint snxRewards);
+    event FeesClaimed(address account, uint sUSDAmount, uint oksRewards);
     bytes32 private constant FEESCLAIMED_SIG = keccak256("FeesClaimed(address,uint256,uint256)");
 
-    function emitFeesClaimed(address account, uint sUSDAmount, uint snxRewards) internal {
-        proxy._emit(abi.encode(account, sUSDAmount, snxRewards), 1, FEESCLAIMED_SIG, 0, 0, 0);
+    function emitFeesClaimed(address account, uint sUSDAmount, uint oksRewards) internal {
+        proxy._emit(abi.encode(account, sUSDAmount, oksRewards), 1, FEESCLAIMED_SIG, 0, 0, 0);
     }
 }

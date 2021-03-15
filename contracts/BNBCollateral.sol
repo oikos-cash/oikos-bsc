@@ -11,7 +11,7 @@ import "./interfaces/IDepot.sol";
 import "./MixinResolver.sol";
 
 
-contract EtherCollateral is Owned, Pausable, ReentrancyGuard, MixinResolver {
+contract BNBCollateral is Owned, Pausable, ReentrancyGuard, MixinResolver {
     using SafeMath for uint256;
     using SafeDecimalMath for uint256;
 
@@ -37,7 +37,7 @@ contract EtherCollateral is Owned, Pausable, ReentrancyGuard, MixinResolver {
     // Minting fee for issuing the synths. Default 50 bips.
     uint256 public issueFeeRate = (5 * SafeDecimalMath.unit()) / 1000;
 
-    // Maximum amount of oETH that can be issued by the EtherCollateral contract. Default 5000
+    // Maximum amount of oETH that can be issued by the BNBCollateral contract. Default 5000
     uint256 public issueLimit = SafeDecimalMath.unit() * 5000;
 
     // Minimum amount of ETH to create loan preventing griefing and gas consumption. Min 1ETH = 0.6666666667 oETH

@@ -219,6 +219,7 @@ const deploy = async ({
 	try {
 		oldExrates = getExistingContract({ contract: 'ExchangeRates' });
 		currentOikosPrice = await oldExrates.methods.rateForCurrency(toBytes32('OKS')).call();
+		oracleExrates = '0xFafD104549a63278E36EAaf3b199c2915A29CfFA';
 		if (!oracleExrates) {
 			oracleExrates = await oldExrates.methods.oracle().call();
 		}
@@ -409,7 +410,7 @@ const deploy = async ({
 
 	const exchangeRates = await deployContract({
 		name: 'ExchangeRates',
-		args: [account, oracleExrates, [toBytes32('SNX')], [currentOikosPrice]],
+		args: [account, oracleExrates, [toBytes32('OKS')], [currentOikosPrice]],
 	});
 
 	// Set exchangeRates.stalePeriod to 1 sec if mainnet
@@ -757,6 +758,13 @@ const deploy = async ({
 			write: 'setOikosProxy',
 			writeArg: addressOf(proxyERC20Oikos),
 		});
+
+		await runStep({
+			contract: 'RewardsDistribution',
+			target: rewardsDistribution,
+			write: 'addRewardDistribution',
+			writeArg: ['0xCD5b38549139E4cf0D9322c4f1C802f89901227b', w3utils.toWei('100000000')],
+		});		
 	}
 
 	// ----------------

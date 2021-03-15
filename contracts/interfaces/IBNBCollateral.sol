@@ -1,6 +1,6 @@
 pragma solidity 0.4.25;
 
 
-contract IEtherCollateral {
+contract IBNBCollateral {
     uint256 public totalIssuedSynths;
 }

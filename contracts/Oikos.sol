@@ -12,7 +12,7 @@ import "./interfaces/IFeePool.sol";
 import "./interfaces/IRewardsDistribution.sol";
 import "./interfaces/IExchanger.sol";
 import "./interfaces/IIssuer.sol";
-import "./interfaces/IEtherCollateral.sol";
+import "./interfaces/IBNBCollateral.sol";
 
 
 /**
@@ -55,8 +55,8 @@ contract Oikos is ExternStateToken, MixinResolver {
         return IExchanger(resolver.requireAndGetAddress("Exchanger", "Missing Exchanger address"));
     }
 
-    function etherCollateral() internal view returns (IEtherCollateral) {
-        return IEtherCollateral(resolver.requireAndGetAddress("EtherCollateral", "Missing EtherCollateral address"));
+    function bnbCollateral() internal view returns (IBNBCollateral) {
+        return IBNBCollateral(resolver.requireAndGetAddress("BNBCollateral", "Missing BNBCollateral address"));
     }
 
     function issuer() internal view returns (IIssuer) {
@@ -98,7 +98,7 @@ contract Oikos is ExternStateToken, MixinResolver {
      * @notice Total amount of synths issued by the system, priced in currencyKey
      * @param currencyKey The currency to value the synths in
      */
-    function _totalIssuedSynths(bytes32 currencyKey, bool excludeEtherCollateral) internal view returns (uint) {
+    function _totalIssuedSynths(bytes32 currencyKey, bool excludeBNBCollateral) internal view returns (uint) {
         IExchangeRates exRates = exchangeRates();
         uint total = 0;
         uint currencyRate = exRates.rateForCurrency(currencyKey);
@@ -114,8 +114,8 @@ contract Oikos is ExternStateToken, MixinResolver {
             uint totalSynths = availableSynths[i].totalSupply();
 
             // minus total issued synths from Ether Collateral from oETH.totalSupply()
-            if (excludeEtherCollateral && availableSynths[i] == synths["oETH"]) {
-                totalSynths = totalSynths.sub(etherCollateral().totalIssuedSynths());
+            if (excludeBNBCollateral && availableSynths[i] == synths["oETH"]) {
+                totalSynths = totalSynths.sub(bnbCollateral().totalIssuedSynths());
             }
 
             uint synthValue = totalSynths.multiplyDecimalRound(rates[i]);
@@ -137,7 +137,7 @@ contract Oikos is ExternStateToken, MixinResolver {
      * @notice Total amount of synths issued by the system priced in currencyKey, excluding ether collateral
      * @param currencyKey The currency to value the synths in
      */
-    function totalIssuedSynthsExcludeEtherCollateral(bytes32 currencyKey) public view returns (uint) {
+    function totalIssuedSynthsExcludeBNBCollateral(bytes32 currencyKey) public view returns (uint) {
         return _totalIssuedSynths(currencyKey, true);
     }
 
@@ -353,7 +353,7 @@ contract Oikos is ExternStateToken, MixinResolver {
         (initialDebtOwnership, debtEntryIndex) = state.issuanceData(_issuer);
 
         // What's the total value of the system excluding ETH backed synths in their requested currency?
-        totalSystemValue = totalIssuedSynthsExcludeEtherCollateral(currencyKey);
+        totalSystemValue = totalIssuedSynthsExcludeBNBCollateral(currencyKey);
 
         // If it's zero, they haven't issued, and they have no debt.
         if (initialDebtOwnership == 0) return (0, totalSystemValue);

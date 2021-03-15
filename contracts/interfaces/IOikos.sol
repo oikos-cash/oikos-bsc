@@ -48,7 +48,7 @@ contract IOikos {
 
     function totalIssuedSynths(bytes32 currencyKey) public view returns (uint);
 
-    function totalIssuedSynthsExcludeEtherCollateral(bytes32 currencyKey) public view returns (uint);
+    function totalIssuedSynthsExcludeBNBCollateral(bytes32 currencyKey) public view returns (uint);
 
     function debtBalanceOf(address issuer, bytes32 currencyKey) public view returns (uint);
     

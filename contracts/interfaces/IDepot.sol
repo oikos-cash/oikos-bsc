@@ -14,9 +14,9 @@ contract IDepot {
     function withdrawMyDepositedSynths() external;
 
     // Deprecated ABI for MAINNET. Only used on Testnets
-    function exchangeEtherForSNX() external payable returns (uint);
+    function exchangeEtherForOKS() external payable returns (uint);
 
-    function exchangeEtherForSNXAtRate(uint guaranteedRate) external payable returns (uint);
+    function exchangeEtherForOKSAtRate(uint guaranteedRate) external payable returns (uint);
 
-    function exchangeSynthsForSNX() external payable returns (uint);
+    function exchangeSynthsForOKS() external payable returns (uint);
 }

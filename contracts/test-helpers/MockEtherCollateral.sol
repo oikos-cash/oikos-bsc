@@ -3,7 +3,7 @@ pragma solidity 0.4.25;
 import "../SafeDecimalMath.sol";
 
 
-contract MockEtherCollateral {
+contract MockBNBCollateral {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
 

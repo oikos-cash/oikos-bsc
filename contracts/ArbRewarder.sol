@@ -153,10 +153,10 @@ contract ArbRewarder is SelfDestructible, Pausable {
     /* ========== PRIVATE FUNCTIONS ========== */
 
     function rewardCaller(uint bought, uint unspent_input) private returns (uint reward_tokens) {
-        uint snx_rate = exchangeRates.rateForCurrency("OKS");
+        uint oks_rate = exchangeRates.rateForCurrency("OKS");
         uint eth_rate = exchangeRates.rateForCurrency("ETH");
 
-        reward_tokens = eth_rate.multiplyDecimal(bought).divideDecimal(snx_rate);
+        reward_tokens = eth_rate.multiplyDecimal(bought).divideDecimal(oks_rate);
         oikos.transfer(msg.sender, reward_tokens);
 
         if (unspent_input > 0) {

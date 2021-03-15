@@ -47,7 +47,7 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 	}
 
 	const { etherscanUrl, etherscanLinkPrefix } = loadConnections({ network });
-	console.log(gray(`Starting ${network.toUpperCase()} contract verification on Etherscan...`));
+	console.log(gray(`Starting ${network.toUpperCase()} contract verification on BSCScan...`));
 
 	const tableData = [];
 
@@ -151,10 +151,10 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 			const guid = result.data.result;
 
 			if (!result.data.status) {
-				tableData.push([name, address, `Unable to verify, Etherscan returned "${guid}`]);
+				tableData.push([name, address, `Unable to verify, BSCScan returned "${guid}`]);
 				continue;
 			} else if (!guid || guid.length !== 50) {
-				console.log(red(`Invalid GUID from Etherscan (see response above).`));
+				console.log(red(`Invalid GUID from BSCScan (see response above).`));
 				tableData.push([name, address, 'Unable to verify (invalid GUID)']);
 				continue;
 			}
@@ -172,7 +172,7 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 				});
 				status = result.data.result;
 
-				console.log(gray(` - "${status}" response from Etherscan`));
+				console.log(gray(` - "${status}" response from BSCScan`));
 
 				if (status === 'Fail - Unable to verify') {
 					console.log(red(` - Unable to verify ${name}.`));
@@ -204,7 +204,7 @@ module.exports = {
 	cmd: program =>
 		program
 			.command('verify')
-			.description('Verify deployed sources on etherscan')
+			.description('Verify deployed sources on bscscan')
 			.option(
 				'-b, --build-path [value]',
 				'Path to a folder hosting compiled files from the "build" step in this script',

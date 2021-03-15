@@ -80,7 +80,7 @@ const loadConnections = ({ network }) => {
 	const etherscanUrl =
 		network === 'bsc' ? 'https://api.bscscan.com/api' : `https://api-${network}.bscscan/api`;
 
-	const etherscanLinkPrefix = `https://${network !== 'mainnet' ? network + '.' : ''}bscscan.com`;
+	const etherscanLinkPrefix = `https://${network !== 'bsc' ? network + '.' : ''}bscscan.com`;
 	return { providerUrl, privateKey, etherscanUrl, etherscanLinkPrefix };
 };
 

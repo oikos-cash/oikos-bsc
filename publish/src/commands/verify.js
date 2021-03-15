@@ -116,29 +116,26 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 				? CONTRACT_OVERRIDES[`${source}.sol`].runs
 				: 200;
 
-			result = await axios.post(
-				etherscanUrl,
-				qs.stringify({
-					module: 'contract',
-					action: 'verifysourcecode',
-					contractaddress: address,
-					sourceCode: readFlattened(),
-					contractname: source,
-					// note: spelling mistake is on etherscan's side
-					constructorArguements: constructorArguments,
-					compilerversion: 'v' + solc.version().replace('.Emscripten.clang', ''), // The version reported by solc-js is too verbose and needs a v at the front
-					optimizationUsed: 1,
-					runs: optimizerRuns,
-					libraryname1: 'SafeDecimalMath',
-					libraryaddress1: deployment.targets['SafeDecimalMath'].address,
-					apikey: process.env.BSCSCAN_KEY,
-				}),
-				{
-					headers: {
-						'Content-Type': 'application/x-www-form-urlencoded',
-					},
-				}
-			);
+			const queryOpts = {
+				module: 'contract',
+				action: 'verifysourcecode',
+				contractaddress: address,
+				sourceCode: readFlattened(),
+				contractname: source,
+				// note: spelling mistake is on etherscan's side
+				constructorArguements: constructorArguments,
+				compilerversion: 'v' + solc.version().replace('.Emscripten.clang', ''), // The version reported by solc-js is too verbose and needs a v at the front
+				optimizationUsed: 1,
+				runs: optimizerRuns,
+				libraryname1: 'SafeDecimalMath',
+				libraryaddress1: deployment.targets['SafeDecimalMath'].address,
+				apikey: process.env.BSCSCAN_KEY,
+			};
+			result = await axios.post(etherscanUrl, qs.stringify(queryOpts), {
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+				},
+			});
 
 			console.log(gray(' - Got result:', result.data.result));
 

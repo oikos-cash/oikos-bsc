@@ -6,7 +6,7 @@
 			"source": "SafeDecimalMath",
 			"link": "https://bscscan.com/address/0xEB7bA0e19ef6dCe1C59C0baA8c68a6168d4949a3",
 			"timestamp": "2021-03-15T21:30:49.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x85f5ef9daa3a9087a60fd2cabf02ea194078009e6ac895a267fd637346569a04",
+			"txn": "https://bscscan.com/tx/0x85f5ef9daa3a9087a60fd2cabf02ea194078009e6ac895a267fd637346569a04",
 			"network": "bsc"
 		},
 		"Math": {
@@ -15,7 +15,7 @@
 			"source": "Math",
 			"link": "https://bscscan.com/address/0x250E2f8a80001153c7e62200376C753832A68CBE",
 			"timestamp": "2021-03-15T21:30:55.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x07a88db0c41df6a1c82d450b598dc94b6f72a3633dba00f9a9c791db83a02625",
+			"txn": "https://bscscan.com/tx/0x07a88db0c41df6a1c82d450b598dc94b6f72a3633dba00f9a9c791db83a02625",
 			"network": "bsc"
 		},
 		"AddressResolver": {
@@ -42,7 +42,7 @@
 			"source": "RewardEscrow",
 			"link": "https://bscscan.com/address/0x769989C007489ADC818C5f9149e5c93b19E412Bb",
 			"timestamp": "2021-03-15T21:31:22.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x427e985a8de4520b6ddf0a5a6d9c874b47daea309d84bd96fca6b0234d864738",
+			"txn": "https://bscscan.com/tx/0x427e985a8de4520b6ddf0a5a6d9c874b47daea309d84bd96fca6b0234d864738",
 			"network": "bsc"
 		},
 		"OikosEscrow": {
@@ -51,7 +51,7 @@
 			"source": "OikosEscrow",
 			"link": "https://bscscan.com/address/0xb09280811Fb5b73D9e3e80C6CE37bC81B767013A",
 			"timestamp": "2021-03-15T21:31:31.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x792e233ed0a04c40101a33c5c51a222e6ab6e0bb52f86c60b5792a8876d2e96b",
+			"txn": "https://bscscan.com/tx/0x792e233ed0a04c40101a33c5c51a222e6ab6e0bb52f86c60b5792a8876d2e96b",
 			"network": "bsc"
 		},
 		"OikosState": {
@@ -60,7 +60,7 @@
 			"source": "OikosState",
 			"link": "https://bscscan.com/address/0x5065DfD3598D6Dfdc43E6621FAe5ECF78aadbeC1",
 			"timestamp": "2021-03-15T21:31:37.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0xeacd6c52739a8f1eb5e513107a873e017f2e508ca9fdf19b398cf2d75a947074",
+			"txn": "https://bscscan.com/tx/0xeacd6c52739a8f1eb5e513107a873e017f2e508ca9fdf19b398cf2d75a947074",
 			"network": "bsc"
 		},
 		"ProxyFeePool": {
@@ -69,7 +69,7 @@
 			"source": "Proxy",
 			"link": "https://bscscan.com/address/0x3cFAa9FC30F6277990A96E9d11c1207dbf0d654C",
 			"timestamp": "2021-03-15T21:31:46.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0xecf2a7c0d101a56cc65fe95ecf83db1d069b279186e327fb5f475e4bf5495c54",
+			"txn": "https://bscscan.com/tx/0xecf2a7c0d101a56cc65fe95ecf83db1d069b279186e327fb5f475e4bf5495c54",
 			"network": "bsc"
 		},
 		"DelegateApprovals": {
@@ -78,7 +78,7 @@
 			"source": "DelegateApprovals",
 			"link": "https://bscscan.com/address/0xf718ebB2bA2587F8f146c85FF750CaB9238909C6",
 			"timestamp": "2021-03-15T21:31:52.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x17b0215d4d5a785dfbb43cd515050c8fed9e0178f92a17a7148591124f00b981",
+			"txn": "https://bscscan.com/tx/0x17b0215d4d5a785dfbb43cd515050c8fed9e0178f92a17a7148591124f00b981",
 			"network": "bsc"
 		},
 		"FeePoolEternalStorage": {
@@ -87,7 +87,7 @@
 			"source": "FeePoolEternalStorage",
 			"link": "https://bscscan.com/address/0xfC3b24375D0a1E59E64612a7a816Ff442e89c4e5",
 			"timestamp": "2021-03-15T21:32:01.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x5eee600c9c7a0eef18b37501e86da5050a62cd7671d990fbaed9f849227cefbd",
+			"txn": "https://bscscan.com/tx/0x5eee600c9c7a0eef18b37501e86da5050a62cd7671d990fbaed9f849227cefbd",
 			"network": "bsc"
 		},
 		"FeePool": {
@@ -96,7 +96,7 @@
 			"source": "FeePool",
 			"link": "https://bscscan.com/address/0x4a7644B4b3ae6E4e2c53D01a39E7C4afA25061aF",
 			"timestamp": "2021-03-15T21:32:10.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0xbb087cbacc380b2991947d0f6c288c57c7fb111f2f0184503eccefa109ae165c",
+			"txn": "https://bscscan.com/tx/0xbb087cbacc380b2991947d0f6c288c57c7fb111f2f0184503eccefa109ae165c",
 			"network": "bsc"
 		},
 		"FeePoolState": {
@@ -105,7 +105,7 @@
 			"source": "FeePoolState",
 			"link": "https://bscscan.com/address/0xdaF492F4cAdC2Ae2197663CB769329221b47109A",
 			"timestamp": "2021-03-15T21:32:43.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x03cb0d4e63439c806743cbe47bc07b1b75903e1ec5bccbf4266e9db99523ba80",
+			"txn": "https://bscscan.com/tx/0x03cb0d4e63439c806743cbe47bc07b1b75903e1ec5bccbf4266e9db99523ba80",
 			"network": "bsc"
 		},
 		"RewardsDistribution": {
@@ -114,7 +114,7 @@
 			"source": "RewardsDistribution",
 			"link": "https://bscscan.com/address/0x8c5B795aC32eb1aa7AE7e1262F88Bdfa971fCb67",
 			"timestamp": "2021-03-15T21:32:52.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x9000e295b74bc496075ea040d15ac49642fb3f5639354712a678419351b1d309",
+			"txn": "https://bscscan.com/tx/0x9000e295b74bc496075ea040d15ac49642fb3f5639354712a678419351b1d309",
 			"network": "bsc"
 		},
 		"SupplySchedule": {
@@ -123,7 +123,7 @@
 			"source": "SupplySchedule",
 			"link": "https://bscscan.com/address/0xcF3DFFb8127a07BF55B662418aE0bb0a41098C61",
 			"timestamp": "2021-03-15T21:33:01.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x8dda3aca78b4c59707330b30551906281072a4376bd7750247669115a45b4bad",
+			"txn": "https://bscscan.com/tx/0x8dda3aca78b4c59707330b30551906281072a4376bd7750247669115a45b4bad",
 			"network": "bsc"
 		},
 		"ProxyOikos": {
@@ -132,7 +132,7 @@
 			"source": "Proxy",
 			"link": "https://bscscan.com/address/0xC32Af9ad3B0E242b97A68485a2D79EEF30584C20",
 			"timestamp": "2021-03-15T21:33:07.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x994971bdca99803a6dd2fcb3de6886c86843ecc6f04380cc537f8bce7f99859a",
+			"txn": "https://bscscan.com/tx/0x994971bdca99803a6dd2fcb3de6886c86843ecc6f04380cc537f8bce7f99859a",
 			"network": "bsc"
 		},
 		"TokenStateOikos": {
@@ -141,7 +141,7 @@
 			"source": "TokenState",
 			"link": "https://bscscan.com/address/0x2c09F1a267936F353b6d996f4613f8abd45A4747",
 			"timestamp": "2021-03-15T21:33:13.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0xa5faff560482a923ee93b6bf6d4194cd7c6315de4149d85f77fa7be17e7debcb",
+			"txn": "https://bscscan.com/tx/0xa5faff560482a923ee93b6bf6d4194cd7c6315de4149d85f77fa7be17e7debcb",
 			"network": "bsc"
 		},
 		"Oikos": {
@@ -150,7 +150,7 @@
 			"source": "Oikos",
 			"link": "https://bscscan.com/address/0x14990043249843500A3fc29e39D9E274F8E2c963",
 			"timestamp": "2021-03-15T21:33:19.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x9002c7f845c2e68730aaedf8bef47fb16726e00932cb2ec0ff57a99cc2324fee",
+			"txn": "https://bscscan.com/tx/0x9002c7f845c2e68730aaedf8bef47fb16726e00932cb2ec0ff57a99cc2324fee",
 			"network": "bsc"
 		},
 		"Exchanger": {
@@ -168,7 +168,7 @@
 			"source": "ExchangeState",
 			"link": "https://bscscan.com/address/0x78fdE2e2A0fbcB84Fd75a31C640F7aCa5D8F17b0",
 			"timestamp": "2021-03-15T21:33:40.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x2b0b698ad7c7d187a1a6eec5fef902509fcc0743fc3f6aaa410cd367b4da1a06",
+			"txn": "https://bscscan.com/tx/0x2b0b698ad7c7d187a1a6eec5fef902509fcc0743fc3f6aaa410cd367b4da1a06",
 			"network": "bsc"
 		},
 		"Issuer": {
@@ -177,7 +177,7 @@
 			"source": "Issuer",
 			"link": "https://bscscan.com/address/0xFdF6C2df28c243c99F16d6becAFcd93cFF4A4A9d",
 			"timestamp": "2021-03-15T21:34:01.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x0ffc7ebfcc3ebcbf53a47b6906d4000fbeff8659468dbb0e0277fdbe8cf52aba",
+			"txn": "https://bscscan.com/tx/0x0ffc7ebfcc3ebcbf53a47b6906d4000fbeff8659468dbb0e0277fdbe8cf52aba",
 			"network": "bsc"
 		},
 		"IssuanceEternalStorage": {
@@ -186,7 +186,7 @@
 			"source": "IssuanceEternalStorage",
 			"link": "https://bscscan.com/address/0x3c9225fCeF09d63B80B9A0Eb7004804328bD98CC",
 			"timestamp": "2021-03-15T21:34:07.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x07831c4f5d743f244001f3d6f88cbb7d7a4d135bf98516bf32e45d25ba067c4c",
+			"txn": "https://bscscan.com/tx/0x07831c4f5d743f244001f3d6f88cbb7d7a4d135bf98516bf32e45d25ba067c4c",
 			"network": "bsc"
 		},
 		"EscrowChecker": {
@@ -204,7 +204,7 @@
 			"source": "ProxyERC20",
 			"link": "https://bscscan.com/address/0x18aCf236eB40c0d4824Fb8f2582EBbEcD325Ef6a",
 			"timestamp": "2021-03-15T21:34:52.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x8251b573ceb7d53ed67525359e8c52e121df650419627104bdae7fb94f76a2f1",
+			"txn": "https://bscscan.com/tx/0x8251b573ceb7d53ed67525359e8c52e121df650419627104bdae7fb94f76a2f1",
 			"network": "bsc"
 		},
 		"TokenStateODR": {
@@ -213,7 +213,7 @@
 			"source": "TokenState",
 			"link": "https://bscscan.com/address/0xCf3D8Abe20Af1D0F9F56A0046DF93D08b80e1398",
 			"timestamp": "2021-03-15T21:35:43.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x50e52ca7c57b55d61bdb5a90ddeae93f836e69af4c597b983e288c8a71e53d70",
+			"txn": "https://bscscan.com/tx/0x50e52ca7c57b55d61bdb5a90ddeae93f836e69af4c597b983e288c8a71e53d70",
 			"network": "bsc"
 		},
 		"ProxyODR": {
@@ -222,7 +222,7 @@
 			"source": "ProxyERC20",
 			"link": "https://bscscan.com/address/0x1bE8d1de0052b7c2f6F9f8F640aAc622518520eE",
 			"timestamp": "2021-03-15T21:35:49.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x550b262e2f305a56014bb87c8b4f5365c4b893001ec1c4f5d24e69c01837e5b5",
+			"txn": "https://bscscan.com/tx/0x550b262e2f305a56014bb87c8b4f5365c4b893001ec1c4f5d24e69c01837e5b5",
 			"network": "bsc"
 		},
 		"SynthODR": {
@@ -231,7 +231,7 @@
 			"source": "Synth",
 			"link": "https://bscscan.com/address/0xbe10B2c8c3835d3ec430d0c02549832FD10b0C6D",
 			"timestamp": "2021-03-15T21:35:58.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0xf7ec1122a01316585556b6decadec8e646ca5cddfbefb8e8261ce10a7fce1fed",
+			"txn": "https://bscscan.com/tx/0xf7ec1122a01316585556b6decadec8e646ca5cddfbefb8e8261ce10a7fce1fed",
 			"network": "bsc"
 		},
 		"TokenStateoUSD": {
@@ -240,7 +240,7 @@
 			"source": "TokenState",
 			"link": "https://bscscan.com/address/0x69F11ac0E446d14aCC90dF1081513cD5dee01D85",
 			"timestamp": "2021-03-15T21:36:28.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x60c819deece339cd8e310d91344db6b509476c4838025492641f609c4a4be951",
+			"txn": "https://bscscan.com/tx/0x60c819deece339cd8e310d91344db6b509476c4838025492641f609c4a4be951",
 			"network": "bsc"
 		},
 		"ProxyoUSD": {
@@ -249,7 +249,7 @@
 			"source": "ProxyERC20",
 			"link": "https://bscscan.com/address/0x6BF2Be9468314281cD28A94c35f967caFd388325",
 			"timestamp": "2021-03-15T21:36:34.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x2a939fa19a4e09d95b93ffe2d8ee17012075d170067b6860801d987d12559fab",
+			"txn": "https://bscscan.com/tx/0x2a939fa19a4e09d95b93ffe2d8ee17012075d170067b6860801d987d12559fab",
 			"network": "bsc"
 		},
 		"SynthoUSD": {
@@ -258,7 +258,7 @@
 			"source": "Synth",
 			"link": "https://bscscan.com/address/0x58B9035e938c5E9aC659f944388cdE3e01D59F0F",
 			"timestamp": "2021-03-15T21:36:40.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x8ddcfa9c586e63ced7adabbe07865dd9be4d12eaf6183d479937e6ee3a575b18",
+			"txn": "https://bscscan.com/tx/0x8ddcfa9c586e63ced7adabbe07865dd9be4d12eaf6183d479937e6ee3a575b18",
 			"network": "bsc"
 		},
 		"TokenStateoXAU": {
@@ -267,7 +267,7 @@
 			"source": "TokenState",
 			"link": "https://bscscan.com/address/0x303A7d473A9Db24178cfA1eE6EAFbaf40Df3FB96",
 			"timestamp": "2021-03-15T21:37:13.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x8645076b6ee498c0636cd31b06f9c80b115b6972de8086c77649af9d34a1f1ba",
+			"txn": "https://bscscan.com/tx/0x8645076b6ee498c0636cd31b06f9c80b115b6972de8086c77649af9d34a1f1ba",
 			"network": "bsc"
 		},
 		"ProxyoXAU": {
@@ -276,7 +276,7 @@
 			"source": "ProxyERC20",
 			"link": "https://bscscan.com/address/0x68Db964FfF792D1A427f275D228E759d197471B9",
 			"timestamp": "2021-03-15T21:37:22.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x55b3ad03c3ac0eff62c573f0890846f1c42aab9d0f56ce5bea1f8dc5d4f7ac2b",
+			"txn": "https://bscscan.com/tx/0x55b3ad03c3ac0eff62c573f0890846f1c42aab9d0f56ce5bea1f8dc5d4f7ac2b",
 			"network": "bsc"
 		},
 		"SynthoXAU": {
@@ -285,7 +285,7 @@
 			"source": "Synth",
 			"link": "https://bscscan.com/address/0x60CE72815353219506A771612F65E4F01d0BA537",
 			"timestamp": "2021-03-15T21:37:31.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x683119daea4cd078e2765cc9951976dc4bebc70c173c95090935fec90ed60126",
+			"txn": "https://bscscan.com/tx/0x683119daea4cd078e2765cc9951976dc4bebc70c173c95090935fec90ed60126",
 			"network": "bsc"
 		},
 		"TokenStateoBTC": {
@@ -294,7 +294,7 @@
 			"source": "TokenState",
 			"link": "https://bscscan.com/address/0xfb7f15c18AB0b97ce90c78c2DBE28d9d9792050C",
 			"timestamp": "2021-03-15T21:38:01.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x46b493070de0fefd0705822a74a48b8a54efb772bcd8cfb58a51b64901c74b8b",
+			"txn": "https://bscscan.com/tx/0x46b493070de0fefd0705822a74a48b8a54efb772bcd8cfb58a51b64901c74b8b",
 			"network": "bsc"
 		},
 		"ProxyoBTC": {
@@ -303,7 +303,7 @@
 			"source": "ProxyERC20",
 			"link": "https://bscscan.com/address/0x19e0E8413DEe3AfFd94bdd42519d01935a0CF0c2",
 			"timestamp": "2021-03-15T21:38:10.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x191d17424185372ce6931eb497814bb087f46b0004cc479695c521cb5a06e587",
+			"txn": "https://bscscan.com/tx/0x191d17424185372ce6931eb497814bb087f46b0004cc479695c521cb5a06e587",
 			"network": "bsc"
 		},
 		"SynthoBTC": {
@@ -312,7 +312,7 @@
 			"source": "Synth",
 			"link": "https://bscscan.com/address/0x19e3168be614b86804A91bC6dE8B7cD3A7bcC79b",
 			"timestamp": "2021-03-15T21:38:16.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x0af51821177a1fdc91b9789e3e1ddcba763533f252818868aaf10c633793b561",
+			"txn": "https://bscscan.com/tx/0x0af51821177a1fdc91b9789e3e1ddcba763533f252818868aaf10c633793b561",
 			"network": "bsc"
 		},
 		"TokenStateoETH": {
@@ -321,7 +321,7 @@
 			"source": "TokenState",
 			"link": "https://bscscan.com/address/0x917633b6543790E6D3B62cF54f037037d430d56D",
 			"timestamp": "2021-03-15T21:38:49.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x47569b8b97d9c6a26bea97e66bc709152dbfb4f376bedf4a0a16caa697aa75d6",
+			"txn": "https://bscscan.com/tx/0x47569b8b97d9c6a26bea97e66bc709152dbfb4f376bedf4a0a16caa697aa75d6",
 			"network": "bsc"
 		},
 		"ProxyoETH": {
@@ -330,7 +330,7 @@
 			"source": "ProxyERC20",
 			"link": "https://bscscan.com/address/0xC826A8E4249bC312E21E00e6ae461986cB0D2E78",
 			"timestamp": "2021-03-15T21:38:55.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x7d1ce46df3bd4a335e342d2f46d518f782134af1a0aaf68262ae974fa789fb05",
+			"txn": "https://bscscan.com/tx/0x7d1ce46df3bd4a335e342d2f46d518f782134af1a0aaf68262ae974fa789fb05",
 			"network": "bsc"
 		},
 		"SynthoETH": {
@@ -339,7 +339,7 @@
 			"source": "MultiCollateralSynth",
 			"link": "https://bscscan.com/address/0x0a26DfC10dAC132307dc84Bd2A86744332e0f63f",
 			"timestamp": "2021-03-15T21:39:04.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x26b281d8b6af9e0ef9416fc6e60ba28e2525e27d66679dcc992a41c6b0a7fd44",
+			"txn": "https://bscscan.com/tx/0x26b281d8b6af9e0ef9416fc6e60ba28e2525e27d66679dcc992a41c6b0a7fd44",
 			"network": "bsc"
 		},
 		"TokenStateoBNB": {
@@ -348,7 +348,7 @@
 			"source": "TokenState",
 			"link": "https://bscscan.com/address/0x5bBCB686F88Ce9197DA5D88C265d23Fe843f3A49",
 			"timestamp": "2021-03-15T21:39:34.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x564035788fe293c6002e9199d66e05206cdb8257fc07a37e0155070cdea13a5f",
+			"txn": "https://bscscan.com/tx/0x564035788fe293c6002e9199d66e05206cdb8257fc07a37e0155070cdea13a5f",
 			"network": "bsc"
 		},
 		"ProxyoBNB": {
@@ -357,7 +357,7 @@
 			"source": "ProxyERC20",
 			"link": "https://bscscan.com/address/0x4DDaCe4B8d58c3989075d2953FBA81fe69De5389",
 			"timestamp": "2021-03-15T21:39:43.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x2ac176958e4fc5c47c7cb117e2836748e101f4d673e82921bdc90f8e1490a701",
+			"txn": "https://bscscan.com/tx/0x2ac176958e4fc5c47c7cb117e2836748e101f4d673e82921bdc90f8e1490a701",
 			"network": "bsc"
 		},
 		"SynthoBNB": {
@@ -366,7 +366,7 @@
 			"source": "Synth",
 			"link": "https://bscscan.com/address/0x457d3Bce622e4Af6038ff35c56bBea017250A4DF",
 			"timestamp": "2021-03-15T21:39:49.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x3ed1aa91fcde3f071f3db90b32143f4e14fe5c1549aa0add905d59b79bc33982",
+			"txn": "https://bscscan.com/tx/0x3ed1aa91fcde3f071f3db90b32143f4e14fe5c1549aa0add905d59b79bc33982",
 			"network": "bsc"
 		},
 		"TokenStateiBTC": {
@@ -375,7 +375,7 @@
 			"source": "TokenState",
 			"link": "https://bscscan.com/address/0xcD6bcc7da89e3ee70F2B2b2a64423591a95f0F4B",
 			"timestamp": "2021-03-15T21:40:22.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x565cdb8d11a957499e63149599778fee687a87c5f968cb926e9a26347c2e9141",
+			"txn": "https://bscscan.com/tx/0x565cdb8d11a957499e63149599778fee687a87c5f968cb926e9a26347c2e9141",
 			"network": "bsc"
 		},
 		"ProxyiBTC": {
@@ -384,7 +384,7 @@
 			"source": "ProxyERC20",
 			"link": "https://bscscan.com/address/0xB72ef897482B5aCe5815FE0c427720A3BBB0FA59",
 			"timestamp": "2021-03-15T21:40:31.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0xddadd4dd0fe75944b0a44c98a89320329ba4b9c59a701aaae194d4e74b2e7151",
+			"txn": "https://bscscan.com/tx/0xddadd4dd0fe75944b0a44c98a89320329ba4b9c59a701aaae194d4e74b2e7151",
 			"network": "bsc"
 		},
 		"SynthiBTC": {
@@ -393,7 +393,7 @@
 			"source": "PurgeableSynth",
 			"link": "https://bscscan.com/address/0x489DB04c98D087A2e64fe42BFE030F1c5566dDe0",
 			"timestamp": "2021-03-15T21:40:40.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0xb09b3efdd74d1aade2ed68acd43e8941313db33d5982aba5e255e4f327a1773c",
+			"txn": "https://bscscan.com/tx/0xb09b3efdd74d1aade2ed68acd43e8941313db33d5982aba5e255e4f327a1773c",
 			"network": "bsc"
 		},
 		"TokenStateiETH": {
@@ -402,7 +402,7 @@
 			"source": "TokenState",
 			"link": "https://bscscan.com/address/0xe284247c913a7810aC3539C7DFce1dc7Bc750DBB",
 			"timestamp": "2021-03-15T21:41:22.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0xef16a126bcf8a3256bbc9023f8a2e9b1e7e36e5399e5ff117a77851059f1b116",
+			"txn": "https://bscscan.com/tx/0xef16a126bcf8a3256bbc9023f8a2e9b1e7e36e5399e5ff117a77851059f1b116",
 			"network": "bsc"
 		},
 		"ProxyiETH": {
@@ -411,7 +411,7 @@
 			"source": "ProxyERC20",
 			"link": "https://bscscan.com/address/0x19399869d4582C3B9729fc9B2A3776309d235F13",
 			"timestamp": "2021-03-15T22:05:01.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x1fbab1fab025ad8fb38791e6da7994a22ffb2a41846e1f232e5de46a85d94819",
+			"txn": "https://bscscan.com/tx/0x1fbab1fab025ad8fb38791e6da7994a22ffb2a41846e1f232e5de46a85d94819",
 			"network": "bsc"
 		},
 		"SynthiETH": {
@@ -474,7 +474,7 @@
 			"source": "BNBCollateral",
 			"link": "https://bscscan.com/address/0xc5A7f060243A2BE4e8f1d78b09731e847F9212B1",
 			"timestamp": "2021-03-15T22:07:37.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x1c5d75f96a2118f243744e69b82e14c6501c4c5633d0c175c066d95c42f007e7",
+			"txn": "https://bscscan.com/tx/0x1c5d75f96a2118f243744e69b82e14c6501c4c5633d0c175c066d95c42f007e7",
 			"network": "bsc"
 		}
 	},

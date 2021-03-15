@@ -1,161 +1,161 @@
 {
 	"AddressResolver": {
-		"deploy": true
+		"deploy": false
 	},
 	"ArbRewarder": {
-		"deploy": true
+		"deploy": false
 	},
 	"Depot": {
-		"deploy": true
+		"deploy": false
 	},
 	"EscrowChecker": {
-		"deploy": true
+		"deploy": false
 	},
 	"ExchangeRates": {
-		"deploy": true
+		"deploy": false
 	},
 	"Exchanger": {
-		"deploy": true
+		"deploy": false
 	},
 	"ExchangeState": {
-		"deploy": true
+		"deploy": false
 	},
 	"BNBCollateral": {
-		"deploy": true
+		"deploy": false
 	},
 	"FeePool": {
-		"deploy": true
+		"deploy": false
 	},
 	"FeePoolState": {
-		"deploy": true
+		"deploy": false
 	},
 	"FeePoolEternalStorage": {
-		"deploy": true
+		"deploy": false
 	},
 	"DelegateApprovals": {
-		"deploy": true
+		"deploy": false
 	},
 	"Issuer": {
-		"deploy": true
+		"deploy": false
 	},
 	"IssuanceEternalStorage": {
-		"deploy": true
+		"deploy": false
 	},
 	"SupplySchedule": {
-		"deploy": true
+		"deploy": false
 	},
 	"Oikos": {
-		"deploy": true
+		"deploy": false
 	},
 	"OikosEscrow": {
-		"deploy": true
+		"deploy": false
 	},
 	"RewardEscrow": {
-		"deploy": true
+		"deploy": false
 	},
 	"RewardsDistribution": {
-		"deploy": true
+		"deploy": false
 	},
 	"OikosState": {
-		"deploy": true
+		"deploy": false
 	},
 	"SynthoUSD": {
-		"deploy": true
+		"deploy": false
 	},
 	"SynthoXAU": {
-		"deploy": true
+		"deploy": false
 	},
 	"SynthoBTC": {
-		"deploy": true
+		"deploy": false
 	},
 	"ProxyERC20": {
-		"deploy": true
+		"deploy": false
 	},
 	"ProxyFeePool": {
-		"deploy": true
+		"deploy": false
 	},
 	"ProxyOikos": {
-		"deploy": true
+		"deploy": false
 	},
 	"ProxyoUSD": {
-		"deploy": true
+		"deploy": false
 	},
 	"ProxyoXAU": {
-		"deploy": true
+		"deploy": false
 	},
 	"ProxyoBTC": {
-		"deploy": true
+		"deploy": false
 	},
 	"SafeDecimalMath": {
-		"deploy": true
+		"deploy": false
 	},
 	"Math": {
-		"deploy": true
+		"deploy": false
 	},
 	"TokenStateOikos": {
-		"deploy": true
+		"deploy": false
 	},
 	"TokenStateoUSD": {
-		"deploy": true
+		"deploy": false
 	},
 	"TokenStateoXAU": {
-		"deploy": true
+		"deploy": false
 	},
 	"TokenStateoBTC": {
-		"deploy": true
+		"deploy": false
 	},
 	"TokenStateoETH": {
-		"deploy": true
+		"deploy": false
 	},
 	"ProxyoETH": {
-		"deploy": true
+		"deploy": false
 	},
 	"SynthoETH": {
-		"deploy": true
+		"deploy": false
 	},
 	"TokenStateoBNB": {
-		"deploy": true
+		"deploy": false
 	},
 	"ProxyoBNB": {
-		"deploy": true
+		"deploy": false
 	},
 	"SynthoBNB": {
-		"deploy": true
+		"deploy": false
 	},
 	"SynthODR": {
-		"deploy": true
+		"deploy": false
 	},
 	"TokenStateODR": {
-		"deploy": true
+		"deploy": false
 	},
 	"ProxyODR": {
-		"deploy": true
+		"deploy": false
 	},
 	"TokenStateiBTC": {
-		"deploy": true
+		"deploy": false
 	},
 	"ProxyiBTC": {
-		"deploy": true
+		"deploy": false
 	},
 	"SynthiBTC": {
-		"deploy": true
+		"deploy": false
 	},
 	"TokenStateiETH": {
-		"deploy": true
+		"deploy": false
 	},
 	"ProxyiETH": {
-		"deploy": true
+		"deploy": false
 	},
 	"SynthiETH": {
-		"deploy": true
+		"deploy": false
 	},
 	"TokenStateiBNB": {
-		"deploy": true
+		"deploy": false
 	},
 	"ProxyiBNB": {
-		"deploy": true
+		"deploy": false
 	},
 	"SynthiBNB": {
-		"deploy": true
+		"deploy": false
 	}
 }

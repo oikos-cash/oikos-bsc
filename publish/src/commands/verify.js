@@ -131,6 +131,9 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 				libraryaddress1: deployment.targets['SafeDecimalMath'].address,
 				apikey: process.env.BSCSCAN_KEY,
 			};
+			const { sourceCode, ...otherOpts } = queryOpts;
+			console.log(sourceCode);
+			console.log(otherOpts);
 			result = await axios.post(etherscanUrl, qs.stringify(queryOpts), {
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded',

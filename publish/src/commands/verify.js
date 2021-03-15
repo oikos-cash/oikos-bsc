@@ -160,7 +160,7 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 			}
 
 			let status = '';
-			while (status !== 'Pass - Verified') {
+			while (true) {
 				console.log(gray(' - Checking verification status...'));
 
 				result = await axios.get(etherscanUrl, {
@@ -184,9 +184,11 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 				if (status === 'Pass - Verified') {
 					console.log(green(` - Verified ${name}`));
 					tableData.push([name, address, 'Successfully verified']);
+					break;
 				} else if (status === 'Already Verified') {
 					console.log(gray(` - Already verified ${name}`));
 					tableData.push([name, address, 'Already verified']);
+					break;
 				} else {
 					console.log(gray(' - Sleeping for 5 seconds and re-checking.'));
 					await new Promise(resolve => setTimeout(resolve, 5000));

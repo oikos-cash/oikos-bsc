@@ -8,8 +8,8 @@ const OikosState = artifacts.require('OikosState');
 const Oikos = artifacts.require('Oikos');
 const Synth = artifacts.require('Synth');
 const AddressResolver = artifacts.require('AddressResolver');
-const EtherCollateral = artifacts.require('EtherCollateral');
-const MockEtherCollateral = artifacts.require('MockEtherCollateral');
+const BNBCollateral = artifacts.require('BNBCollateral');
+const MockBNBCollateral = artifacts.require('MockBNBCollateral');
 
 const {
 	currentTime,
@@ -31,14 +31,7 @@ contract('Oikos', async accounts => {
 
 	const [deployerAccount, owner, account1, account2, account3] = accounts;
 
-	let oikos,
-		exchangeRates,
-		supplySchedule,
-		escrow,
-		oracle,
-		timestamp,
-		addressResolver,
-		oikosState;
+	let oikos, exchangeRates, supplySchedule, escrow, oracle, timestamp, addressResolver, oikosState;
 
 	const getRemainingIssuableSynths = async account =>
 		(await oikos.remainingIssuableSynths(account))[0];
@@ -122,10 +115,7 @@ contract('Oikos', async accounts => {
 			await oikos.addSynth(synth.address, { from: owner });
 
 			// Assert that we've successfully added a Synth
-			assert.bnEqual(
-				await oikos.availableSynthCount(),
-				previousSynthCount.add(web3.utils.toBN(1))
-			);
+			assert.bnEqual(await oikos.availableSynthCount(), previousSynthCount.add(web3.utils.toBN(1)));
 			// Assert that it's at the end of the array
 			assert.equal(await oikos.availableSynths(previousSynthCount), synth.address);
 			// Assert that it's retrievable by its currencyKey
@@ -995,11 +985,11 @@ contract('Oikos', async accounts => {
 	});
 
 	describe('when etherCollateral is set', async () => {
-		const collateralKey = 'EtherCollateral';
+		const collateralKey = 'BNBCollateral';
 
 		let etherCollateral;
 		beforeEach(async () => {
-			etherCollateral = await EtherCollateral.at(
+			etherCollateral = await BNBCollateral.at(
 				await addressResolver.getAddress(toBytes32(collateralKey))
 			);
 		});
@@ -1007,17 +997,17 @@ contract('Oikos', async accounts => {
 			// no synths issued in etherCollateral
 			assert.bnEqual(0, await etherCollateral.totalIssuedSynths());
 
-			// totalIssuedSynthsExcludeEtherCollateral equal totalIssuedSynths
+			// totalIssuedSynthsExcludeBNBCollateral equal totalIssuedSynths
 			assert.bnEqual(
 				await oikos.totalIssuedSynths(oUSD),
-				await oikos.totalIssuedSynthsExcludeEtherCollateral(oUSD)
+				await oikos.totalIssuedSynthsExcludeBNBCollateral(oUSD)
 			);
 		});
 		describe('creating a loan on etherCollateral to issue oETH', async () => {
 			let sETHContract;
 			beforeEach(async () => {
 				// mock etherCollateral
-				etherCollateral = await MockEtherCollateral.new({ from: owner });
+				etherCollateral = await MockBNBCollateral.new({ from: owner });
 				// have the owner simulate being MultiCollateral so we can invoke issue and burn
 				await addressResolver.importAddresses(
 					[toBytes32(collateralKey)],
@@ -1048,16 +1038,10 @@ contract('Oikos', async accounts => {
 				await etherCollateral.openLoan(amountToIssue, { from: owner });
 
 				// totalSupply of synths should exclude Ether Collateral issued synths
-				assert.bnEqual(
-					totalSupplyBefore,
-					await oikos.totalIssuedSynthsExcludeEtherCollateral(oETH)
-				);
+				assert.bnEqual(totalSupplyBefore, await oikos.totalIssuedSynthsExcludeBNBCollateral(oETH));
 
 				// totalIssuedSynths after includes amount issued
-				assert.bnEqual(
-					await oikos.totalIssuedSynths(oETH),
-					totalSupplyBefore.add(amountToIssue)
-				);
+				assert.bnEqual(await oikos.totalIssuedSynths(oETH), totalSupplyBefore.add(amountToIssue));
 			});
 
 			it('should exclude oETH issued by ether Collateral from debtBalanceOf', async () => {
@@ -1071,7 +1055,7 @@ contract('Oikos', async accounts => {
 				await etherCollateral.openLoan(amountToIssue, { from: owner });
 
 				// After account1 owns 100% of oUSD debt.
-				assert.bnEqual(await oikos.totalIssuedSynthsExcludeEtherCollateral(oUSD), toUnit('10'));
+				assert.bnEqual(await oikos.totalIssuedSynthsExcludeBNBCollateral(oUSD), toUnit('10'));
 				assert.bnEqual(await oikos.debtBalanceOf(account1, oUSD), debtBefore);
 			});
 		});

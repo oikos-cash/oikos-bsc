@@ -33,7 +33,7 @@
 			"source": "ExchangeRates",
 			"link": "https://bscscan.com/address/0x9A1D6d7900eC1E34bF22f85a139a21461D4bFB42",
 			"timestamp": "2021-03-15T21:31:13.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x7ffe8f7b935d715e3a3dc080c9ed23d92450bc5d07ec9307f416dd4cdd97f50b",
+			"txn": "https://bscscan.com/tx/0x7ffe8f7b935d715e3a3dc080c9ed23d92450bc5d07ec9307f416dd4cdd97f50b",
 			"network": "bsc"
 		},
 		"RewardEscrow": {
@@ -159,7 +159,7 @@
 			"source": "Exchanger",
 			"link": "https://bscscan.com/address/0x7dBDD3fa9468c886506fD6726Caa3F2D55074280",
 			"timestamp": "2021-03-15T21:33:34.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x13ea12e57ffeabf30b7b3577f5ee913dccf3f3b2e84ef9a6c8679520e0b89072",
+			"txn": "https://bscscan.com/tx/0x13ea12e57ffeabf30b7b3577f5ee913dccf3f3b2e84ef9a6c8679520e0b89072",
 			"network": "bsc"
 		},
 		"ExchangeState": {
@@ -195,7 +195,7 @@
 			"source": "EscrowChecker",
 			"link": "https://bscscan.com/address/0x573EBD9661f33bf44f856DE11F0231DA4C5AeCEE",
 			"timestamp": "2021-03-15T21:34:22.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x3d88568317ec4110a744ad444794cfcd0f7ea0e5eba0b59c1918e727417d1be3",
+			"txn": "https://bscscan.com/tx/0x3d88568317ec4110a744ad444794cfcd0f7ea0e5eba0b59c1918e727417d1be3",
 			"network": "bsc"
 		},
 		"ProxyERC20": {
@@ -456,7 +456,7 @@
 			"source": "Depot",
 			"link": "https://bscscan.com/address/0x32Cd9AaD085b7ae26DD47E34e7EbEeB817dD6cB3",
 			"timestamp": "2021-03-15T22:06:55.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0xe254f419c02cf7d7fc050b3b9b19cddfaa3382ae3c885a7b3db0dd107d6479b5",
+			"txn": "https://bscscan.com/tx/0xe254f419c02cf7d7fc050b3b9b19cddfaa3382ae3c885a7b3db0dd107d6479b5",
 			"network": "bsc"
 		},
 		"ArbRewarder": {
@@ -465,7 +465,7 @@
 			"source": "ArbRewarder",
 			"link": "https://bscscan.com/address/0x79dcCeC140fF50b86852f3EE92CB8577C5A6B187",
 			"timestamp": "2021-03-15T22:07:04.000Z",
-			"txn": "https://bsc.bscscan.com/tx/0x3b59d75f9c757684a54f5d47f35230886c85a5ced0d4bb0c5c3fc938a30fbf0f",
+			"txn": "https://bscscan.com/tx/0x3b59d75f9c757684a54f5d47f35230886c85a5ced0d4bb0c5c3fc938a30fbf0f",
 			"network": "bsc"
 		},
 		"BNBCollateral": {

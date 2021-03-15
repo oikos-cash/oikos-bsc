@@ -5,9 +5,9 @@ import "./TokenState.sol";
 import "./MixinResolver.sol";
 import "./SupplySchedule.sol";
 import "./Synth.sol";
-import "./interfaces/ISynthetixState.sol";
+import "./interfaces/IOikosState.sol";
 import "./interfaces/IExchangeRates.sol";
-import "./interfaces/ISynthetixEscrow.sol";
+import "./interfaces/IOikosEscrow.sol";
 import "./interfaces/IFeePool.sol";
 import "./interfaces/IRewardsDistribution.sol";
 import "./interfaces/IExchanger.sol";
@@ -16,11 +16,11 @@ import "./interfaces/IEtherCollateral.sol";
 
 
 /**
- * @title Synthetix ERC20 contract.
- * @notice The Synthetix contracts not only facilitates transfers, exchanges, and tracks balances,
- * but it also computes the quantity of fees each synthetix holder is entitled to.
+ * @title Oikos ERC20 contract.
+ * @notice The Oikos contracts not only facilitates transfers, exchanges, and tracks balances,
+ * but it also computes the quantity of fees each oikos holder is entitled to.
  */
-contract Synthetix is ExternStateToken, MixinResolver {
+contract Oikos is ExternStateToken, MixinResolver {
     // ========== STATE VARIABLES ==========
 
     // Available Synths which can be used with the system
@@ -28,10 +28,10 @@ contract Synthetix is ExternStateToken, MixinResolver {
     mapping(bytes32 => Synth) public synths;
     mapping(address => bytes32) public synthsByAddress;
 
-    string constant TOKEN_NAME = "Synthetix Network Token";
-    string constant TOKEN_SYMBOL = "SNX";
+    string constant TOKEN_NAME = "Oikos Network Token";
+    string constant TOKEN_SYMBOL = "OKS";
     uint8 constant DECIMALS = 18;
-    bytes32 constant sUSD = "sUSD";
+    bytes32 constant oUSD = "oUSD";
 
     // ========== CONSTRUCTOR ==========
 
@@ -40,8 +40,8 @@ contract Synthetix is ExternStateToken, MixinResolver {
      * @param _proxy The main token address of the Proxy contract. This will be ProxyERC20.sol
      * @param _tokenState Address of the external immutable contract containing token balances.
      * @param _owner The owner of this contract.
-     * @param _totalSupply On upgrading set to reestablish the current total supply (This should be in SynthetixState if ever updated)
-     * @param _resolver The address of the Synthetix Address Resolver
+     * @param _totalSupply On upgrading set to reestablish the current total supply (This should be in OikosState if ever updated)
+     * @param _resolver The address of the Oikos Address Resolver
      */
     constructor(address _proxy, TokenState _tokenState, address _owner, uint _totalSupply, address _resolver)
         public
@@ -63,8 +63,8 @@ contract Synthetix is ExternStateToken, MixinResolver {
         return IIssuer(resolver.requireAndGetAddress("Issuer", "Missing Issuer address"));
     }
 
-    function synthetixState() internal view returns (ISynthetixState) {
-        return ISynthetixState(resolver.requireAndGetAddress("SynthetixState", "Missing SynthetixState address"));
+    function oikosState() internal view returns (IOikosState) {
+        return IOikosState(resolver.requireAndGetAddress("OikosState", "Missing OikosState address"));
     }
 
     function exchangeRates() internal view returns (IExchangeRates) {
@@ -79,12 +79,12 @@ contract Synthetix is ExternStateToken, MixinResolver {
         return SupplySchedule(resolver.requireAndGetAddress("SupplySchedule", "Missing SupplySchedule address"));
     }
 
-    function rewardEscrow() internal view returns (ISynthetixEscrow) {
-        return ISynthetixEscrow(resolver.requireAndGetAddress("RewardEscrow", "Missing RewardEscrow address"));
+    function rewardEscrow() internal view returns (IOikosEscrow) {
+        return IOikosEscrow(resolver.requireAndGetAddress("RewardEscrow", "Missing RewardEscrow address"));
     }
 
-    function synthetixEscrow() internal view returns (ISynthetixEscrow) {
-        return ISynthetixEscrow(resolver.requireAndGetAddress("SynthetixEscrow", "Missing SynthetixEscrow address"));
+    function oikosEscrow() internal view returns (IOikosEscrow) {
+        return IOikosEscrow(resolver.requireAndGetAddress("OikosEscrow", "Missing OikosEscrow address"));
     }
 
     function rewardsDistribution() internal view returns (IRewardsDistribution) {
@@ -113,8 +113,8 @@ contract Synthetix is ExternStateToken, MixinResolver {
             //       iteration of the loop
             uint totalSynths = availableSynths[i].totalSupply();
 
-            // minus total issued synths from Ether Collateral from sETH.totalSupply()
-            if (excludeEtherCollateral && availableSynths[i] == synths["sETH"]) {
+            // minus total issued synths from Ether Collateral from oETH.totalSupply()
+            if (excludeEtherCollateral && availableSynths[i] == synths["oETH"]) {
                 totalSynths = totalSynths.sub(etherCollateral().totalIssuedSynths());
             }
 
@@ -168,7 +168,7 @@ contract Synthetix is ExternStateToken, MixinResolver {
     // ========== MUTATIVE FUNCTIONS ==========
 
     /**
-     * @notice Add an associated Synth contract to the Synthetix system
+     * @notice Add an associated Synth contract to the Oikos system
      * @dev Only the contract owner may call this.
      */
     function addSynth(Synth synth) external optionalProxy_onlyOwner {
@@ -183,13 +183,13 @@ contract Synthetix is ExternStateToken, MixinResolver {
     }
 
     /**
-     * @notice Remove an associated Synth contract from the Synthetix system
+     * @notice Remove an associated Synth contract from the Oikos system
      * @dev Only the contract owner may call this.
      */
     function removeSynth(bytes32 currencyKey) external optionalProxy_onlyOwner {
         require(synths[currencyKey] != address(0), "Synth does not exist");
         require(synths[currencyKey].totalSupply() == 0, "Synth supply exists");
-        require(currencyKey != sUSD, "Cannot remove synth");
+        require(currencyKey != oUSD, "Cannot remove synth");
 
         // Save the address we're removing for emitting the event at the end.
         address synthToRemove = synths[currencyKey];
@@ -215,7 +215,7 @@ contract Synthetix is ExternStateToken, MixinResolver {
         delete synthsByAddress[synths[currencyKey]];
         delete synths[currencyKey];
 
-        // Note: No event here as Synthetix contract exceeds max contract size
+        // Note: No event here as Oikos contract exceeds max contract size
         // with these events, and it's unlikely people will need to
         // track these events specifically.
     }
@@ -224,8 +224,8 @@ contract Synthetix is ExternStateToken, MixinResolver {
      * @notice ERC20 transfer function.
      */
     function transfer(address to, uint value) public optionalProxy returns (bool) {
-        // Ensure they're not trying to exceed their staked SNX amount
-        require(value <= transferableSynthetix(messageSender), "Cannot transfer staked or escrowed SNX");
+        // Ensure they're not trying to exceed their staked OKS amount
+        require(value <= transferableOikos(messageSender), "Cannot transfer staked or escrowed OKS");
 
         // Perform the transfer: if there is a problem an exception will be thrown in this call.
         _transfer_byProxy(messageSender, to, value);
@@ -238,7 +238,7 @@ contract Synthetix is ExternStateToken, MixinResolver {
      */
     function transferFrom(address from, address to, uint value) public optionalProxy returns (bool) {
         // Ensure they're not trying to exceed their locked amount
-        require(value <= transferableSynthetix(from), "Cannot transfer staked or escrowed SNX");
+        require(value <= transferableOikos(from), "Cannot transfer staked or escrowed OKS");
 
         // Perform the transfer: if there is a problem,
         // an exception will be thrown in this call.
@@ -276,7 +276,7 @@ contract Synthetix is ExternStateToken, MixinResolver {
     // ========== Issuance/Burning ==========
 
     /**
-     * @notice The maximum synths an issuer can issue against their total synthetix quantity.
+     * @notice The maximum synths an issuer can issue against their total oikos quantity.
      * This ignores any already issued synths, and is purely giving you the maximimum amount the user can issue.
      */
     function maxIssuableSynths(address _issuer)
@@ -287,35 +287,35 @@ contract Synthetix is ExternStateToken, MixinResolver {
             uint
         )
     {
-        // What is the value of their SNX balance in the destination currency?
-        uint destinationValue = exchangeRates().effectiveValue("SNX", collateral(_issuer), sUSD);
+        // What is the value of their OKS balance in the destination currency?
+        uint destinationValue = exchangeRates().effectiveValue("OKS", collateral(_issuer), oUSD);
 
         // They're allowed to issue up to issuanceRatio of that value
-        return destinationValue.multiplyDecimal(synthetixState().issuanceRatio());
+        return destinationValue.multiplyDecimal(oikosState().issuanceRatio());
     }
 
     /**
      * @notice The current collateralisation ratio for a user. Collateralisation ratio varies over time
-     * as the value of the underlying Synthetix asset changes,
+     * as the value of the underlying Oikos asset changes,
      * e.g. based on an issuance ratio of 20%. if a user issues their maximum available
-     * synths when they hold $10 worth of Synthetix, they will have issued $2 worth of synths. If the value
-     * of Synthetix changes, the ratio returned by this function will adjust accordingly. Users are
+     * synths when they hold $10 worth of Oikos, they will have issued $2 worth of synths. If the value
+     * of Oikos changes, the ratio returned by this function will adjust accordingly. Users are
      * incentivised to maintain a collateralisation ratio as close to the issuance ratio as possible by
      * altering the amount of fees they're able to claim from the system.
      */
     function collateralisationRatio(address _issuer) public view returns (uint) {
-        uint totalOwnedSynthetix = collateral(_issuer);
-        if (totalOwnedSynthetix == 0) return 0;
+        uint totalOwnedOikos = collateral(_issuer);
+        if (totalOwnedOikos == 0) return 0;
 
-        uint debtBalance = debtBalanceOf(_issuer, "SNX");
-        return debtBalance.divideDecimalRound(totalOwnedSynthetix);
+        uint debtBalance = debtBalanceOf(_issuer, "OKS");
+        return debtBalance.divideDecimalRound(totalOwnedOikos);
     }
 
     /**
-     * @notice If a user issues synths backed by SNX in their wallet, the SNX become locked. This function
+     * @notice If a user issues synths backed by OKS in their wallet, the OKS become locked. This function
      * will tell you how many synths a user has to give back to the system in order to unlock their original
      * debt position. This is priced in whichever synth is passed in as a currency key, e.g. you can price
-     * the debt in sUSD, or any other synth you wish.
+     * the debt in oUSD, or any other synth you wish.
      */
     function debtBalanceOf(address _issuer, bytes32 currencyKey)
         public
@@ -325,7 +325,7 @@ contract Synthetix is ExternStateToken, MixinResolver {
             uint
         )
     {
-        ISynthetixState state = synthetixState();
+        IOikosState state = oikosState();
 
         // What was their initial debt ownership?
         (uint initialDebtOwnership, ) = state.issuanceData(_issuer);
@@ -345,7 +345,7 @@ contract Synthetix is ExternStateToken, MixinResolver {
             uint totalSystemValue
         )
     {
-        ISynthetixState state = synthetixState();
+        IOikosState state = oikosState();
 
         // What was their initial debt ownership?
         uint initialDebtOwnership;
@@ -375,7 +375,7 @@ contract Synthetix is ExternStateToken, MixinResolver {
     }
 
     /**
-     * @notice The remaining synths an issuer can issue against their total synthetix balance.
+     * @notice The remaining synths an issuer can issue against their total oikos balance.
      * @param _issuer The account that intends to issue
      */
     function remainingIssuableSynths(address _issuer)
@@ -388,7 +388,7 @@ contract Synthetix is ExternStateToken, MixinResolver {
             uint totalSystemDebt
         )
     {
-        (alreadyIssued, totalSystemDebt) = debtBalanceOfAndTotalDebt(_issuer, sUSD);
+        (alreadyIssued, totalSystemDebt) = debtBalanceOfAndTotalDebt(_issuer, oUSD);
         maxIssuable = maxIssuableSynths(_issuer);
 
         if (alreadyIssued >= maxIssuable) {
@@ -399,7 +399,7 @@ contract Synthetix is ExternStateToken, MixinResolver {
     }
 
     /**
-     * @notice The total SNX owned by this account, both escrowed and unescrowed,
+     * @notice The total OKS owned by this account, both escrowed and unescrowed,
      * against which synths can be issued.
      * This includes those already being used as collateral (locked), and those
      * available for further issuance (unlocked).
@@ -407,8 +407,8 @@ contract Synthetix is ExternStateToken, MixinResolver {
     function collateral(address account) public view returns (uint) {
         uint balance = tokenState.balanceOf(account);
 
-        if (synthetixEscrow() != address(0)) {
-            balance = balance.add(synthetixEscrow().balanceOf(account));
+        if (oikosEscrow() != address(0)) {
+            balance = balance.add(oikosEscrow().balanceOf(account));
         }
 
         if (rewardEscrow() != address(0)) {
@@ -419,38 +419,38 @@ contract Synthetix is ExternStateToken, MixinResolver {
     }
 
     /**
-     * @notice The number of SNX that are free to be transferred for an account.
-     * @dev Escrowed SNX are not transferable, so they are not included
+     * @notice The number of OKS that are free to be transferred for an account.
+     * @dev Escrowed OKS are not transferable, so they are not included
      * in this calculation.
-     * @notice SNX rate not stale is checked within debtBalanceOf
+     * @notice OKS rate not stale is checked within debtBalanceOf
      */
-    function transferableSynthetix(address account)
+    function transferableOikos(address account)
         public
         view
-        rateNotStale("SNX") // SNX is not a synth so is not checked in totalIssuedSynths
+        rateNotStale("OKS") // OKS is not a synth so is not checked in totalIssuedSynths
         returns (uint)
     {
-        // How many SNX do they have, excluding escrow?
+        // How many OKS do they have, excluding escrow?
         // Note: We're excluding escrow here because we're interested in their transferable amount
-        // and escrowed SNX are not transferable.
+        // and escrowed OKS are not transferable.
         uint balance = tokenState.balanceOf(account);
 
         // How many of those will be locked by the amount they've issued?
-        // Assuming issuance ratio is 20%, then issuing 20 SNX of value would require
-        // 100 SNX to be locked in their wallet to maintain their collateralisation ratio
-        // The locked synthetix value can exceed their balance.
-        uint lockedSynthetixValue = debtBalanceOf(account, "SNX").divideDecimalRound(synthetixState().issuanceRatio());
+        // Assuming issuance ratio is 20%, then issuing 20 OKS of value would require
+        // 100 OKS to be locked in their wallet to maintain their collateralisation ratio
+        // The locked oikos value can exceed their balance.
+        uint lockedOikosValue = debtBalanceOf(account, "OKS").divideDecimalRound(oikosState().issuanceRatio());
 
-        // If we exceed the balance, no SNX are transferable, otherwise the difference is.
-        if (lockedSynthetixValue >= balance) {
+        // If we exceed the balance, no OKS are transferable, otherwise the difference is.
+        if (lockedOikosValue >= balance) {
             return 0;
         } else {
-            return balance.sub(lockedSynthetixValue);
+            return balance.sub(lockedOikosValue);
         }
     }
 
     /**
-     * @notice Mints the inflationary SNX supply. The inflation shedule is
+     * @notice Mints the inflationary OKS supply. The inflation shedule is
      * defined in the SupplySchedule contract.
      * The mint() function is publicly callable by anyone. The caller will
      receive a minter reward as specified in supplySchedule.minterReward().
@@ -467,7 +467,7 @@ contract Synthetix is ExternStateToken, MixinResolver {
         // record minting event before mutation to token supply
         _supplySchedule.recordMintEvent(supplyToMint);
 
-        // Set minted SNX balance to RewardEscrow's balance
+        // Set minted OKS balance to RewardEscrow's balance
         // Minus the minterReward and set balance of minter to add reward
         uint minterReward = _supplySchedule.minterReward();
         // Get the remainder

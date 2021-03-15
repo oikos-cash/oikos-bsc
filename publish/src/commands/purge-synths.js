@@ -53,7 +53,7 @@ const purgeSynths = async ({
 			console.error(red(`Synth ${synth} not found!`));
 			process.exitCode = 1;
 			return;
-		} else if (['sUSD'].indexOf(synth) >= 0) {
+		} else if (['oUSD'].indexOf(synth) >= 0) {
 			console.error(red(`Synth ${synth} cannot be purged`));
 			process.exitCode = 1;
 			return;
@@ -81,7 +81,7 @@ const purgeSynths = async ({
 				cyan(
 					`${yellow(
 						'⚠ WARNING'
-					)}: This action will purge the following synths from the Synthetix contract on ${network}:\n- ${synthsToPurge.join(
+					)}: This action will purge the following synths from the Oikos contract on ${network}:\n- ${synthsToPurge.join(
 						'\n- '
 					)}`
 				) + '\nDo you want to continue? (y/n) '
@@ -92,9 +92,9 @@ const purgeSynths = async ({
 		}
 	}
 
-	const { address: synthetixAddress, source } = deployment.targets['Synthetix'];
-	const { abi: synthetixABI } = deployment.sources[source];
-	const Synthetix = new web3.eth.Contract(synthetixABI, synthetixAddress);
+	const { address: oikosAddress, source } = deployment.targets['Oikos'];
+	const { abi: oikosABI } = deployment.sources[source];
+	const Oikos = new web3.eth.Contract(oikosABI, oikosAddress);
 
 	for (const currencyKey of synthsToPurge) {
 		const { address: synthAddress, source: synthSource } = deployment.targets[
@@ -107,12 +107,12 @@ const purgeSynths = async ({
 		const Synth = new web3.eth.Contract(synthABI, synthAddress);
 		const { address: proxyAddress } = deployment.targets[`Proxy${currencyKey}`];
 
-		const currentSynthInSNX = await Synthetix.methods.synths(toBytes32(currencyKey)).call();
+		const currentSynthInSNX = await Oikos.methods.synths(toBytes32(currencyKey)).call();
 
 		if (synthAddress !== currentSynthInSNX) {
 			console.error(
 				red(
-					`Synth address in Synthetix for ${currencyKey} is different from what's deployed in Synthetix to the local ${DEPLOYMENT_FILENAME} of ${network} \ndeployed: ${yellow(
+					`Synth address in Oikos for ${currencyKey} is different from what's deployed in Oikos to the local ${DEPLOYMENT_FILENAME} of ${network} \ndeployed: ${yellow(
 						currentSynthInSNX
 					)}\nlocal:    ${yellow(synthAddress)}`
 				)

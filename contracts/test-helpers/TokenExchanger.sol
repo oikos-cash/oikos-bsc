@@ -1,47 +1,47 @@
 /* TokenExchanger.sol: Used for testing contract to contract calls on chain 
- * with Synthetix for testing ERC20 compatability
+ * with Oikos for testing ERC20 compatability
  */
 pragma solidity 0.4.25;
 
 import "../Owned.sol";
-import "../interfaces/ISynthetix.sol";
+import "../interfaces/IOikos.sol";
 import "../interfaces/IFeePool.sol";
 import "../interfaces/IERC20.sol";
 
 
 contract TokenExchanger is Owned {
     address public integrationProxy;
-    address public synthetix;
+    address public oikos;
 
     constructor(address _owner, address _integrationProxy) public Owned(_owner) {
         integrationProxy = _integrationProxy;
     }
 
-    function setSynthetixProxy(address _integrationProxy) external onlyOwner {
+    function setOikosProxy(address _integrationProxy) external onlyOwner {
         integrationProxy = _integrationProxy;
     }
 
-    function setSynthetix(address _synthetix) external onlyOwner {
-        synthetix = _synthetix;
+    function setOikos(address _oikos) external onlyOwner {
+        oikos = _oikos;
     }
 
-    function checkBalance(address account) public view synthetixProxyIsSet returns (uint) {
+    function checkBalance(address account) public view oikosProxyIsSet returns (uint) {
         return IERC20(integrationProxy).balanceOf(account);
     }
 
-    function checkAllowance(address tokenOwner, address spender) public view synthetixProxyIsSet returns (uint) {
+    function checkAllowance(address tokenOwner, address spender) public view oikosProxyIsSet returns (uint) {
         return IERC20(integrationProxy).allowance(tokenOwner, spender);
     }
 
-    function checkBalanceSNXDirect(address account) public view synthetixProxyIsSet returns (uint) {
-        return IERC20(synthetix).balanceOf(account);
+    function checkBalanceSNXDirect(address account) public view oikosProxyIsSet returns (uint) {
+        return IERC20(oikos).balanceOf(account);
     }
 
     function getDecimals(address tokenAddress) public view returns (uint) {
         return IERC20(tokenAddress).decimals();
     }
 
-    function doTokenSpend(address fromAccount, address toAccount, uint amount) public synthetixProxyIsSet returns (bool) {
+    function doTokenSpend(address fromAccount, address toAccount, uint amount) public oikosProxyIsSet returns (bool) {
         // Call Immutable static call #1
         require(checkBalance(fromAccount) >= amount, "fromAccount does not have the required balance to spend");
 
@@ -55,8 +55,8 @@ contract TokenExchanger is Owned {
         return IERC20(integrationProxy).transferFrom(fromAccount, toAccount, amount);
     }
 
-    modifier synthetixProxyIsSet {
-        require(integrationProxy != address(0), "Synthetix Integration proxy address not set");
+    modifier oikosProxyIsSet {
+        require(integrationProxy != address(0), "Oikos Integration proxy address not set");
         _;
     }
 

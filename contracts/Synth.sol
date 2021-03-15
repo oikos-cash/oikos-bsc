@@ -2,7 +2,7 @@ pragma solidity 0.4.25;
 
 import "./ExternStateToken.sol";
 import "./interfaces/IFeePool.sol";
-import "./interfaces/ISynthetix.sol";
+import "./interfaces/IOikos.sol";
 import "./interfaces/IExchanger.sol";
 import "./interfaces/IIssuer.sol";
 import "./MixinResolver.sol";
@@ -11,12 +11,12 @@ import "./MixinResolver.sol";
 contract Synth is ExternStateToken, MixinResolver {
     /* ========== STATE VARIABLES ========== */
 
-    // Currency key which identifies this Synth to the Synthetix system
+    // Currency key which identifies this Synth to the Oikos system
     bytes32 public currencyKey;
 
     uint8 public constant DECIMALS = 18;
 
-    // Where fees are pooled in sUSD
+    // Where fees are pooled in oUSD
     address public constant FEE_ADDRESS = 0xfeEFEEfeefEeFeefEEFEEfEeFeefEEFeeFEEFEeF;
 
     /* ========== CONSTRUCTOR ========== */
@@ -46,7 +46,7 @@ contract Synth is ExternStateToken, MixinResolver {
     function transfer(address to, uint value) public optionalProxy returns (bool) {
         _ensureCanTransfer(messageSender, value);
 
-        // transfers to FEE_ADDRESS will be exchanged into sUSD and recorded as fee
+        // transfers to FEE_ADDRESS will be exchanged into oUSD and recorded as fee
         if (to == FEE_ADDRESS) {
             return _transferToFeeAddress(to, value);
         }
@@ -91,33 +91,33 @@ contract Synth is ExternStateToken, MixinResolver {
 
     /**
      * @notice _transferToFeeAddress function
-     * non-sUSD synths are exchanged into sUSD via synthInitiatedExchange
+     * non-oUSD synths are exchanged into oUSD via synthInitiatedExchange
      * notify feePool to record amount as fee paid to feePool */
     function _transferToFeeAddress(address to, uint value) internal returns (bool) {
         uint amountInUSD;
 
-        // sUSD can be transferred to FEE_ADDRESS directly
-        if (currencyKey == "sUSD") {
+        // oUSD can be transferred to FEE_ADDRESS directly
+        if (currencyKey == "oUSD") {
             amountInUSD = value;
             super._internalTransfer(messageSender, to, value);
         } else {
-            // else exchange synth into sUSD and send to FEE_ADDRESS
-            amountInUSD = exchanger().exchange(messageSender, currencyKey, value, "sUSD", FEE_ADDRESS);
+            // else exchange synth into oUSD and send to FEE_ADDRESS
+            amountInUSD = exchanger().exchange(messageSender, currencyKey, value, "oUSD", FEE_ADDRESS);
         }
 
-        // Notify feePool to record sUSD to distribute as fees
+        // Notify feePool to record oUSD to distribute as fees
         feePool().recordFeePaid(amountInUSD);
 
         return true;
     }
 
-    // Allow synthetix to issue a certain number of synths from an account.
+    // Allow oikos to issue a certain number of synths from an account.
     // forward call to _internalIssue
     function issue(address account, uint amount) external onlyInternalContracts {
         _internalIssue(account, amount);
     }
 
-    // Allow synthetix or another synth contract to burn a certain number of synths from an account.
+    // Allow oikos or another synth contract to burn a certain number of synths from an account.
     // forward call to _internalBurn
     function burn(address account, uint amount) external onlyInternalContracts {
         _internalBurn(account, amount);
@@ -145,8 +145,8 @@ contract Synth is ExternStateToken, MixinResolver {
     }
 
     /* ========== VIEWS ========== */
-    function synthetix() internal view returns (ISynthetix) {
-        return ISynthetix(resolver.requireAndGetAddress("Synthetix", "Missing Synthetix address"));
+    function oikos() internal view returns (IOikos) {
+        return IOikos(resolver.requireAndGetAddress("Oikos", "Missing Oikos address"));
     }
 
     function feePool() internal view returns (IFeePool) {
@@ -197,14 +197,14 @@ contract Synth is ExternStateToken, MixinResolver {
     /* ========== MODIFIERS ========== */
 
     modifier onlyInternalContracts() {
-        bool isSynthetix = msg.sender == address(synthetix());
+        bool isOikos = msg.sender == address(oikos());
         bool isFeePool = msg.sender == address(feePool());
         bool isExchanger = msg.sender == address(exchanger());
         bool isIssuer = msg.sender == address(issuer());
 
         require(
-            isSynthetix || isFeePool || isExchanger || isIssuer,
-            "Only Synthetix, FeePool, Exchanger or Issuer contracts allowed"
+            isOikos || isFeePool || isExchanger || isIssuer,
+            "Only Oikos, FeePool, Exchanger or Issuer contracts allowed"
         );
         _;
     }

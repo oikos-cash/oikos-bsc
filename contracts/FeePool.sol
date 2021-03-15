@@ -4,10 +4,10 @@ import "./Proxyable.sol";
 import "./SelfDestructible.sol";
 import "./SafeDecimalMath.sol";
 import "./MixinResolver.sol";
-import "./Synthetix.sol";
-import "./interfaces/ISynthetixEscrow.sol";
+import "./Oikos.sol";
+import "./interfaces/IOikosEscrow.sol";
 import "./interfaces/IExchangeRates.sol";
-import "./interfaces/ISynthetixState.sol";
+import "./interfaces/IOikosState.sol";
 import "./interfaces/IExchanger.sol";
 import "./interfaces/IIssuer.sol";
 import "./interfaces/IRewardsDistribution.sol";
@@ -27,11 +27,11 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
     // Exchange fee may not exceed 10%.
     uint public constant MAX_EXCHANGE_FEE_RATE = SafeDecimalMath.unit() / 10;
 
-    // Where fees are pooled in sUSD.
+    // Where fees are pooled in oUSD.
     address public constant FEE_ADDRESS = 0xfeEFEEfeefEeFeefEEFEEfEeFeefEEFeeFEEFEeF;
 
-    // sUSD currencyKey. Fees stored and paid in sUSD
-    bytes32 private sUSD = "sUSD";
+    // oUSD currencyKey. Fees stored and paid in oUSD
+    bytes32 private oUSD = "oUSD";
 
     // This struct represents the issuance activity that's happened in a fee period.
     struct FeePeriod {
@@ -90,8 +90,8 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
 
     /* ========== VIEWS ========== */
 
-    function synthetix() internal view returns (ISynthetix) {
-        return ISynthetix(resolver.requireAndGetAddress("Synthetix", "Missing Synthetix address"));
+    function oikos() internal view returns (IOikos) {
+        return IOikos(resolver.requireAndGetAddress("Oikos", "Missing Oikos address"));
     }
 
     function feePoolState() internal view returns (FeePoolState) {
@@ -111,12 +111,12 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
         return IIssuer(resolver.requireAndGetAddress("Issuer", "Missing Issuer address"));
     }
 
-    function synthetixState() internal view returns (ISynthetixState) {
-        return ISynthetixState(resolver.requireAndGetAddress("SynthetixState", "Missing SynthetixState address"));
+    function oikosState() internal view returns (IOikosState) {
+        return IOikosState(resolver.requireAndGetAddress("OikosState", "Missing OikosState address"));
     }
 
-    function rewardEscrow() internal view returns (ISynthetixEscrow) {
-        return ISynthetixEscrow(resolver.requireAndGetAddress("RewardEscrow", "Missing RewardEscrow address"));
+    function rewardEscrow() internal view returns (IOikosEscrow) {
+        return IOikosEscrow(resolver.requireAndGetAddress("RewardEscrow", "Missing RewardEscrow address"));
     }
 
     function delegateApprovals() internal view returns (DelegateApprovals) {
@@ -158,8 +158,8 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
      * @notice Logs an accounts issuance data per fee period
      * @param account Message.Senders account address
      * @param debtRatio Debt percentage this account has locked after minting or burning their synth
-     * @param debtEntryIndex The index in the global debt ledger. synthetixState.issuanceData(account)
-     * @dev onlyIssuer to call me on synthetix.issue() & synthetix.burn() calls to store the locked SNX
+     * @param debtEntryIndex The index in the global debt ledger. oikosState.issuanceData(account)
+     * @dev onlyIssuer to call me on oikos.issue() & oikos.burn() calls to store the locked OKS
      * per fee period so we know to allocate the correct proportions of fees and rewards per period
      */
     function appendAccountIssuanceRecord(address account, uint debtRatio, uint debtEntryIndex) external onlyIssuer {
@@ -205,17 +205,17 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
      * @param amount susd amount in fees being paid.
      */
     function recordFeePaid(uint amount) external onlyExchangerOrSynth {
-        // Keep track off fees in sUSD in the open fee pool period.
+        // Keep track off fees in oUSD in the open fee pool period.
         _recentFeePeriodsStorage(0).feesToDistribute = _recentFeePeriodsStorage(0).feesToDistribute.add(amount);
     }
 
     /**
-     * @notice The RewardsDistribution contract informs us how many SNX rewards are sent to RewardEscrow to be claimed.
+     * @notice The RewardsDistribution contract informs us how many OKS rewards are sent to RewardEscrow to be claimed.
      */
     function setRewardsToDistribute(uint amount) external {
         address rewardsAuthority = resolver.getAddress("RewardsDistribution");
         require(messageSender == rewardsAuthority || msg.sender == rewardsAuthority, "Caller is not rewardsAuthority");
-        // Add the amount of SNX rewards to distribute on top of any rolling unclaimed amount
+        // Add the amount of OKS rewards to distribute on top of any rolling unclaimed amount
         _recentFeePeriodsStorage(0).rewardsToDistribute = _recentFeePeriodsStorage(0).rewardsToDistribute.add(amount);
     }
 
@@ -251,7 +251,7 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
         // Open up the new fee period.
         // Increment periodId from the recent closed period feePeriodId
         _recentFeePeriodsStorage(0).feePeriodId = uint64(uint256(_recentFeePeriodsStorage(1).feePeriodId).add(1));
-        _recentFeePeriodsStorage(0).startingDebtIndex = uint64(synthetixState().debtLedgerLength());
+        _recentFeePeriodsStorage(0).startingDebtIndex = uint64(oikosState().debtLedgerLength());
         _recentFeePeriodsStorage(0).startTime = uint64(now);
 
         emitFeePeriodClosed(_recentFeePeriodsStorage(1).feePeriodId);
@@ -331,7 +331,7 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
         uint rewardsToDistribute,
         uint rewardsClaimed
     ) public optionalProxy_onlyOwner onlyDuringSetup {
-        require(startingDebtIndex <= synthetixState().debtLedgerLength(), "Cannot import bad data");
+        require(startingDebtIndex <= oikosState().debtLedgerLength(), "Cannot import bad data");
 
         _recentFeePeriods[_currentFeePeriod.add(feePeriodIndex).mod(FEE_PERIOD_LENGTH)] = FeePeriod({
             feePeriodId: uint64(feePeriodId),
@@ -345,36 +345,36 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
     }
 
     /**
-    * @notice Owner can escrow SNX. Owner to send the tokens to the RewardEscrow
+    * @notice Owner can escrow OKS. Owner to send the tokens to the RewardEscrow
     * @param account Address to escrow tokens for
     * @param quantity Amount of tokens to escrow
     */
     function appendVestingEntry(address account, uint quantity) public optionalProxy_onlyOwner {
-        // Transfer SNX from messageSender to the Reward Escrow
-        synthetix().transferFrom(messageSender, rewardEscrow(), quantity);
+        // Transfer OKS from messageSender to the Reward Escrow
+        oikos().transferFrom(messageSender, rewardEscrow(), quantity);
 
         // Create Vesting Entry
         rewardEscrow().appendVestingEntry(account, quantity);
     }
 
     /**
-    * @notice One time onlyOwner call to convert all XDR balance in the FEE_ADDRESS to sUSD
+    * @notice One time onlyOwner call to convert all ODR balance in the FEE_ADDRESS to oUSD
     */
     function convertXDRFeesTosUSD(address exchangeRatesAddress) public optionalProxy_onlyOwner {
-        // Get the ExchageRates address with the XDR rate (its not in the new one)
+        // Get the ExchageRates address with the ODR rate (its not in the new one)
         address _exchangeRates = 0xE95Ef4e7a04d2fB05cb625c62CA58da10112c605;
         if (exchangeRatesAddress != 0) {
             _exchangeRates = exchangeRatesAddress;
         }
 
-        Synth xdrSynth = synthetix().synths("XDR");
-        Synth sUSDSynth = synthetix().synths(sUSD);
+        Synth xdrSynth = oikos().synths("ODR");
+        Synth sUSDSynth = oikos().synths(oUSD);
 
-        // FeePools XDR Balance
+        // FeePools ODR Balance
         uint xdrAmount = xdrSynth.balanceOf(FEE_ADDRESS);
 
-        // How much sUSD should be minted from the XDR's
-        uint sUSDAmount = IExchangeRates(_exchangeRates).effectiveValue("XDR", xdrAmount, sUSD);
+        // How much oUSD should be minted from the ODR's
+        uint sUSDAmount = IExchangeRates(_exchangeRates).effectiveValue("ODR", xdrAmount, oUSD);
 
         // Burn the XDRs
         xdrSynth.burn(FEE_ADDRESS, xdrAmount);
@@ -382,17 +382,17 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
         // Mint their new synths
         sUSDSynth.issue(FEE_ADDRESS, sUSDAmount);
 
-        // Convert FeePeriods To sUSD
+        // Convert FeePeriods To oUSD
         for (uint i = 0; i < FEE_PERIOD_LENGTH; i++) {
             uint feesToDistribute = IExchangeRates(_exchangeRates).effectiveValue(
-                "XDR",
+                "ODR",
                 _recentFeePeriodsStorage(i).feesToDistribute,
-                sUSD
+                oUSD
             );
             uint feesClaimed = IExchangeRates(_exchangeRates).effectiveValue(
-                "XDR",
+                "ODR",
                 _recentFeePeriodsStorage(i).feesClaimed,
-                sUSD
+                oUSD
             );
             _recentFeePeriodsStorage(i).feesToDistribute = feesToDistribute;
             _recentFeePeriodsStorage(i).feesClaimed = feesClaimed;
@@ -420,7 +420,7 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
 
     /**
      * @notice Record the fee payment in our recentFeePeriods.
-     * @param sUSDAmount The amount of fees priced in sUSD.
+     * @param sUSDAmount The amount of fees priced in oUSD.
      */
     function _recordFeePayment(uint sUSDAmount) internal returns (uint) {
         // Don't assign to the parameter
@@ -458,7 +458,7 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
 
     /**
      * @notice Record the reward payment in our recentFeePeriods.
-     * @param snxAmount The amount of SNX tokens.
+     * @param snxAmount The amount of OKS tokens.
      */
     function _recordRewardPayment(uint snxAmount) internal returns (uint) {
         // Don't assign to the parameter
@@ -499,7 +499,7 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
     /**
     * @notice Send the fees to claiming address.
     * @param account The address to send the fees to.
-    * @param sUSDAmount The amount of fees priced in sUSD.
+    * @param sUSDAmount The amount of fees priced in oUSD.
     */
     function _payFees(address account, uint sUSDAmount) internal notFeeAddress(account) {
         // Checks not really possible but rather gaurds for the internal code.
@@ -507,12 +507,12 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
             account != address(0) ||
                 account != address(this) ||
                 account != address(proxy) ||
-                account != address(synthetix()),
+                account != address(oikos()),
             "Can't send fees to this address"
         );
 
-        // Grab the sUSD Synth
-        Synth sUSDSynth = synthetix().synths(sUSD);
+        // Grab the oUSD Synth
+        Synth sUSDSynth = oikos().synths(oUSD);
 
         // NOTE: we do not control the FEE_ADDRESS so it is not possible to do an
         // ERC20.approve() transaction to allow this feePool to call ERC20.transferFrom
@@ -528,16 +528,16 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
     /**
     * @notice Send the rewards to claiming address - will be locked in rewardEscrow.
     * @param account The address to send the fees to.
-    * @param snxAmount The amount of SNX.
+    * @param snxAmount The amount of OKS.
     */
     function _payRewards(address account, uint snxAmount) internal notFeeAddress(account) {
         require(account != address(0), "Account can't be 0");
         require(account != address(this), "Can't send rewards to fee pool");
         require(account != address(proxy), "Can't send rewards to proxy");
-        require(account != address(synthetix()), "Can't send rewards to synthetix");
+        require(account != address(oikos()), "Can't send rewards to oikos");
 
         // Record vesting entry for claiming address and amount
-        // SNX already minted to rewardEscrow balance
+        // OKS already minted to rewardEscrow balance
         rewardEscrow().appendVestingEntry(account, snxAmount);
     }
 
@@ -576,7 +576,7 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
     }
 
     /**
-     * @notice The total fees available in the system to be withdrawnn in sUSD
+     * @notice The total fees available in the system to be withdrawnn in oUSD
      */
     function totalFeesAvailable() external view returns (uint) {
         uint totalFees = 0;
@@ -591,7 +591,7 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
     }
 
     /**
-     * @notice The total SNX rewards available in the system to be withdrawn
+     * @notice The total OKS rewards available in the system to be withdrawn
      */
     function totalRewardsAvailable() external view returns (uint) {
         uint totalRewards = 0;
@@ -606,8 +606,8 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
     }
 
     /**
-     * @notice The fees available to be withdrawn by a specific account, priced in sUSD
-     * @dev Returns two amounts, one for fees and one for SNX rewards
+     * @notice The fees available to be withdrawn by a specific account, priced in oUSD
+     * @dev Returns two amounts, one for fees and one for OKS rewards
      */
     function feesAvailable(address account) public view returns (uint, uint) {
         // Add up the fees
@@ -622,8 +622,8 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
             totalRewards = totalRewards.add(userFees[i][1]);
         }
 
-        // And convert totalFees to sUSD
-        // Return totalRewards as is in SNX amount
+        // And convert totalFees to oUSD
+        // Return totalRewards as is in OKS amount
         return (totalFees, totalRewards);
     }
 
@@ -635,8 +635,8 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
         // Threshold is calculated from ratio % above the target ratio (issuanceRatio).
         //  0  <  10%:   Claimable
         // 10% > above:  Unable to claim
-        uint ratio = synthetix().collateralisationRatio(account);
-        uint targetRatio = synthetixState().issuanceRatio();
+        uint ratio = oikos().collateralisationRatio(account);
+        uint targetRatio = oikosState().issuanceRatio();
 
         // Claimable if collateral ratio below target ratio
         if (ratio < targetRatio) {
@@ -655,7 +655,7 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
     }
 
     /**
-     * @notice Calculates fees by period for an account, priced in sUSD
+     * @notice Calculates fees by period for an account, priced in oUSD
      * @param account The address you want to query the fees for
      */
     function feesByPeriod(address account) public view returns (uint[2][FEE_PERIOD_LENGTH] memory results) {
@@ -751,10 +751,10 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
     {
         // Figure out their global debt percentage delta at end of fee Period.
         // This is a high precision integer.
-        ISynthetixState _synthetixState = synthetixState();
-        uint feePeriodDebtOwnership = _synthetixState
+        IOikosState _oikosState = oikosState();
+        uint feePeriodDebtOwnership = _oikosState
             .debtLedger(closingDebtIndex)
-            .divideDecimalRoundPrecise(_synthetixState.debtLedger(debtEntryIndex))
+            .divideDecimalRoundPrecise(_oikosState.debtLedger(debtEntryIndex))
             .multiplyDecimalRoundPrecise(ownershipPercentage);
 
         return feePeriodDebtOwnership;
@@ -790,7 +790,7 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
     * @notice Calculate the collateral ratio before user is blocked from claiming.
     */
     function getPenaltyThresholdRatio() public view returns (uint) {
-        uint targetRatio = synthetixState().issuanceRatio();
+        uint targetRatio = oikosState().issuanceRatio();
 
         return targetRatio.multiplyDecimal(SafeDecimalMath.unit().add(targetThreshold));
     }
@@ -810,7 +810,7 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
     /* ========== Modifiers ========== */
     modifier onlyExchangerOrSynth {
         bool isExchanger = msg.sender == address(exchanger());
-        bool isSynth = synthetix().synthsByAddress(msg.sender) != bytes32(0);
+        bool isSynth = oikos().synthsByAddress(msg.sender) != bytes32(0);
 
         require(isExchanger || isSynth, "Only Exchanger, Synths Authorised");
         _;

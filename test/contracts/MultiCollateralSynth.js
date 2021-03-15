@@ -2,7 +2,7 @@ require('.'); // import common test scaffolding
 
 const FeePool = artifacts.require('FeePool');
 const AddressResolver = artifacts.require('AddressResolver');
-const Synthetix = artifacts.require('Synthetix');
+const Oikos = artifacts.require('Oikos');
 const MultiCollateralSynth = artifacts.require('MultiCollateralSynth');
 const TokenState = artifacts.require('TokenState');
 const Proxy = artifacts.require('Proxy');
@@ -26,8 +26,8 @@ contract('MultiCollateralSynth', accounts => {
 	let feePool,
 		feePoolProxy,
 		// FEE_ADDRESS,
-		synthetix,
-		synthetixProxy,
+		oikos,
+		oikosProxy,
 		resolver;
 
 	beforeEach(async () => {
@@ -38,17 +38,17 @@ contract('MultiCollateralSynth', accounts => {
 		// Deploy new proxy for feePool
 		feePoolProxy = await Proxy.new(owner, { from: deployerAccount });
 
-		synthetix = await Synthetix.deployed();
-		// Deploy new proxy for Synthetix
-		synthetixProxy = await Proxy.new(owner, { from: deployerAccount });
+		oikos = await Oikos.deployed();
+		// Deploy new proxy for Oikos
+		oikosProxy = await Proxy.new(owner, { from: deployerAccount });
 
 		resolver = await AddressResolver.deployed();
 
-		// ensure synthetixProxy has target set to synthetix
+		// ensure oikosProxy has target set to oikos
 		await feePool.setProxy(feePoolProxy.address, { from: owner });
-		await synthetix.setProxy(synthetixProxy.address, { from: owner });
-		// set new proxies on Synthetix and FeePool
-		await synthetixProxy.setTarget(synthetix.address, { from: owner });
+		await oikos.setProxy(oikosProxy.address, { from: owner });
+		// set new proxies on Oikos and FeePool
+		await oikosProxy.setTarget(oikos.address, { from: owner });
 		await feePoolProxy.setTarget(feePool.address, { from: owner });
 	});
 
@@ -78,7 +78,7 @@ contract('MultiCollateralSynth', accounts => {
 		return { synth, tokenState, proxy };
 	};
 
-	describe('when a MultiCollateral synth is added and connected to Synthetix', () => {
+	describe('when a MultiCollateral synth is added and connected to Oikos', () => {
 		const collateralKey = 'EtherCollateral';
 
 		beforeEach(async () => {
@@ -88,7 +88,7 @@ contract('MultiCollateralSynth', accounts => {
 			});
 			await tokenState.setAssociatedContract(synth.address, { from: owner });
 			await proxy.setTarget(synth.address, { from: owner });
-			await synthetix.addSynth(synth.address, { from: owner });
+			await oikos.addSynth(synth.address, { from: owner });
 			this.synth = synth;
 		});
 
@@ -106,7 +106,7 @@ contract('MultiCollateralSynth', accounts => {
 					fnc: this.synth.issue,
 					args: [account1, toUnit('1')],
 					accounts,
-					reason: 'Only Synthetix, FeePool, Exchanger, Issuer or MultiCollateral contracts allowed',
+					reason: 'Only Oikos, FeePool, Exchanger, Issuer or MultiCollateral contracts allowed',
 				});
 			});
 		});
@@ -116,7 +116,7 @@ contract('MultiCollateralSynth', accounts => {
 					fnc: this.synth.burn,
 					args: [account1, toUnit('1')],
 					accounts,
-					reason: 'Only Synthetix, FeePool, Exchanger, Issuer or MultiCollateral contracts allowed',
+					reason: 'Only Oikos, FeePool, Exchanger, Issuer or MultiCollateral contracts allowed',
 				});
 			});
 		});
@@ -142,10 +142,10 @@ contract('MultiCollateralSynth', accounts => {
 					);
 				});
 			});
-			describe('when synthetix set to account1', () => {
+			describe('when oikos set to account1', () => {
 				beforeEach(async () => {
-					// have account1 simulate being Synthetix so we can invoke issue and burn
-					await resolver.importAddresses([toBytes32('Synthetix')], [account1], { from: owner });
+					// have account1 simulate being Oikos so we can invoke issue and burn
+					await resolver.importAddresses([toBytes32('Oikos')], [account1], { from: owner });
 				});
 				it('then it can issue new synths as account1', async () => {
 					const accountToIssue = account1;

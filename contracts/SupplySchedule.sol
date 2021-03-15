@@ -3,19 +3,19 @@
 MODULE DESCRIPTION
 -----------------------------------------------------------------
 
-The SNX supply schedule contract determines the amount of SNX tokens
+The OKS supply schedule contract determines the amount of OKS tokens
 mintable over the course of 195 weeks.
 
 Exponential Decay Inflation Schedule
 
-Synthetix.mint() function is used to mint the inflationary supply.
+Oikos.mint() function is used to mint the inflationary supply.
 
 The mechanics for Inflation Smoothing and Terminal Inflation 
 have been defined in these sips
-https://sips.synthetix.io/sips/sip-23
-https://sips.synthetix.io/sips/sip-24
+https://sips.oikos.io/sips/sip-23
+https://sips.oikos.io/sips/sip-24
 
-The previous SNX Inflation Supply Schedule is at 
+The previous OKS Inflation Supply Schedule is at 
 https://etherscan.io/address/0xA3de830b5208851539De8e4FF158D635E8f36FCb#code
 
 -----------------------------------------------------------------
@@ -26,7 +26,7 @@ pragma solidity 0.4.25;
 import "./SafeDecimalMath.sol";
 import "./Owned.sol";
 import "./Math.sol";
-import "./interfaces/ISynthetix.sol";
+import "./interfaces/IOikos.sol";
 
 
 /**
@@ -43,23 +43,23 @@ contract SupplySchedule is Owned {
     // Counter for number of weeks since the start of supply inflation
     uint public weekCounter;
 
-    // The number of SNX rewarded to the caller of Synthetix.mint()
+    // The number of OKS rewarded to the caller of Oikos.mint()
     uint public minterReward = 200 * SafeDecimalMath.unit();
 
     // The initial weekly inflationary supply is 75m / 52 until the start of the decay rate.
     // 75e6 * SafeDecimalMath.unit() / 52
     uint public constant INITIAL_WEEKLY_SUPPLY = 1442307692307692307692307;
 
-    // Address of the SynthetixProxy for the onlySynthetix modifier
-    address public synthetixProxy;
+    // Address of the OikosProxy for the onlyOikos modifier
+    address public oikosProxy;
 
-    // Max SNX rewards for minter
+    // Max OKS rewards for minter
     uint public constant MAX_MINTER_REWARD = 200 * SafeDecimalMath.unit();
 
     // How long each inflation period is before mint can be called
     uint public constant MINT_PERIOD_DURATION = 1 weeks;
 
-    uint public constant INFLATION_START_DATE = 1551830400; // 2019-03-06T00:00:00+00:00
+    uint public constant INFLATION_START_DATE = 1590969600; // Jun 1st 2020
     uint public constant MINT_BUFFER = 1 days;
     uint8 public constant SUPPLY_DECAY_START = 40; // Week 40
     uint8 public constant SUPPLY_DECAY_END = 234; //  Supply Decay ends on Week 234 (inclusive of Week 234 for a total of 195 weeks of inflation decay)
@@ -78,7 +78,7 @@ contract SupplySchedule is Owned {
     // ========== VIEWS ==========
 
     /**    
-    * @return The amount of SNX mintable for the inflationary supply
+    * @return The amount of OKS mintable for the inflationary supply
     */
     function mintableSupply() external view returns (uint) {
         uint totalAmount;
@@ -88,7 +88,6 @@ contract SupplySchedule is Owned {
         }
 
         uint remainingWeeksToMint = weeksSinceLastIssuance();
-
         uint currentWeek = weekCounter;
 
         // Calculate total mintable supply from exponential decay function
@@ -108,9 +107,9 @@ contract SupplySchedule is Owned {
                 totalAmount = totalAmount.add(tokenDecaySupplyForWeek(decayCount));
                 remainingWeeksToMint--;
             } else {
-                // Terminal supply is calculated on the total supply of Synthetix including any new supply
+                // Terminal supply is calculated on the total supply of Oikos including any new supply
                 // We can compound the remaining week's supply at the fixed terminal rate
-                uint totalSupply = ISynthetix(synthetixProxy).totalSupply();
+                uint totalSupply = IOikos(oikosProxy).totalSupply();
                 uint currentTotalSupply = totalSupply.add(totalAmount);
 
                 totalAmount = totalAmount.add(terminalInflationSupply(currentTotalSupply, remainingWeeksToMint));
@@ -171,12 +170,12 @@ contract SupplySchedule is Owned {
     // ========== MUTATIVE FUNCTIONS ==========
 
     /**
-     * @notice Record the mint event from Synthetix by incrementing the inflation 
+     * @notice Record the mint event from Oikos by incrementing the inflation 
      * week counter for the number of weeks minted (probabaly always 1)
      * and store the time of the event.
-     * @param supplyMinted the amount of SNX the total supply was inflated by.
+     * @param supplyMinted the amount of OKS the total supply was inflated by.
      * */
-    function recordMintEvent(uint supplyMinted) external onlySynthetix returns (bool) {
+    function recordMintEvent(uint supplyMinted) external onlyOikos returns (bool) {
         uint numberOfWeeksIssued = weeksSinceLastIssuance();
 
         // add number of weeks minted to weekCounter
@@ -191,11 +190,11 @@ contract SupplySchedule is Owned {
     }
 
     /**
-     * @notice Sets the reward amount of SNX for the caller of the public 
-     * function Synthetix.mint(). 
+     * @notice Sets the reward amount of OKS for the caller of the public 
+     * function Oikos.mint(). 
      * This incentivises anyone to mint the inflationary supply and the mintr 
      * Reward will be deducted from the inflationary supply and sent to the caller.
-     * @param amount the amount of SNX to reward the minter.
+     * @param amount the amount of OKS to reward the minter.
      * */
     function setMinterReward(uint amount) external onlyOwner {
         require(amount <= MAX_MINTER_REWARD, "Reward cannot exceed max minter reward");
@@ -206,25 +205,25 @@ contract SupplySchedule is Owned {
     // ========== SETTERS ========== */
 
     /**
-     * @notice Set the SynthetixProxy should it ever change.
-     * SupplySchedule requires Synthetix address as it has the authority
+     * @notice Set the OikosProxy should it ever change.
+     * SupplySchedule requires Oikos address as it has the authority
      * to record mint event.
      * */
-    function setSynthetixProxy(ISynthetix _synthetixProxy) external onlyOwner {
-        require(_synthetixProxy != address(0), "Address cannot be 0");
-        synthetixProxy = _synthetixProxy;
-        emit SynthetixProxyUpdated(synthetixProxy);
+    function setOikosProxy(IOikos _oikosProxy) external onlyOwner {
+        require(_oikosProxy != address(0), "Address cannot be 0");
+        oikosProxy = _oikosProxy;
+        emit OikosProxyUpdated(oikosProxy);
     }
 
     // ========== MODIFIERS ==========
 
     /**
-     * @notice Only the Synthetix contract is authorised to call this function
+     * @notice Only the Oikos contract is authorised to call this function
      * */
-    modifier onlySynthetix() {
+    modifier onlyOikos() {
         require(
-            msg.sender == address(Proxy(synthetixProxy).target()),
-            "Only the synthetix contract can perform this action"
+            msg.sender == address(Proxy(oikosProxy).target()),
+            "Only the oikos contract can perform this action"
         );
         _;
     }
@@ -236,12 +235,12 @@ contract SupplySchedule is Owned {
     event SupplyMinted(uint supplyMinted, uint numberOfWeeksIssued, uint lastMintEvent, uint timestamp);
 
     /**
-     * @notice Emitted when the SNX minter reward amount is updated
+     * @notice Emitted when the OKS minter reward amount is updated
      * */
     event MinterRewardUpdated(uint newRewardAmount);
 
     /**
-     * @notice Emitted when setSynthetixProxy is called changing the Synthetix Proxy address
+     * @notice Emitted when setOikosProxy is called changing the Oikos Proxy address
      * */
-    event SynthetixProxyUpdated(address newAddress);
+    event OikosProxyUpdated(address newAddress);
 }

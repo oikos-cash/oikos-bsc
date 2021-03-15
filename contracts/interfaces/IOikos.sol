@@ -1,19 +1,19 @@
 pragma solidity 0.4.25;
 
 /**
- * @title Synthetix interface contract
+ * @title Oikos interface contract
  * @notice Abstract contract to hold public getters
  * @dev pseudo interface, actually declared as contract to hold the public getters
  */
-import "../interfaces/ISynthetixState.sol";
+import "../interfaces/IOikosState.sol";
 import "../interfaces/ISynth.sol";
-import "../interfaces/ISynthetixEscrow.sol";
+import "../interfaces/IOikosEscrow.sol";
 import "../interfaces/IFeePool.sol";
 import "../interfaces/IExchangeRates.sol";
 import "../Synth.sol";
 
 
-contract ISynthetix {
+contract IOikos {
     // ========== PUBLIC STATE VARIABLES ==========
 
     uint public totalSupply;

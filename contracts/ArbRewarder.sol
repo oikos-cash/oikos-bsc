@@ -11,14 +11,14 @@ date:       2019-05-01
 -----------------------------------------------------------------
 MODULE DESCRIPTION
 -----------------------------------------------------------------
-The Synthetix ArbRewarder Contract for fixing the sETH/ETH peg
+The Oikos ArbRewarder Contract for fixing the oETH/ETH peg
 
 Allows a user to send ETH to the contract via arbSynthRate()
-- If the sETH/ETH ratio is below 99/100 & there is sufficient SNX
+- If the oETH/ETH ratio is below 99/100 & there is sufficient OKS
 remaining in the contract at the current exchange rate.
-- Convert the ETH to sETH via Uniswap up to the 99/100 ratio or the ETH is exhausted
-- Convert the sETH to SNX at the current exchange rate.
-- Send the SNX to the wallet that sent the ETH
+- Convert the ETH to oETH via Uniswap up to the 99/100 ratio or the ETH is exhausted
+- Convert the oETH to OKS at the current exchange rate.
+- Send the OKS to the wallet that sent the ETH
 
 -----------------------------------------------------------------
 */
@@ -42,7 +42,7 @@ contract ArbRewarder is SelfDestructible, Pausable {
 
     /* Additional slippage we'll allow on top of the uniswap trade
      * Parts-per-hundred-thousand: 100 = 1%
-     * Example: 95 sETH, 100 ETH, buy 1 sETH -> expected: 1.03857 ETH
+     * Example: 95 oETH, 100 ETH, buy 1 oETH -> expected: 1.03857 ETH
      * After acceptable_slippage:  1.02818 ETH */
     uint acceptable_slippage = 100;
 
@@ -55,13 +55,13 @@ contract ArbRewarder is SelfDestructible, Pausable {
 
     /* Contract Addresses */
     address public uniswapAddress = 0xe9Cf7887b93150D4F2Da7dFc6D502B216438F244;
-    address public synthetixProxy = 0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F;
+    address public oikosProxy = 0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F;
 
     IExchangeRates public exchangeRates = IExchangeRates(0x99a46c42689720d9118FF7aF7ce80C2a92fC4f97);
     IUniswapExchange public uniswapExchange = IUniswapExchange(uniswapAddress);
 
     IERC20 public synth = IERC20(0x5e74C9036fb86BD7eCdcb084a0673EFc32eA31cb);
-    IERC20 public synthetix = IERC20(synthetixProxy);
+    IERC20 public oikos = IERC20(oikosProxy);
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -85,9 +85,9 @@ contract ArbRewarder is SelfDestructible, Pausable {
         off_peg_min = _off_peg_min;
     }
 
-    function setSynthetix(address _address) external onlyOwner {
-        synthetixProxy = _address;
-        synthetix = IERC20(synthetixProxy);
+    function setOikos(address _address) external onlyOwner {
+        oikosProxy = _address;
+        oikos = IERC20(oikosProxy);
     }
 
     function setSynthAddress(address _synthAddress) external onlyOwner {
@@ -119,16 +119,16 @@ contract ArbRewarder is SelfDestructible, Pausable {
     /* ========== PUBLIC FUNCTIONS ========== */
 
     /**
-     * Here the caller gives us some ETH. We convert the ETH->sETH  and reward the caller with SNX worth
-     * the value of the sETH received from the earlier swap.
+     * Here the caller gives us some ETH. We convert the ETH->oETH  and reward the caller with OKS worth
+     * the value of the oETH received from the earlier swap.
      */
-    function arbSynthRate() public payable rateNotStale("ETH") rateNotStale("SNX") notPaused returns (uint reward_tokens) {
-        /* Ensure there is enough more sETH than ETH in the Uniswap pool */
+    function arbSynthRate() public payable rateNotStale("ETH") rateNotStale("OKS") notPaused returns (uint reward_tokens) {
+        /* Ensure there is enough more oETH than ETH in the Uniswap pool */
         uint seth_in_uniswap = synth.balanceOf(uniswapAddress);
         uint eth_in_uniswap = uniswapAddress.balance;
         require(
             eth_in_uniswap.divideDecimal(seth_in_uniswap) < uint(divisor - off_peg_min).divideDecimal(divisor),
-            "sETH/ETH ratio is too high"
+            "oETH/ETH ratio is too high"
         );
 
         /* Get maximum ETH we'll convert for caller */
@@ -136,7 +136,7 @@ contract ArbRewarder is SelfDestructible, Pausable {
         uint eth_to_convert = min(msg.value, max_eth_to_convert);
         uint unspent_input = msg.value - eth_to_convert;
 
-        /* Actually swap ETH for sETH */
+        /* Actually swap ETH for oETH */
         uint min_seth_bought = expectedOutput(uniswapExchange, eth_to_convert);
         uint tokens_bought = uniswapExchange.ethToTokenSwapInput.value(eth_to_convert)(min_seth_bought, now + max_delay);
 
@@ -153,11 +153,11 @@ contract ArbRewarder is SelfDestructible, Pausable {
     /* ========== PRIVATE FUNCTIONS ========== */
 
     function rewardCaller(uint bought, uint unspent_input) private returns (uint reward_tokens) {
-        uint snx_rate = exchangeRates.rateForCurrency("SNX");
+        uint snx_rate = exchangeRates.rateForCurrency("OKS");
         uint eth_rate = exchangeRates.rateForCurrency("ETH");
 
         reward_tokens = eth_rate.multiplyDecimal(bought).divideDecimal(snx_rate);
-        synthetix.transfer(msg.sender, reward_tokens);
+        oikos.transfer(msg.sender, reward_tokens);
 
         if (unspent_input > 0) {
             msg.sender.transfer(unspent_input);

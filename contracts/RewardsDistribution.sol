@@ -19,11 +19,11 @@ minted.
 DistributionData can be added to the distributions array simply
 with an address and an amount of tokens to send to that address.
 
-i.e. The sETH arb pool is assigned 5% of the current Inflationary
+i.e. The oETH arb pool is assigned 5% of the current Inflationary
 supply so it is allocated 72K of the tokens. If that is the only
-distribution added then 72K SNX is deducted from the weeks
-inflationary supply and sent to the sETH Arb Pool then the
-remainder is sent to the RewardsEscrow Contract for the SNX
+distribution added then 72K OKS is deducted from the weeks
+inflationary supply and sent to the oETH Arb Pool then the
+remainder is sent to the RewardsEscrow Contract for the OKS
 Staking Rewards.
 
 RewardDistributions can be added, edited and removed.
@@ -37,7 +37,7 @@ import "./Owned.sol";
 import "./SafeDecimalMath.sol";
 import "./interfaces/IERC20.sol";
 import "./interfaces/IFeePool.sol";
-import "./interfaces/ISynthetix.sol";
+import "./interfaces/IOikos.sol";
 
 
 contract RewardsDistribution is Owned {
@@ -50,9 +50,9 @@ contract RewardsDistribution is Owned {
     address public authority;
 
     /**
-     * @notice Address of the Synthetix ProxyERC20
+     * @notice Address of the Oikos ProxyERC20
      */
-    address public synthetixProxy;
+    address public oikosProxy;
 
     /**
      * @notice Address of the RewardEscrow contract
@@ -79,23 +79,23 @@ contract RewardsDistribution is Owned {
     DistributionData[] public distributions;
 
     /**
-     * @dev _authority maybe the underlying synthetix contract.
-     * Remember to set the autority on a synthetix upgrade
+     * @dev _authority maybe the underlying oikos contract.
+     * Remember to set the autority on a oikos upgrade
      */
-    constructor(address _owner, address _authority, address _synthetixProxy, address _rewardEscrow, address _feePoolProxy)
+    constructor(address _owner, address _authority, address _oikosProxy, address _rewardEscrow, address _feePoolProxy)
         public
         Owned(_owner)
     {
         authority = _authority;
-        synthetixProxy = _synthetixProxy;
+        oikosProxy = _oikosProxy;
         rewardEscrow = _rewardEscrow;
         feePoolProxy = _feePoolProxy;
     }
 
     // ========== EXTERNAL SETTERS ==========
 
-    function setSynthetixProxy(address _synthetixProxy) external onlyOwner {
-        synthetixProxy = _synthetixProxy;
+    function setOikosProxy(address _oikosProxy) external onlyOwner {
+        oikosProxy = _oikosProxy;
     }
 
     function setRewardEscrow(address _rewardEscrow) external onlyOwner {
@@ -180,11 +180,11 @@ contract RewardsDistribution is Owned {
     function distributeRewards(uint amount) external returns (bool) {
         require(msg.sender == authority, "Caller is not authorised");
         require(rewardEscrow != address(0), "RewardEscrow is not set");
-        require(synthetixProxy != address(0), "SynthetixProxy is not set");
+        require(oikosProxy != address(0), "OikosProxy is not set");
         require(feePoolProxy != address(0), "FeePoolProxy is not set");
         require(amount > 0, "Nothing to distribute");
         require(
-            IERC20(synthetixProxy).balanceOf(this) >= amount,
+            IERC20(oikosProxy).balanceOf(this) >= amount,
             "RewardsDistribution contract does not have enough tokens to distribute"
         );
 
@@ -195,10 +195,10 @@ contract RewardsDistribution is Owned {
             if (distributions[i].destination != address(0) || distributions[i].amount != 0) {
                 remainder = remainder.sub(distributions[i].amount);
 
-                // Transfer the SNX
-                IERC20(synthetixProxy).transfer(distributions[i].destination, distributions[i].amount);
+                // Transfer the OKS
+                IERC20(oikosProxy).transfer(distributions[i].destination, distributions[i].amount);
 
-                // If the contract implements RewardsDistributionRecipient.sol, inform it how many SNX its received.
+                // If the contract implements RewardsDistributionRecipient.sol, inform it how many OKS its received.
                 bytes memory payload = abi.encodeWithSignature("notifyRewardAmount(uint256)", distributions[i].amount);
                 distributions[i].destination.call(payload);
                 // Note: we're ignoring the return value as it will fail for contracts that do not implement RewardsDistributionRecipient.sol
@@ -206,7 +206,7 @@ contract RewardsDistribution is Owned {
         }
 
         // After all ditributions have been sent, send the remainder to the RewardsEscrow contract
-        IERC20(synthetixProxy).transfer(rewardEscrow, remainder);
+        IERC20(oikosProxy).transfer(rewardEscrow, remainder);
 
         // Tell the FeePool how much it has to distribute to the stakers
         IFeePool(feePoolProxy).setRewardsToDistribute(remainder);

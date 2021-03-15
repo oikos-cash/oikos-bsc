@@ -62,7 +62,7 @@ const removeSynths = async ({
 			console.error(red(`Synth ${synth} not found!`));
 			process.exitCode = 1;
 			return;
-		} else if (['sUSD'].indexOf(synth) >= 0) {
+		} else if (['oUSD'].indexOf(synth) >= 0) {
 			console.error(red(`Synth ${synth} cannot be removed`));
 			process.exitCode = 1;
 			return;
@@ -96,7 +96,7 @@ const removeSynths = async ({
 				cyan(
 					`${yellow(
 						'⚠ WARNING'
-					)}: This action will remove the following synths from the Synthetix contract on ${network}:\n- ${synthsToRemove.join(
+					)}: This action will remove the following synths from the Oikos contract on ${network}:\n- ${synthsToRemove.join(
 						'\n- '
 					)}`
 				) + '\nDo you want to continue? (y/n) '
@@ -107,11 +107,11 @@ const removeSynths = async ({
 		}
 	}
 
-	const { address: synthetixAddress, source } = deployment.targets['Synthetix'];
-	const { abi: synthetixABI } = deployment.sources[source];
-	const Synthetix = new web3.eth.Contract(synthetixABI, synthetixAddress);
+	const { address: oikosAddress, source } = deployment.targets['Oikos'];
+	const { abi: oikosABI } = deployment.sources[source];
+	const Oikos = new web3.eth.Contract(oikosABI, oikosAddress);
 
-	const synthetixOwner = await Synthetix.methods.owner().call();
+	const oikosOwner = await Oikos.methods.owner().call();
 
 	// deep clone these configurations so we can mutate and persist them
 	const updatedConfig = JSON.parse(JSON.stringify(config));
@@ -126,12 +126,12 @@ const removeSynths = async ({
 		const { abi: synthABI } = deployment.sources[synthSource];
 		const Synth = new web3.eth.Contract(synthABI, synthAddress);
 
-		const currentSynthInSNX = await Synthetix.methods.synths(toBytes32(currencyKey)).call();
+		const currentSynthInSNX = await Oikos.methods.synths(toBytes32(currencyKey)).call();
 
 		if (synthAddress !== currentSynthInSNX) {
 			console.error(
 				red(
-					`Synth address in Synthetix for ${currencyKey} is different from what's deployed in Synthetix to the local ${DEPLOYMENT_FILENAME} of ${network} \ndeployed: ${yellow(
+					`Synth address in Oikos for ${currencyKey} is different from what's deployed in Oikos to the local ${DEPLOYMENT_FILENAME} of ${network} \ndeployed: ${yellow(
 						currentSynthInSNX
 					)}\nlocal:    ${yellow(synthAddress)}`
 				)
@@ -140,7 +140,7 @@ const removeSynths = async ({
 			return;
 		}
 
-		// now check total supply (is required in Synthetix.removeSynth)
+		// now check total supply (is required in Oikos.removeSynth)
 		const totalSupply = w3utils.fromWei(await Synth.methods.totalSupply().call());
 		if (Number(totalSupply) > 0) {
 			console.error(
@@ -154,22 +154,22 @@ const removeSynths = async ({
 			return;
 		}
 
-		if (synthetixOwner === account) {
-			console.log(yellow(`Invoking Synthetix.removeSynth(Synth${currencyKey})...`));
-			await Synthetix.methods.removeSynth(toBytes32(currencyKey)).send({
+		if (oikosOwner === account) {
+			console.log(yellow(`Invoking Oikos.removeSynth(Synth${currencyKey})...`));
+			await Oikos.methods.removeSynth(toBytes32(currencyKey)).send({
 				from: account,
 				gas: Number(gasLimit),
 				gasPrice: w3utils.toWei(gasPrice.toString(), 'gwei'),
 			});
 			console.log(
 				gray(
-					`Removed ${currencyKey} from Synthetix. Verify via ${etherscanLinkPrefix}/address/${synthetixAddress}#readContract`
+					`Removed ${currencyKey} from Oikos. Verify via ${etherscanLinkPrefix}/address/${oikosAddress}#readContract`
 				)
 			);
 		} else {
 			appendOwnerAction({
-				key: `Synthetix.removeSynth(Synth${currencyKey})`,
-				target: synthetixAddress,
+				key: `Oikos.removeSynth(Synth${currencyKey})`,
+				target: oikosAddress,
 				action: `removeSynth(${currencyKey})`,
 			});
 		}

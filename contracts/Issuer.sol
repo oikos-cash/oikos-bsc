@@ -4,9 +4,9 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./SafeDecimalMath.sol";
 import "./MixinResolver.sol";
 import "./IssuanceEternalStorage.sol";
-import "./interfaces/ISynthetix.sol";
+import "./interfaces/IOikos.sol";
 import "./interfaces/IFeePool.sol";
-import "./interfaces/ISynthetixState.sol";
+import "./interfaces/IOikosState.sol";
 import "./interfaces/IExchanger.sol";
 
 
@@ -14,7 +14,7 @@ contract Issuer is MixinResolver {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
 
-    bytes32 private constant sUSD = "sUSD";
+    bytes32 private constant oUSD = "oUSD";
     bytes32 public constant LAST_ISSUE_EVENT = "LAST_ISSUE_EVENT";
 
     // Minimum Stake time may not exceed 1 weeks.
@@ -25,16 +25,16 @@ contract Issuer is MixinResolver {
     constructor(address _owner, address _resolver) public MixinResolver(_owner, _resolver) {}
 
     /* ========== VIEWS ========== */
-    function synthetix() internal view returns (ISynthetix) {
-        return ISynthetix(resolver.requireAndGetAddress("Synthetix", "Missing Synthetix address"));
+    function oikos() internal view returns (IOikos) {
+        return IOikos(resolver.requireAndGetAddress("Oikos", "Missing Oikos address"));
     }
 
     function exchanger() internal view returns (IExchanger) {
         return IExchanger(resolver.requireAndGetAddress("Exchanger", "Missing Exchanger address"));
     }
 
-    function synthetixState() internal view returns (ISynthetixState) {
-        return ISynthetixState(resolver.requireAndGetAddress("SynthetixState", "Missing SynthetixState address"));
+    function oikosState() internal view returns (IOikosState) {
+        return IOikosState(resolver.requireAndGetAddress("OikosState", "Missing OikosState address"));
     }
 
     function feePool() internal view returns (IFeePool) {
@@ -63,7 +63,7 @@ contract Issuer is MixinResolver {
     /* ========== SETTERS ========== */
 
     /**
-     * @notice Set the min stake time on locking synthetix
+     * @notice Set the min stake time on locking oikos
      * @param _seconds The new minimumStakeTime
      */
     function setMinimumStakeTime(uint _seconds) external onlyOwner {
@@ -86,19 +86,19 @@ contract Issuer is MixinResolver {
     
     function issueSynths(address from, uint amount)
         external
-        onlySynthetix
+        onlyOikos
     // No need to check if price is stale, as it is checked in issuableSynths.
     {
-        // Get remaining issuable in sUSD and existingDebt
-        (uint maxIssuable, uint existingDebt, uint totalSystemDebt) = synthetix().remainingIssuableSynths(from);
+        // Get remaining issuable in oUSD and existingDebt
+        (uint maxIssuable, uint existingDebt, uint totalSystemDebt) = oikos().remainingIssuableSynths(from);
         require(amount <= maxIssuable, "Amount too large");
 
         _internalIssueSynths(from, amount, existingDebt, totalSystemDebt);
     }
 
-    function issueMaxSynths(address from) external onlySynthetix {
+    function issueMaxSynths(address from) external onlyOikos {
         // Figure out the maximum we can issue in that currency
-        (uint maxIssuable, uint existingDebt, uint totalSystemDebt) = synthetix().remainingIssuableSynths(from);
+        (uint maxIssuable, uint existingDebt, uint totalSystemDebt) = oikos().remainingIssuableSynths(from);
 
         _internalIssueSynths(from, maxIssuable, existingDebt, totalSystemDebt);
     }
@@ -113,50 +113,50 @@ contract Issuer is MixinResolver {
         _setLastIssueEvent(from);
 
         // Create their synths
-        synthetix().synths(sUSD).issue(from, amount);
+        oikos().synths(oUSD).issue(from, amount);
 
-        // Store their locked SNX amount to determine their fee % for the period
+        // Store their locked OKS amount to determine their fee % for the period
         _appendAccountIssuanceRecord(from);
     }
 
     // Burn synths requires minimum stake time is elapsed
     function burnSynths(address from, uint amount)
         external
-        onlySynthetix
+        onlyOikos
     {
         require(canBurnSynths(from), "Minimum stake time not reached");
 
-        // First settle anything pending into sUSD as burning or issuing impacts the size of the debt pool
-        (, uint refunded) = exchanger().settle(from, sUSD);
+        // First settle anything pending into oUSD as burning or issuing impacts the size of the debt pool
+        (, uint refunded) = exchanger().settle(from, oUSD);
 
         // How much debt do they have?
-        (uint existingDebt, uint totalSystemValue) = synthetix().debtBalanceOfAndTotalDebt(from, sUSD);
+        (uint existingDebt, uint totalSystemValue) = oikos().debtBalanceOfAndTotalDebt(from, oUSD);
 
         require(existingDebt > 0, "No debt to forgive");
 
-        uint debtToRemoveAfterSettlement = exchanger().calculateAmountAfterSettlement(from, sUSD, amount, refunded);
+        uint debtToRemoveAfterSettlement = exchanger().calculateAmountAfterSettlement(from, oUSD, amount, refunded);
 
         _internalBurnSynths(from, debtToRemoveAfterSettlement, existingDebt, totalSystemValue);
     }
 
-    // Burns your sUSD to the target c-ratio so you can claim fees
-    // Skip settle anything pending into sUSD as user will still have debt remaining after target c-ratio 
+    // Burns your oUSD to the target c-ratio so you can claim fees
+    // Skip settle anything pending into oUSD as user will still have debt remaining after target c-ratio 
     function burnSynthsToTarget(address from)
         external
-        onlySynthetix
+        onlyOikos
     {
         // How much debt do they have?
-        (uint existingDebt, uint totalSystemValue) = synthetix().debtBalanceOfAndTotalDebt(from, sUSD);
+        (uint existingDebt, uint totalSystemValue) = oikos().debtBalanceOfAndTotalDebt(from, oUSD);
 
         require(existingDebt > 0, "No debt to forgive");
 
-        // The maximum amount issuable against their total SNX balance.
-        uint maxIssuable = synthetix().maxIssuableSynths(from);
+        // The maximum amount issuable against their total OKS balance.
+        uint maxIssuable = oikos().maxIssuableSynths(from);
 
-        // The amount of sUSD to burn to fix c-ratio. The safe sub will revert if its < 0
+        // The amount of oUSD to burn to fix c-ratio. The safe sub will revert if its < 0
         uint amountToBurnToTarget = existingDebt.sub(maxIssuable);
 
-        // Burn will fail if you dont have the required sUSD in your wallet
+        // Burn will fail if you dont have the required oUSD in your wallet
         _internalBurnSynths(from, amountToBurnToTarget, existingDebt, totalSystemValue);
     }
 
@@ -174,7 +174,7 @@ contract Issuer is MixinResolver {
         uint amountToBurn = amountToRemove;
 
         // synth.burn does a safe subtraction on balance (so it will revert if there are not enough synths).
-        synthetix().synths(sUSD).burn(from, amountToBurn);
+        oikos().synths(oUSD).burn(from, amountToBurn);
 
         // Store their debtRatio against a feeperiod to determine their fee/rewards % for the period
         _appendAccountIssuanceRecord(from);
@@ -184,24 +184,24 @@ contract Issuer is MixinResolver {
 
     /**
      * @notice Store in the FeePool the users current debt value in the system.
-      * @dev debtBalanceOf(messageSender, "sUSD") to be used with totalIssuedSynthsExcludeEtherCollateral("sUSD") to get
+      * @dev debtBalanceOf(messageSender, "oUSD") to be used with totalIssuedSynthsExcludeEtherCollateral("oUSD") to get
      *  users % of the system within a feePeriod.
      */
     function _appendAccountIssuanceRecord(address from) internal {
         uint initialDebtOwnership;
         uint debtEntryIndex;
-        (initialDebtOwnership, debtEntryIndex) = synthetixState().issuanceData(from);
+        (initialDebtOwnership, debtEntryIndex) = oikosState().issuanceData(from);
 
         feePool().appendAccountIssuanceRecord(from, initialDebtOwnership, debtEntryIndex);
     }
 
     /**
-     * @notice Function that registers new synth as they are issued. Calculate delta to append to synthetixState.
-     * @dev Only internal calls from synthetix address.
+     * @notice Function that registers new synth as they are issued. Calculate delta to append to oikosState.
+     * @dev Only internal calls from oikos address.
      * @param amount The amount of synths to register with a base of UNIT
      */
     function _addToDebtRegister(address from, uint amount, uint existingDebt, uint totalDebtIssued) internal {
-        ISynthetixState state = synthetixState();
+        IOikosState state = oikosState();
 
         // What will the new total be including the new value?
         uint newTotalDebtIssued = amount.add(totalDebtIssued);
@@ -244,7 +244,7 @@ contract Issuer is MixinResolver {
      * @param totalDebtIssued The existing system debt (in UNIT base) presented in sUSDs
      */
     function _removeFromDebtRegister(address from, uint amount, uint existingDebt, uint totalDebtIssued) internal {
-        ISynthetixState state = synthetixState();
+        IOikosState state = oikosState();
 
         uint debtToRemove = amount;
 
@@ -284,8 +284,8 @@ contract Issuer is MixinResolver {
 
     /* ========== MODIFIERS ========== */
 
-    modifier onlySynthetix() {
-        require(msg.sender == address(synthetix()), "Issuer: Only the synthetix contract can perform this action");
+    modifier onlyOikos() {
+        require(msg.sender == address(oikos()), "Issuer: Only the oikos contract can perform this action");
         _;
     }
 

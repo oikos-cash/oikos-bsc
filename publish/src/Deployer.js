@@ -50,10 +50,10 @@ class Deployer {
 	}
 
 	async deploy({ name, source, args = [], deps = [], force = false, dryRun = false }) {
-		if (!this.config[name] && !force) {
-			console.log(yellow(`Skipping ${name} as it is NOT in contract flags file for deployment.`));
-			return;
-		}
+		//if (!this.config[name] && !force) {
+		//	console.log(yellow(`Skipping ${name} as it is NOT in contract flags file for deployment.`));
+		//	return;
+		//}
 		const missingDeps = deps.filter(d => !this.deployedContracts[d]);
 		if (missingDeps.length) {
 			throw Error(`Cannot deploy ${name} as it is missing dependencies: ${missingDeps.join(',')}`);
@@ -128,7 +128,7 @@ class Deployer {
 		} else if (existingAddress) {
 			deployedContract = this.getContract({ abi: compiled.abi, address: existingAddress });
 			console.log(gray(` - Reusing instance of ${name} at ${existingAddress}`));
-		} else {
+		} else if (!existingAddress && name !== "DappMaintenance") {
 			throw new Error(
 				`Settings for contract: ${name} specify an existing contract, but do not give an address.`
 			);

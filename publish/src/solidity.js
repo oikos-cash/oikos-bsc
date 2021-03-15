@@ -109,7 +109,12 @@ module.exports = {
 						`Cannot find compiled contract code for: ${contract}. Did you run the "build" step first?`
 					);
 				}
-				memo[contract] = JSON.parse(fs.readFileSync(sourceFile));
+				try {
+					memo[contract] = JSON.parse(fs.readFileSync(sourceFile));
+
+				}catch (err) {
+					console.log(err)
+				}
 				return memo;
 			}, {});
 

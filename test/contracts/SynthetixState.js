@@ -1,28 +1,28 @@
 require('.'); // import common test scaffolding
 
-const Synthetix = artifacts.require('Synthetix');
-const SynthetixState = artifacts.require('SynthetixState');
+const Oikos = artifacts.require('Oikos');
+const OikosState = artifacts.require('OikosState');
 const Synth = artifacts.require('Synth');
 const Issuer = artifacts.require('Issuer');
 
 const { toUnit } = require('../utils/testUtils');
 const { toBytes32 } = require('../..');
 
-contract('SynthetixState', async accounts => {
-	const sUSD = toBytes32('sUSD');
+contract('OikosState', async accounts => {
+	const oUSD = toBytes32('oUSD');
 
 	const [deployerAccount, owner, account1, account2] = accounts;
 
-	let synthetix, synthetixState, sUSDContract, issuer;
+	let oikos, oikosState, sUSDContract, issuer;
 
 	beforeEach(async () => {
 		// Save ourselves from having to await deployed() in every single test.
 		// We do this in a beforeEach instead of before to ensure we isolate
 		// contract interfaces to prevent test bleed.
-		synthetix = await Synthetix.deployed();
-		synthetixState = await SynthetixState.deployed();
+		oikos = await Oikos.deployed();
+		oikosState = await OikosState.deployed();
 		issuer = await Issuer.deployed();
-		sUSDContract = await Synth.at(await synthetix.synths(sUSD));
+		sUSDContract = await Synth.at(await oikos.synths(oUSD));
 
 		// set minimumStakeTime on issue and burning to 0
 		await issuer.setMinimumStakeTime(0, { from: owner });
@@ -30,7 +30,7 @@ contract('SynthetixState', async accounts => {
 
 	it('should set constructor params on deployment', async () => {
 		// constructor(address _owner, address _associatedContract)
-		const instance = await SynthetixState.new(account1, account2, {
+		const instance = await OikosState.new(account1, account2, {
 			from: deployerAccount,
 		});
 
@@ -41,7 +41,7 @@ contract('SynthetixState', async accounts => {
 	it('should allow the owner to set the issuance ratio', async () => {
 		const ratio = toUnit('0.2');
 
-		const transaction = await synthetixState.setIssuanceRatio(ratio, {
+		const transaction = await oikosState.setIssuanceRatio(ratio, {
 			from: owner,
 		});
 
@@ -51,7 +51,7 @@ contract('SynthetixState', async accounts => {
 	it('should allow the owner to set the issuance ratio to zero', async () => {
 		const ratio = web3.utils.toBN('0');
 
-		const transaction = await synthetixState.setIssuanceRatio(ratio, {
+		const transaction = await oikosState.setIssuanceRatio(ratio, {
 			from: owner,
 		});
 
@@ -62,7 +62,7 @@ contract('SynthetixState', async accounts => {
 		const ratio = toUnit('0.2');
 
 		await assert.revert(
-			synthetixState.setIssuanceRatio(ratio, {
+			oikosState.setIssuanceRatio(ratio, {
 				from: account1,
 			})
 		);
@@ -72,112 +72,112 @@ contract('SynthetixState', async accounts => {
 		const max = toUnit('1');
 
 		// It should succeed when setting it to max
-		const transaction = await synthetixState.setIssuanceRatio(max, {
+		const transaction = await oikosState.setIssuanceRatio(max, {
 			from: owner,
 		});
 		assert.eventEqual(transaction, 'IssuanceRatioUpdated', { newRatio: max });
 
 		// But max + 1 should fail
 		await assert.revert(
-			synthetixState.setIssuanceRatio(web3.utils.toBN(max).add(web3.utils.toBN('1')), {
+			oikosState.setIssuanceRatio(web3.utils.toBN(max).add(web3.utils.toBN('1')), {
 				from: account1,
 			})
 		);
 	});
 
 	it('should allow the associated contract to setCurrentIssuanceData', async () => {
-		await synthetixState.setAssociatedContract(account1, { from: owner });
-		await synthetixState.setCurrentIssuanceData(account2, toUnit('0.1'), { from: account1 });
+		await oikosState.setAssociatedContract(account1, { from: owner });
+		await oikosState.setCurrentIssuanceData(account2, toUnit('0.1'), { from: account1 });
 	});
 
 	it('should disallow another address from calling setCurrentIssuanceData', async () => {
-		await synthetixState.setAssociatedContract(account1, { from: owner });
+		await oikosState.setAssociatedContract(account1, { from: owner });
 		await assert.revert(
-			synthetixState.setCurrentIssuanceData(account2, toUnit('0.1'), { from: account2 })
+			oikosState.setCurrentIssuanceData(account2, toUnit('0.1'), { from: account2 })
 		);
 	});
 
 	it('should allow the associated contract to clearIssuanceData', async () => {
-		await synthetixState.setAssociatedContract(account1, { from: owner });
-		await synthetixState.setCurrentIssuanceData(account2, toUnit('0.1'), { from: account1 });
-		await synthetixState.clearIssuanceData(account2, { from: account1 });
-		assert.bnEqual((await synthetixState.issuanceData(account2)).initialDebtOwnership, 0);
+		await oikosState.setAssociatedContract(account1, { from: owner });
+		await oikosState.setCurrentIssuanceData(account2, toUnit('0.1'), { from: account1 });
+		await oikosState.clearIssuanceData(account2, { from: account1 });
+		assert.bnEqual((await oikosState.issuanceData(account2)).initialDebtOwnership, 0);
 	});
 
 	it('should disallow another address from calling clearIssuanceData', async () => {
-		await synthetixState.setAssociatedContract(account1, { from: owner });
-		await assert.revert(synthetixState.clearIssuanceData(account2, { from: account2 }));
+		await oikosState.setAssociatedContract(account1, { from: owner });
+		await assert.revert(oikosState.clearIssuanceData(account2, { from: account2 }));
 	});
 
 	it('should allow the associated contract to incrementTotalIssuerCount', async () => {
-		await synthetixState.setAssociatedContract(account1, { from: owner });
+		await oikosState.setAssociatedContract(account1, { from: owner });
 
-		await synthetixState.incrementTotalIssuerCount({ from: account1 });
-		assert.bnEqual(await synthetixState.totalIssuerCount(), 1);
+		await oikosState.incrementTotalIssuerCount({ from: account1 });
+		assert.bnEqual(await oikosState.totalIssuerCount(), 1);
 	});
 
 	it('should disallow another address from calling incrementTotalIssuerCount', async () => {
-		await synthetixState.setAssociatedContract(account1, { from: owner });
-		await assert.revert(synthetixState.incrementTotalIssuerCount({ from: account2 }));
+		await oikosState.setAssociatedContract(account1, { from: owner });
+		await assert.revert(oikosState.incrementTotalIssuerCount({ from: account2 }));
 	});
 
 	it('should allow the associated contract to decrementTotalIssuerCount', async () => {
-		await synthetixState.setAssociatedContract(account1, { from: owner });
+		await oikosState.setAssociatedContract(account1, { from: owner });
 
 		// We need to increment first or we'll overflow on subtracting from zero and revert that way
-		await synthetixState.incrementTotalIssuerCount({ from: account1 });
-		await synthetixState.decrementTotalIssuerCount({ from: account1 });
-		assert.bnEqual(await synthetixState.totalIssuerCount(), 0);
+		await oikosState.incrementTotalIssuerCount({ from: account1 });
+		await oikosState.decrementTotalIssuerCount({ from: account1 });
+		assert.bnEqual(await oikosState.totalIssuerCount(), 0);
 	});
 
 	it('should disallow another address from calling decrementTotalIssuerCount', async () => {
-		await synthetixState.setAssociatedContract(account1, { from: owner });
+		await oikosState.setAssociatedContract(account1, { from: owner });
 
 		// We need to increment first or we'll overflow on subtracting from zero and revert that way
-		await synthetixState.incrementTotalIssuerCount({ from: account1 });
-		await assert.revert(synthetixState.decrementTotalIssuerCount({ from: account2 }));
+		await oikosState.incrementTotalIssuerCount({ from: account1 });
+		await assert.revert(oikosState.decrementTotalIssuerCount({ from: account2 }));
 	});
 
 	it('should allow the associated contract to appendDebtLedgerValue', async () => {
-		await synthetixState.setAssociatedContract(account1, { from: owner });
+		await oikosState.setAssociatedContract(account1, { from: owner });
 
-		await synthetixState.appendDebtLedgerValue(toUnit('0.1'), { from: account1 });
-		assert.bnEqual(await synthetixState.lastDebtLedgerEntry(), toUnit('0.1'));
+		await oikosState.appendDebtLedgerValue(toUnit('0.1'), { from: account1 });
+		assert.bnEqual(await oikosState.lastDebtLedgerEntry(), toUnit('0.1'));
 	});
 
 	it('should disallow another address from calling appendDebtLedgerValue', async () => {
-		await synthetixState.setAssociatedContract(account1, { from: owner });
+		await oikosState.setAssociatedContract(account1, { from: owner });
 
-		await assert.revert(synthetixState.appendDebtLedgerValue(toUnit('0.1'), { from: account2 }));
+		await assert.revert(oikosState.appendDebtLedgerValue(toUnit('0.1'), { from: account2 }));
 	});
 
 	it('should correctly report debtLedgerLength', async () => {
-		await synthetixState.setAssociatedContract(account1, { from: owner });
+		await oikosState.setAssociatedContract(account1, { from: owner });
 
-		assert.bnEqual(await synthetixState.debtLedgerLength(), 0);
-		await synthetixState.appendDebtLedgerValue(toUnit('0.1'), { from: account1 });
-		assert.bnEqual(await synthetixState.debtLedgerLength(), 1);
+		assert.bnEqual(await oikosState.debtLedgerLength(), 0);
+		await oikosState.appendDebtLedgerValue(toUnit('0.1'), { from: account1 });
+		assert.bnEqual(await oikosState.debtLedgerLength(), 1);
 	});
 
 	it('should correctly report lastDebtLedgerEntry', async () => {
-		await synthetixState.setAssociatedContract(account1, { from: owner });
+		await oikosState.setAssociatedContract(account1, { from: owner });
 
 		// Nothing in the array, so we should revert on invalid opcode
-		await assert.invalidOpcode(synthetixState.lastDebtLedgerEntry());
-		await synthetixState.appendDebtLedgerValue(toUnit('0.1'), { from: account1 });
-		assert.bnEqual(await synthetixState.lastDebtLedgerEntry(), toUnit('0.1'));
+		await assert.invalidOpcode(oikosState.lastDebtLedgerEntry());
+		await oikosState.appendDebtLedgerValue(toUnit('0.1'), { from: account1 });
+		assert.bnEqual(await oikosState.lastDebtLedgerEntry(), toUnit('0.1'));
 	});
 
 	it('should correctly report hasIssued for an address', async () => {
-		assert.equal(await synthetixState.hasIssued(owner), false);
+		assert.equal(await oikosState.hasIssued(owner), false);
 
-		await synthetix.issueMaxSynths({ from: owner });
+		await oikos.issueMaxSynths({ from: owner });
 		const synthBalance = await sUSDContract.balanceOf(owner);
 
-		assert.equal(await synthetixState.hasIssued(owner), true);
+		assert.equal(await oikosState.hasIssued(owner), true);
 
-		await synthetix.burnSynths(synthBalance, { from: owner });
+		await oikos.burnSynths(synthBalance, { from: owner });
 
-		assert.equal(await synthetixState.hasIssued(owner), false);
+		assert.equal(await oikosState.hasIssued(owner), false);
 	});
 });

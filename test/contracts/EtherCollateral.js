@@ -1,7 +1,7 @@
 require('.'); // import common test scaffolding
 
 const EtherCollateral = artifacts.require('EtherCollateral');
-const Synthetix = artifacts.require('Synthetix');
+const Oikos = artifacts.require('Oikos');
 const Depot = artifacts.require('Depot');
 const Synth = artifacts.require('Synth');
 const MultiCollateralSynth = artifacts.require('MultiCollateralSynth');
@@ -32,17 +32,17 @@ contract('EtherCollateral', async accounts => {
 	const MONTH = 2629743;
 	const YEAR = 31536000;
 
-	const [sUSD, sETH, ETH, SNX] = ['sUSD', 'sETH', 'ETH', 'SNX'].map(toBytes32);
+	const [oUSD, oETH, ETH, SNX] = ['oUSD', 'oETH', 'ETH', 'SNX'].map(toBytes32);
 
-	// const [XDR, sUSD, sAUD, sEUR, sBTC, SNX, iBTC, sETH] = [
+	// const [XDR, oUSD, sAUD, sEUR, oBTC, SNX, iBTC, oETH] = [
 	// 	'XDR',
-	// 	'sUSD',
+	// 	'oUSD',
 	// 	'sAUD',
 	// 	'sEUR',
-	// 	'sBTC',
+	// 	'oBTC',
 	// 	'SNX',
 	// 	'iBTC',
-	// 	'sETH',
+	// 	'oETH',
 	// ].map(toBytes32);
 
 	const ISSUACE_RATIO = toUnit('0.666666666666666667');
@@ -60,7 +60,7 @@ contract('EtherCollateral', async accounts => {
 	] = accounts;
 
 	let etherCollateral,
-		synthetix,
+		oikos,
 		feePoolProxy,
 		exchangeRates,
 		depot,
@@ -73,7 +73,7 @@ contract('EtherCollateral', async accounts => {
 	// 	const timestamp = await currentTime();
 
 	// 	await exchangeRates.updateRates(
-	// 		[XDR, sAUD, sEUR, SNX, sBTC, iBTC, sETH],
+	// 		[XDR, sAUD, sEUR, SNX, oBTC, iBTC, oETH],
 	// 		['5', '0.5', '1.25', '0.1', '5000', '4000', '172'].map(toUnit),
 	// 		timestamp,
 	// 		{
@@ -95,7 +95,7 @@ contract('EtherCollateral', async accounts => {
 
 	const issueSynthsUSD = async (issueAmount, receiver) => {
 		// We need the owner to issue synths
-		await synthetix.issueSynths(issueAmount, { from: owner });
+		await oikos.issueSynths(issueAmount, { from: owner });
 		// Set up the depositor with an amount of synths to deposit.
 		await sUSDSynth.transfer(receiver, issueAmount, {
 			from: owner,
@@ -106,13 +106,13 @@ contract('EtherCollateral', async accounts => {
 		// Ensure Depot has latest rates
 		// await updateRatesWithDefaults();
 
-		// Get sUSD from Owner
+		// Get oUSD from Owner
 		await issueSynthsUSD(synthsToDeposit, depositor);
 
 		// Approve Transaction
 		await sUSDSynth.approve(depot.address, synthsToDeposit, { from: depositor });
 
-		// Deposit sUSD in Depot
+		// Deposit oUSD in Depot
 		await depot.depositSynths(synthsToDeposit, {
 			from: depositor,
 		});
@@ -148,7 +148,7 @@ contract('EtherCollateral', async accounts => {
 	};
 
 	const calculateLoanFeesUSD = async feesInETH => {
-		// Ask the Depot how many sUSD I will get for this ETH
+		// Ask the Depot how many oUSD I will get for this ETH
 		const expectedFeesUSD = await depot.synthsReceivedForEther(feesInETH);
 		// console.log('expectedFeesUSD', expectedFeesUSD.toString());
 		return expectedFeesUSD;
@@ -159,7 +159,7 @@ contract('EtherCollateral', async accounts => {
 
 		// Depot requires SNX and ETH rates
 		await exchangeRates.updateRates(
-			[SNX, sETH, ETH],
+			[SNX, oETH, ETH],
 			['0.1', '172', '172'].map(toUnit),
 			timestamp,
 			{
@@ -172,15 +172,15 @@ contract('EtherCollateral', async accounts => {
 
 	beforeEach(async () => {
 		etherCollateral = await EtherCollateral.deployed();
-		synthetix = await Synthetix.deployed();
+		oikos = await Oikos.deployed();
 		exchangeRates = await ExchangeRates.deployed();
 		depot = await Depot.deployed();
 		feePoolProxy = await FeePoolProxy.deployed();
 		FEE_ADDRESS = await feePoolProxy.FEE_ADDRESS();
 		addressResolver = await AddressResolver.deployed();
 
-		sUSDSynth = await Synth.at(await synthetix.synths(sUSD));
-		sETHSynth = await MultiCollateralSynth.at(await synthetix.synths(sETH));
+		sUSDSynth = await Synth.at(await oikos.synths(oUSD));
+		sETHSynth = await MultiCollateralSynth.at(await oikos.synths(oETH));
 
 		// TODO: Setting to a year because fastForwardAndUpdateRates is
 		await updateRatesWithDefaults();
@@ -371,15 +371,15 @@ contract('EtherCollateral', async accounts => {
 	});
 
 	describe('when accessing the external views then', async () => {
-		it('collateralAmountForLoan should return 7500 ETH required to open 5000 sETH', async () => {
+		it('collateralAmountForLoan should return 7500 ETH required to open 5000 oETH', async () => {
 			const ethForLoanAmounnt = await etherCollateral.collateralAmountForLoan(toUnit('5000'));
 			assert.bnEqual(ethForLoanAmounnt, toUnit('7500'));
 		});
-		it('loanAmountFromCollateral should return 5000 sETH when opening a loan with 7500 ETH', async () => {
+		it('loanAmountFromCollateral should return 5000 oETH when opening a loan with 7500 ETH', async () => {
 			const loanAmountFromCollateral = await etherCollateral.loanAmountFromCollateral(
 				toUnit('7500')
 			);
-			// There is a rounding up. You get more sETH rather than less for your loan
+			// There is a rounding up. You get more oETH rather than less for your loan
 			assert.bnClose(loanAmountFromCollateral, toUnit('5000'), 2500);
 		});
 	});
@@ -391,13 +391,13 @@ contract('EtherCollateral', async accounts => {
 				await assert.revert(etherCollateral.openLoan({ value: toUnit('1'), from: address1 }));
 			});
 			it('attempting to issue more than the cap (issueLimit)', async () => {
-				// limit sETH supply cap to 50
+				// limit oETH supply cap to 50
 				await etherCollateral.setIssueLimit(toUnit('50'), { from: owner });
-				// 150 ETH will issue 66 sETH
+				// 150 ETH will issue 66 oETH
 				await assert.revert(etherCollateral.openLoan({ value: toUnit('150'), from: address1 }));
 			});
 			it('attempting to issue more near the supply cap', async () => {
-				// reduce the supply cap to 100 sETH
+				// reduce the supply cap to 100 oETH
 				await etherCollateral.setIssueLimit(toUnit('100'), { from: owner });
 
 				// Issue to the just under the limit
@@ -565,7 +565,7 @@ contract('EtherCollateral', async accounts => {
 						let closeLoanTransaction;
 
 						beforeEach(async () => {
-							// Deposit sUSD in Depot to allow fees to be bought with ETH
+							// Deposit oUSD in Depot to allow fees to be bought with ETH
 							await depositUSDInDepot(toUnit('10000'), depotDepositor);
 							// Go into the future
 							// fastForwardAndUpdateRates(MONTH * 2);
@@ -574,7 +574,7 @@ contract('EtherCollateral', async accounts => {
 							expectedFeeETH = await calculateLoanFees(address1, loanID);
 							// expectedFeesUSD = await calculateLoanFeesUSD(expectedFeeETH);
 							interestRatePerSec = await etherCollateral.interestPerSecond();
-							// Get the total sETH Issued
+							// Get the total oETH Issued
 							totalIssuedSynthsBefore = await etherCollateral.totalIssuedSynths();
 							// Close loan
 							closeLoanTransaction = await etherCollateral.closeLoan(loanID, { from: address1 });
@@ -627,7 +627,7 @@ contract('EtherCollateral', async accounts => {
 							let closeLoanTransaction;
 
 							beforeEach(async () => {
-								// Deposit sUSD in Depot to allow fees to be bought with ETH
+								// Deposit oUSD in Depot to allow fees to be bought with ETH
 								await depositUSDInDepot(toUnit('100000'), depotDepositor);
 
 								// Cacluate the fees
@@ -636,7 +636,7 @@ contract('EtherCollateral', async accounts => {
 
 								// console.log('expectedFeeETH', expectedFeeETH.toString());
 								// console.log('expectedFeesUSD', expectedFeesUSD.toString());
-								// Get the total sETH Issued
+								// Get the total oETH Issued
 								totalIssuedSynthsBefore = await etherCollateral.totalIssuedSynths();
 								// console.log('totalIssuedSynthsBefore', totalIssuedSynthsBefore.toString());
 								closeLoanTransaction = await etherCollateral.closeLoan(loan2ID, { from: address1 });
@@ -851,7 +851,7 @@ contract('EtherCollateral', async accounts => {
 			const tenETH = toUnit('10');
 
 			beforeEach(async () => {
-				// Deposit sUSD in Depot to allow fees to be bought with ETH
+				// Deposit oUSD in Depot to allow fees to be bought with ETH
 				await depositUSDInDepot(toUnit('100000'), depotDepositor);
 			});
 
@@ -965,14 +965,14 @@ contract('EtherCollateral', async accounts => {
 					await assert.revert(etherCollateral.closeLoan(9999, { from: address1 }));
 				});
 
-				it('sETH balance is less than loanAmount', async () => {
-					// "Burn" some of accounts sETH by sending to the owner
+				it('oETH balance is less than loanAmount', async () => {
+					// "Burn" some of accounts oETH by sending to the owner
 					await sETHSynth.transfer(owner, toUnit('4'), { from: address1 });
 					await assert.revert(etherCollateral.closeLoan(loanID, { from: address1 }));
 				});
 
-				it('Depot has no sUSD to buy for Fees', async () => {
-					// Dont put any sUSD into the Depot and close the loan
+				it('Depot has no oUSD to buy for Fees', async () => {
+					// Dont put any oUSD into the Depot and close the loan
 					await assert.revert(etherCollateral.closeLoan(loanID, { from: address1 }));
 				});
 			});
@@ -995,7 +995,7 @@ contract('EtherCollateral', async accounts => {
 				beforeEach(async () => {
 					// interestRatePerSec = await etherCollateral.interestPerSecond();
 
-					// Deposit sUSD in Depot to allow fees to be bought with ETH
+					// Deposit oUSD in Depot to allow fees to be bought with ETH
 					await depositUSDInDepot(oneThousandsUSD, depotDepositor);
 
 					// Save Accounts balance
@@ -1052,11 +1052,11 @@ contract('EtherCollateral', async accounts => {
 					assert.ok(synthLoan.timeClosed > synthLoan.timeCreated, true);
 				});
 
-				it('reduce sETH totalSupply', async () => {
+				it('reduce oETH totalSupply', async () => {
 					assert.bnEqual(await etherCollateral.totalIssuedSynths(), ZERO_BN);
 				});
 
-				it('increase the FeePool sUSD balance', async () => {
+				it('increase the FeePool oUSD balance', async () => {
 					assert.bnEqual(await sUSDSynth.balanceOf(FEE_ADDRESS), expectedFeesUSD);
 				});
 
@@ -1076,7 +1076,7 @@ contract('EtherCollateral', async accounts => {
 					assert.bnEqual(depositerETHFees, expectedFeeETH);
 				});
 
-				it('decrease the sUSD balance in Depot', async () => {
+				it('decrease the oUSD balance in Depot', async () => {
 					const expectedBalance = oneThousandsUSD.sub(expectedFeesUSD);
 					assert.bnEqual(await sUSDSynth.balanceOf(depot.address), expectedBalance);
 				});

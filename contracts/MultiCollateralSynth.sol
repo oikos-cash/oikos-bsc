@@ -70,15 +70,15 @@ contract MultiCollateralSynth is Synth {
 
     // Contracts directly interacting with multiCollateralSynth to issue and burn
     modifier onlyInternalContracts() {
-        bool isSynthetix = msg.sender == address(synthetix());
+        bool isOikos = msg.sender == address(oikos());
         bool isFeePool = msg.sender == address(feePool());
         bool isExchanger = msg.sender == address(exchanger());
         bool isIssuer = msg.sender == address(issuer());
         bool isMultiCollateral = msg.sender == address(multiCollateral());
 
         require(
-            isSynthetix || isFeePool || isExchanger || isIssuer || isMultiCollateral,
-            "Only Synthetix, FeePool, Exchanger, Issuer or MultiCollateral contracts allowed"
+            isOikos || isFeePool || isExchanger || isIssuer || isMultiCollateral,
+            "Only Oikos, FeePool, Exchanger, Issuer or MultiCollateral contracts allowed"
         );
         _;
     }

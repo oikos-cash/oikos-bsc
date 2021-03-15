@@ -2,7 +2,7 @@ require('.'); // import common test scaffolding
 
 const FeePool = artifacts.require('FeePool');
 // const FeePoolState = artifacts.require('FeePoolState');
-const Synthetix = artifacts.require('Synthetix');
+const Oikos = artifacts.require('Oikos');
 // const Synth = artifacts.require('Synth');
 const RewardEscrow = artifacts.require('RewardEscrow');
 const SupplySchedule = artifacts.require('SupplySchedule');
@@ -25,7 +25,7 @@ contract('Rewards Integration Tests', async accounts => {
 		const timestamp = await currentTime();
 
 		await exchangeRates.updateRates(
-			[XDR, sAUD, sEUR, SNX, sBTC, iBTC, sETH],
+			[XDR, sAUD, sEUR, SNX, oBTC, iBTC, oETH],
 			['5', '0.5', '1.25', '0.1', '5000', '4000', '172'].map(toUnit),
 			timestamp,
 			{
@@ -85,15 +85,15 @@ contract('Rewards Integration Tests', async accounts => {
 	// };
 
 	// CURRENCIES
-	const [XDR, sUSD, sAUD, sEUR, sBTC, SNX, iBTC, sETH] = [
+	const [XDR, oUSD, sAUD, sEUR, oBTC, SNX, iBTC, oETH] = [
 		'XDR',
-		'sUSD',
+		'oUSD',
 		'sAUD',
 		'sEUR',
-		'sBTC',
+		'oBTC',
 		'SNX',
 		'iBTC',
-		'sETH',
+		'oETH',
 	].map(toBytes32);
 
 	// DIVISIONS
@@ -140,7 +140,7 @@ contract('Rewards Integration Tests', async accounts => {
 	// VARIABLES
 	let feePool,
 		// feePoolState,
-		synthetix,
+		oikos,
 		// sUSDContract,
 		// sBTCContract,
 		exchangeRates,
@@ -157,9 +157,9 @@ contract('Rewards Integration Tests', async accounts => {
 		exchangeRates = await ExchangeRates.deployed();
 		feePool = await FeePool.deployed();
 		// feePoolState = await FeePoolState.deployed();
-		synthetix = await Synthetix.deployed();
-		// sUSDContract = await Synth.at(await synthetix.synths(sUSD));
-		// sBTCContract = await Synth.at(await synthetix.synths(sBTC));
+		oikos = await Oikos.deployed();
+		// sUSDContract = await Synth.at(await oikos.synths(oUSD));
+		// sBTCContract = await Synth.at(await oikos.synths(oBTC));
 
 		supplySchedule = await SupplySchedule.deployed();
 		rewardEscrow = await RewardEscrow.deployed();
@@ -172,12 +172,12 @@ contract('Rewards Integration Tests', async accounts => {
 		await fastForwardAndUpdateRates(WEEK + MINUTE);
 
 		// Assign 1/3 of total SNX to 3 accounts
-		const snxTotalSupply = await synthetix.totalSupply();
+		const snxTotalSupply = await oikos.totalSupply();
 		const thirdOfSNX = third(snxTotalSupply);
 
-		await synthetix.transfer(account1, thirdOfSNX, { from: owner });
-		await synthetix.transfer(account2, thirdOfSNX, { from: owner });
-		await synthetix.transfer(account3, thirdOfSNX, { from: owner });
+		await oikos.transfer(account1, thirdOfSNX, { from: owner });
+		await oikos.transfer(account2, thirdOfSNX, { from: owner });
+		await oikos.transfer(account3, thirdOfSNX, { from: owner });
 
 		// Get the SNX mintableSupply
 		periodOneMintableSupplyMinusMinterReward = (await supplySchedule.mintableSupply()).sub(
@@ -185,7 +185,7 @@ contract('Rewards Integration Tests', async accounts => {
 		);
 
 		// Mint the staking rewards
-		await synthetix.mint({ from: deployerAccount });
+		await oikos.mint({ from: deployerAccount });
 
 		// set minimumStakeTime on issue and burning to 0
 		await issuer.setMinimumStakeTime(0, { from: owner });
@@ -199,9 +199,9 @@ contract('Rewards Integration Tests', async accounts => {
 			FEE_PERIOD_LENGTH = (await feePool.FEE_PERIOD_LENGTH()).toNumber();
 			CLAIMABLE_PERIODS = FEE_PERIOD_LENGTH - 1;
 
-			await synthetix.issueMaxSynths({ from: account1 });
-			await synthetix.issueMaxSynths({ from: account2 });
-			await synthetix.issueMaxSynths({ from: account3 });
+			await oikos.issueMaxSynths({ from: account1 });
+			await oikos.issueMaxSynths({ from: account2 });
+			await oikos.issueMaxSynths({ from: account3 });
 		});
 
 		it('should allocate the 3 accounts a third of the rewards for 1 period', async () => {
@@ -248,7 +248,7 @@ contract('Rewards Integration Tests', async accounts => {
 				mintedRewardsSupply = (await supplySchedule.mintableSupply()).sub(MINTER_SNX_REWARD);
 				// console.log('mintedRewardsSupply', mintedRewardsSupply.toString());
 				// Mint the staking rewards
-				await synthetix.mint({ from: owner });
+				await oikos.mint({ from: owner });
 
 				// await logFeePeriods();
 			}
@@ -275,7 +275,7 @@ contract('Rewards Integration Tests', async accounts => {
 				mintedRewardsSupply = (await supplySchedule.mintableSupply()).sub(MINTER_SNX_REWARD);
 				// console.log('mintedRewardsSupply', mintedRewardsSupply.toString());
 				// Mint the staking rewards
-				await synthetix.mint({ from: owner });
+				await oikos.mint({ from: owner });
 
 				// await logFeePeriods();
 			}
@@ -308,7 +308,7 @@ contract('Rewards Integration Tests', async accounts => {
 				mintedRewardsSupply = (await supplySchedule.mintableSupply()).sub(MINTER_SNX_REWARD);
 
 				// Mint the staking rewards
-				await synthetix.mint({ from: owner });
+				await oikos.mint({ from: owner });
 
 				// await logFeePeriods();
 			}
@@ -342,7 +342,7 @@ contract('Rewards Integration Tests', async accounts => {
 				await fastForwardAndUpdateRates(MINUTE);
 
 				// Mint the staking rewards
-				await synthetix.mint({ from: owner });
+				await oikos.mint({ from: owner });
 
 				// await logFeePeriods();
 			}
@@ -355,7 +355,7 @@ contract('Rewards Integration Tests', async accounts => {
 			// FastForward a bit to be able to mint
 			await fastForwardAndUpdateRates(MINUTE);
 			// Mint the staking rewards
-			await synthetix.mint({ from: owner });
+			await oikos.mint({ from: owner });
 
 			// Get last FeePeriod
 			const lastFeePeriod = await feePool.recentFeePeriods(CLAIMABLE_PERIODS);
@@ -375,7 +375,7 @@ contract('Rewards Integration Tests', async accounts => {
 				// FastForward a bit to be able to mint
 				await fastForwardAndUpdateRates(MINUTE);
 				// Mint the staking rewards
-				await synthetix.mint({ from: owner });
+				await oikos.mint({ from: owner });
 
 				// await logFeePeriods();
 			}
@@ -388,7 +388,7 @@ contract('Rewards Integration Tests', async accounts => {
 			// FastForward a bit to be able to mint
 			await fastForwardAndUpdateRates(MINUTE);
 			// Mint the staking rewards
-			await synthetix.mint({ from: owner });
+			await oikos.mint({ from: owner });
 			// Get last FeePeriod
 			const lastFeePeriod = await feePool.recentFeePeriods(CLAIMABLE_PERIODS);
 			// Assert rewards have rolled over
@@ -408,7 +408,7 @@ contract('Rewards Integration Tests', async accounts => {
 				await fastForwardAndUpdateRates(MINUTE);
 
 				// Mint the staking rewards
-				await synthetix.mint({ from: owner });
+				await oikos.mint({ from: owner });
 
 				// Only 1 account claims rewards
 				await feePool.claimFees({ from: account1 });
@@ -428,23 +428,23 @@ contract('Rewards Integration Tests', async accounts => {
 			// FastForward a bit to be able to mint
 			await fastForwardAndUpdateRates(MINUTE);
 			// Mint the staking rewards
-			await synthetix.mint({ from: owner });
+			await oikos.mint({ from: owner });
 			// await logFeePeriods();
 
 			// Account 1 leaves the system for week 2
-			const burnableTotal = await synthetix.debtBalanceOf(account1, sUSD);
-			await synthetix.burnSynths(burnableTotal, { from: account1 });
+			const burnableTotal = await oikos.debtBalanceOf(account1, oUSD);
+			await oikos.burnSynths(burnableTotal, { from: account1 });
 			// await logFeesByPeriod(account1);
 
 			// Close week 2, ffwd & mint
 			await fastForwardAndCloseFeePeriod();
 			await fastForwardAndUpdateRates(MINUTE);
-			await synthetix.mint({ from: owner });
+			await oikos.mint({ from: owner });
 			// await logFeePeriods();
 			// await logFeesByPeriod(account1);
 
 			// Account 1 comes back into the system
-			await synthetix.issueMaxSynths({ from: account1 });
+			await oikos.issueMaxSynths({ from: account1 });
 
 			// Only Account 1 claims rewards
 			const rewardsAmount = third(periodOneMintableSupplyMinusMinterReward);
@@ -492,8 +492,8 @@ contract('Rewards Integration Tests', async accounts => {
 			assert.bnClose(account1Escrowed[1], third(periodOneMintableSupplyMinusMinterReward), 1);
 
 			// Account 1 leaves the system
-			const burnableTotal = await synthetix.debtBalanceOf(account1, sUSD);
-			await synthetix.burnSynths(burnableTotal, { from: account1 });
+			const burnableTotal = await oikos.debtBalanceOf(account1, oUSD);
+			await oikos.burnSynths(burnableTotal, { from: account1 });
 
 			// FastForward into the second mintable week
 			await fastForwardAndUpdateRates(WEEK + MINUTE);
@@ -504,13 +504,13 @@ contract('Rewards Integration Tests', async accounts => {
 			);
 
 			// Mint the staking rewards for p2
-			await synthetix.mint({ from: owner });
+			await oikos.mint({ from: owner });
 
 			// Close the period after user leaves system
 			fastForwardAndCloseFeePeriod();
 
 			// Account1 Reenters in current unclosed period so no rewards yet
-			// await synthetix.issueMaxSynths({ from: account1 });
+			// await oikos.issueMaxSynths({ from: account1 });
 
 			// Accounts 2 & 3 now have 33% of period 1 and 50% of period 2
 			// console.log('33% of p1', third(periodOneMintableSupplyMinusMinterReward).toString());
@@ -555,12 +555,12 @@ contract('Rewards Integration Tests', async accounts => {
 
 	describe('Exchange Rate Shift tests', async () => {
 		it('should assign accounts (1,2,3) to have (40%,40%,20%) of the debt/rewards', async () => {
-			// Account 1&2 issue 10K USD and exchange in sBTC each, holding 50% of the total debt.
-			await synthetix.issueSynths(tenK, { from: account1 });
-			await synthetix.issueSynths(tenK, { from: account2 });
+			// Account 1&2 issue 10K USD and exchange in oBTC each, holding 50% of the total debt.
+			await oikos.issueSynths(tenK, { from: account1 });
+			await oikos.issueSynths(tenK, { from: account2 });
 
-			await synthetix.exchange(sUSD, tenK, sBTC, { from: account1 });
-			await synthetix.exchange(sUSD, tenK, sBTC, { from: account2 });
+			await oikos.exchange(oUSD, tenK, oBTC, { from: account1 });
+			await oikos.exchange(oUSD, tenK, oBTC, { from: account2 });
 
 			await fastForwardAndCloseFeePeriod();
 			// //////////////////////////////////////////////
@@ -589,16 +589,16 @@ contract('Rewards Integration Tests', async accounts => {
 			// console.log('account2Escrow[1]', account2Escrow[1].toString());
 			assert.bnClose(account2Escrow[1], half(periodOneMintableSupplyMinusMinterReward), 1);
 
-			// Increase sBTC price by 100%
+			// Increase oBTC price by 100%
 			const timestamp = await currentTime();
-			await exchangeRates.updateRates([sBTC], ['10000'].map(toUnit), timestamp, {
+			await exchangeRates.updateRates([oBTC], ['10000'].map(toUnit), timestamp, {
 				from: oracle,
 			});
 
-			// Account 3 (enters the system and) mints 10K sUSD (minus half of an exchange fee - to balance the fact
-			// that the other two holders have doubled their sBTC holdings) and should have 20% of the debt not 33.33%
+			// Account 3 (enters the system and) mints 10K oUSD (minus half of an exchange fee - to balance the fact
+			// that the other two holders have doubled their oBTC holdings) and should have 20% of the debt not 33.33%
 			const potentialFee = await feePool.exchangeFeeIncurred(toUnit('10000'));
-			await synthetix.issueSynths(tenK.sub(half(potentialFee)), { from: account3 });
+			await oikos.issueSynths(tenK.sub(half(potentialFee)), { from: account3 });
 
 			// Get the SNX mintableSupply for week 2
 			const periodTwoMintableSupply = (await supplySchedule.mintableSupply()).sub(
@@ -606,13 +606,13 @@ contract('Rewards Integration Tests', async accounts => {
 			);
 
 			// Mint the staking rewards
-			await synthetix.mint({ from: owner });
+			await oikos.mint({ from: owner });
 
 			// Do some exchanging to generateFees
-			const sBTCAmount = await exchangeRates.effectiveValue(sUSD, tenK, sBTC);
+			const sBTCAmount = await exchangeRates.effectiveValue(oUSD, tenK, oBTC);
 			const sBTCAmountMinusFees = await feePool.amountReceivedFromExchange(sBTCAmount);
-			await synthetix.exchange(sBTC, sBTCAmountMinusFees, sUSD, { from: account1 });
-			await synthetix.exchange(sBTC, sBTCAmountMinusFees, sUSD, { from: account2 });
+			await oikos.exchange(oBTC, sBTCAmountMinusFees, oUSD, { from: account1 });
+			await oikos.exchange(oBTC, sBTCAmountMinusFees, oUSD, { from: account2 });
 
 			// Close so we can claim
 			await fastForwardAndCloseFeePeriod();
@@ -674,17 +674,17 @@ contract('Rewards Integration Tests', async accounts => {
 			// Commenting out this logic for now (v2.14.x) - needs to be relooked at -JJ
 
 			// // now in p3 Acc1 burns all and leaves (-40%) and Acc2 has 67% and Acc3 33% rewards allocated as such
-			// // Account 1 exchanges all sBTC back to sUSD
+			// // Account 1 exchanges all oBTC back to oUSD
 			// const acc1sBTCBalance = await sBTCContract.balanceOf(account1, { from: account1 });
-			// await synthetix.exchange(sBTC, acc1sBTCBalance, sUSD, { from: account1 });
+			// await oikos.exchange(oBTC, acc1sBTCBalance, oUSD, { from: account1 });
 			// const amountAfterExchange = await feePool.amountReceivedFromExchange(acc1sBTCBalance);
 			// const amountAfterExchangeInUSD = await exchangeRates.effectiveValue(
-			// 	sBTC,
+			// 	oBTC,
 			// 	amountAfterExchange,
-			// 	sUSD
+			// 	oUSD
 			// );
 
-			// await synthetix.burnSynths(amountAfterExchangeInUSD, { from: account1 });
+			// await oikos.burnSynths(amountAfterExchangeInUSD, { from: account1 });
 
 			// // Get the SNX mintableSupply for week 3
 			// // const periodThreeMintableSupply = (await supplySchedule.mintableSupply()).sub(
@@ -692,7 +692,7 @@ contract('Rewards Integration Tests', async accounts => {
 			// // );
 
 			// // Mint the staking rewards
-			// await synthetix.mint({ from: owner });
+			// await oikos.mint({ from: owner });
 
 			// // Close so we can claim
 			// await fastForwardAndCloseFeePeriod();
@@ -730,7 +730,7 @@ contract('Rewards Integration Tests', async accounts => {
 			// assert.bnClose(account3Escrow2[1], oneFifth(periodThreeMintableSupply), 15);
 
 			// // Acc1 mints 20K (40%) close p (40,40,20)');
-			// await synthetix.issueSynths(twentyK, { from: account1 });
+			// await oikos.issueSynths(twentyK, { from: account1 });
 
 			// // Get the SNX mintableSupply for week 4
 			// const periodFourMintableSupply = (await supplySchedule.mintableSupply()).sub(
@@ -738,7 +738,7 @@ contract('Rewards Integration Tests', async accounts => {
 			// );
 
 			// // Mint the staking rewards
-			// await synthetix.mint({ from: owner });
+			// await oikos.mint({ from: owner });
 
 			// // Close so we can claim
 			// await fastForwardAndCloseFeePeriod();
@@ -765,19 +765,19 @@ contract('Rewards Integration Tests', async accounts => {
 			// assert.bnClose(account3EscrowEntry3[1], oneFifth(periodFourMintableSupply), 16);
 		});
 
-		it('(Inverse) Issue sBTC then shift rate down 50% then calc rewards');
+		it('(Inverse) Issue oBTC then shift rate down 50% then calc rewards');
 	});
 
-	describe('3 Accounts issue 10K sUSD each in week 1', async () => {
+	describe('3 Accounts issue 10K oUSD each in week 1', async () => {
 		beforeEach(async () => {
-			await synthetix.issueSynths(tenK, { from: account1 });
-			await synthetix.issueSynths(tenK, { from: account2 });
-			await synthetix.issueSynths(tenK, { from: account3 });
+			await oikos.issueSynths(tenK, { from: account1 });
+			await oikos.issueSynths(tenK, { from: account2 });
+			await oikos.issueSynths(tenK, { from: account3 });
 		});
 
 		it('Acc1 issues and burns multiple times and should have accounts 1,2,3 rewards 50%,25%,25%', async () => {
-			// Acc 1 Issues 20K sUSD
-			await synthetix.issueSynths(tenK, { from: account1 });
+			// Acc 1 Issues 20K oUSD
+			await oikos.issueSynths(tenK, { from: account1 });
 
 			// Close week 2
 			await fastForwardAndCloseFeePeriod();
@@ -811,11 +811,11 @@ contract('Rewards Integration Tests', async accounts => {
 			assert.bnClose(account3Escrow[1], quarter(periodOneMintableSupplyMinusMinterReward), 24);
 
 			// Acc1 Burns all
-			await synthetix.burnSynths(twentyK, { from: account1 });
-			// Acc 1 Issues 10K sUSD
-			await synthetix.issueSynths(tenK, { from: account1 });
-			// Acc 1 Issues 10K sUSD again
-			await synthetix.issueSynths(tenK, { from: account1 });
+			await oikos.burnSynths(twentyK, { from: account1 });
+			// Acc 1 Issues 10K oUSD
+			await oikos.issueSynths(tenK, { from: account1 });
+			// Acc 1 Issues 10K oUSD again
+			await oikos.issueSynths(tenK, { from: account1 });
 
 			// Get the SNX mintableSupply for week 2
 			const periodTwoMintableSupply = (await supplySchedule.mintableSupply()).sub(
@@ -823,7 +823,7 @@ contract('Rewards Integration Tests', async accounts => {
 			);
 
 			// Mint the staking rewards
-			await synthetix.mint({ from: owner });
+			await oikos.mint({ from: owner });
 
 			// Close week 3
 			await fastForwardAndCloseFeePeriod();
@@ -860,9 +860,9 @@ contract('Rewards Integration Tests', async accounts => {
 	describe('Collateralisation Ratio Penalties', async () => {
 		beforeEach(async () => {
 			// console.log('3 accounts issueMaxSynths in p1');
-			await synthetix.issueMaxSynths({ from: account1 });
-			await synthetix.issueMaxSynths({ from: account2 });
-			await synthetix.issueMaxSynths({ from: account3 });
+			await oikos.issueMaxSynths({ from: account1 });
+			await oikos.issueMaxSynths({ from: account2 });
+			await oikos.issueMaxSynths({ from: account3 });
 
 			// We should have zero rewards available because the period is still open.
 			const rewardsBefore = await feePool.feesAvailable(account1);

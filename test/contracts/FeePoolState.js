@@ -22,7 +22,7 @@ contract('FeePoolState', async accounts => {
 		account6,
 	] = accounts;
 
-	const [sEUR, sAUD, sBTC, SNX] = ['sEUR', 'sAUD', 'sBTC', 'SNX'].map(toBytes32);
+	const [sEUR, sAUD, oBTC, SNX] = ['sEUR', 'sAUD', 'oBTC', 'SNX'].map(toBytes32);
 
 	let feePool, feePoolState, exchangeRates;
 
@@ -31,7 +31,7 @@ contract('FeePoolState', async accounts => {
 		const timestamp = await currentTime();
 
 		await exchangeRates.updateRates(
-			[sAUD, sEUR, SNX, sBTC],
+			[sAUD, sEUR, SNX, oBTC],
 			['0.5', '1.25', '0.1', '4000'].map(toUnit),
 			timestamp,
 			{
@@ -55,7 +55,7 @@ contract('FeePoolState', async accounts => {
 		feePoolState = await FeePoolState.deployed();
 		feePool = await FeePool.deployed();
 		exchangeRates = await ExchangeRates.deployed();
-		// synthetix = await Synthetix.deployed();
+		// oikos = await Oikos.deployed();
 
 		// Send a price update to guarantee we're not stale.
 		await updateRatesWithDefaults();
@@ -381,7 +381,7 @@ contract('FeePoolState', async accounts => {
 		});
 	});
 
-	// TODO checks SynthetixState debt entry is same as stored FeePoolState Entry
+	// TODO checks OikosState debt entry is same as stored FeePoolState Entry
 	// it.only('should allow an issuer to issue max synths and track debt issuance in feePool', async function() {
 	// 	// Send a price update to guarantee we're not depending on values from outside this test.
 	// 	const oracle = await exchangeRates.oracle();
@@ -395,22 +395,22 @@ contract('FeePoolState', async accounts => {
 	// 	);
 
 	// 	// Give some SNX to account1
-	// 	await synthetix.transfer(account1, toUnit('10000'), { from: owner });
+	// 	await oikos.transfer(account1, toUnit('10000'), { from: owner });
 
 	// 	// Determine maximum amount that can be issued.
-	// 	const maxIssuable = await synthetix.maxIssuableSynths(account1, sUSD);
+	// 	const maxIssuable = await oikos.maxIssuableSynths(account1, oUSD);
 
 	// 	// Issue
-	// 	await synthetix.issueSynths(maxIssuable, { from: account1 });
+	// 	await oikos.issueSynths(maxIssuable, { from: account1 });
 
-	// 	// There should be 200 sUSD of value in the system
-	// 	assert.bnEqual(await synthetix.totalIssuedSynths(sUSD), toUnit('200'));
+	// 	// There should be 200 oUSD of value in the system
+	// 	assert.bnEqual(await oikos.totalIssuedSynths(oUSD), toUnit('200'));
 
 	// 	// And account1 should own all of it.
-	// 	assert.bnEqual(await synthetix.debtBalanceOf(account1, sUSD), toUnit('200'));
+	// 	assert.bnEqual(await oikos.debtBalanceOf(account1, oUSD), toUnit('200'));
 
 	// 	// And feePool.accountIssuanceLedger[account1] should record debt minted
-	// 	const issuanceDataFromState = await synthetixState.issuanceData(account1);
+	// 	const issuanceDataFromState = await oikosState.issuanceData(account1);
 	// 	const feePoolLedger = await feePool.accountIssuanceLedger(account1, 0);
 
 	// 	assert.bnEqual(feePoolLedger.debtEntryIndex, 0);
@@ -432,20 +432,20 @@ contract('FeePoolState', async accounts => {
 	// 	);
 
 	// 	// Give some SNX to account1
-	// 	await synthetix.transfer(account1, toUnit('20000'), { from: owner });
+	// 	await oikos.transfer(account1, toUnit('20000'), { from: owner });
 
 	// 	// Issue
-	// 	await synthetix.issueSynths(toUnit('200'), { from: account1 });
+	// 	await oikos.issueSynths(toUnit('200'), { from: account1 });
 
-	// 	// There should be 200 sUSD of value in the system
-	// 	assert.bnEqual(await synthetix.totalIssuedSynths(sUSD), toUnit('200'));
+	// 	// There should be 200 oUSD of value in the system
+	// 	assert.bnEqual(await oikos.totalIssuedSynths(oUSD), toUnit('200'));
 
 	// 	// And account1 should own all of it.
-	// 	assert.bnEqual(await synthetix.debtBalanceOf(account1, sUSD), toUnit('200'));
+	// 	assert.bnEqual(await oikos.debtBalanceOf(account1, oUSD), toUnit('200'));
 
 	// 	// And feePool.accountIssuanceLedger[account1] should record debt minted
 	// 	let issuanceDataFromState, feePoolLedger;
-	// 	issuanceDataFromState = await synthetixState.issuanceData(account1);
+	// 	issuanceDataFromState = await oikosState.issuanceData(account1);
 	// 	feePoolLedger = await feePool.accountIssuanceLedger(account1, 0);
 
 	// 	assert.bnEqual(feePoolLedger.debtEntryIndex, 0);
@@ -454,12 +454,12 @@ contract('FeePoolState', async accounts => {
 	// 	assert.bnEqual(feePoolLedger.debtPercentage, issuanceDataFromState.initialDebtOwnership);
 
 	// 	// Issue
-	// 	await synthetix.issueSynths(toUnit('200'), { from: account1 });
+	// 	await oikos.issueSynths(toUnit('200'), { from: account1 });
 
 	// 	// And account1 should own all of it.
-	// 	assert.bnEqual(await synthetix.debtBalanceOf(account1, sUSD), toUnit('400'));
+	// 	assert.bnEqual(await oikos.debtBalanceOf(account1, oUSD), toUnit('400'));
 
-	// 	issuanceDataFromState = await synthetixState.issuanceData(account1);
+	// 	issuanceDataFromState = await oikosState.issuanceData(account1);
 	// 	feePoolLedger = await feePool.accountIssuanceLedger(account1, 0);
 
 	// 	// debtEntryIndex is updated to 1 and still own whole system

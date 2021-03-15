@@ -1,7 +1,7 @@
 require('.'); // import common test scaffolding
 
 const RewardsDistribution = artifacts.require('RewardsDistribution');
-const Synthetix = artifacts.require('Synthetix');
+const Oikos = artifacts.require('Oikos');
 const FeePool = artifacts.require('FeePool');
 const MockRewardsRecipient = artifacts.require('MockRewardsRecipient');
 
@@ -20,14 +20,14 @@ contract('RewardsDistribution', async accounts => {
 		account5,
 	] = accounts;
 
-	let rewardsDistribution, synthetix, feePool, mockRewardsRecipient;
+	let rewardsDistribution, oikos, feePool, mockRewardsRecipient;
 
 	beforeEach(async () => {
 		// Save ourselves from having to await deployed() in every single test.
 		// We do this in a beforeEach instead of before to ensure we isolate
 		// contract interfaces to prevent test bleed.
 		rewardsDistribution = await RewardsDistribution.deployed();
-		synthetix = await Synthetix.deployed();
+		oikos = await Oikos.deployed();
 		feePool = await FeePool.deployed();
 		mockRewardsRecipient = await MockRewardsRecipient.new(owner, { from: owner });
 		await mockRewardsRecipient.setRewardsDistribution(rewardsDistribution.address, { from: owner });
@@ -47,7 +47,7 @@ contract('RewardsDistribution', async accounts => {
 
 		assert.equal(await instance.owner(), account1);
 		assert.equal(await instance.authority(), account2);
-		assert.equal(await instance.synthetixProxy(), account3);
+		assert.equal(await instance.oikosProxy(), account3);
 		assert.equal(await instance.rewardEscrow(), account4);
 		assert.equal(await instance.feePoolProxy(), account5);
 	});
@@ -251,7 +251,7 @@ contract('RewardsDistribution', async accounts => {
 			});
 
 			// Set the SNX Token Transfer Address
-			await rewardsDistribution.setSynthetixProxy(synthetix.address, {
+			await rewardsDistribution.setOikosProxy(oikos.address, {
 				from: owner,
 			});
 
@@ -299,17 +299,17 @@ contract('RewardsDistribution', async accounts => {
 			assert.equal(authorityAddress, authorityAddress);
 
 			// Transfer SNX to the RewardsDistribution contract address
-			await synthetix.methods['transfer(address,uint256)'](
+			await oikos.methods['transfer(address,uint256)'](
 				rewardsDistribution.address,
 				totalToDistribute,
 				{ from: owner }
 			);
 
 			// Check RewardsDistribution balance
-			const balanceOfRewardsContract = await synthetix.balanceOf(rewardsDistribution.address);
+			const balanceOfRewardsContract = await oikos.balanceOf(rewardsDistribution.address);
 			assert.bnEqual(balanceOfRewardsContract, totalToDistribute);
 
-			// Distribute Rewards called from Synthetix contract as the authority to distribute
+			// Distribute Rewards called from Oikos contract as the authority to distribute
 			const transaction = await rewardsDistribution.distributeRewards(totalToDistribute, {
 				from: authorityAddress,
 			});
@@ -318,15 +318,15 @@ contract('RewardsDistribution', async accounts => {
 			assert.eventEqual(transaction, 'RewardsDistributed', { amount: totalToDistribute });
 
 			// Check Account 1 balance
-			const balanceOfAccount1 = await synthetix.balanceOf(account1);
+			const balanceOfAccount1 = await oikos.balanceOf(account1);
 			assert.bnEqual(balanceOfAccount1, toUnit('5000'));
 
 			// Check Account 2 balance
-			const balanceOfAccount2 = await synthetix.balanceOf(account2);
+			const balanceOfAccount2 = await oikos.balanceOf(account2);
 			assert.bnEqual(balanceOfAccount2, toUnit('10000'));
 
 			// Check Reward Escrow balance
-			const balanceOfRewardEscrow = await synthetix.balanceOf(rewardEscrowAddress);
+			const balanceOfRewardEscrow = await oikos.balanceOf(rewardEscrowAddress);
 			assert.bnEqual(balanceOfRewardEscrow, toUnit('20000'));
 
 			// Check FeePool has rewards to distribute
@@ -350,13 +350,13 @@ contract('RewardsDistribution', async accounts => {
 			assert.equal(distributionsLength, 2);
 
 			// Transfer SNX to the RewardsDistribution contract address
-			await synthetix.transfer(rewardsDistribution.address, totalToDistribute, { from: owner });
+			await oikos.transfer(rewardsDistribution.address, totalToDistribute, { from: owner });
 
 			// Check RewardsDistribution balance
-			const balanceOfRewardsContract = await synthetix.balanceOf(rewardsDistribution.address);
+			const balanceOfRewardsContract = await oikos.balanceOf(rewardsDistribution.address);
 			assert.bnEqual(balanceOfRewardsContract, totalToDistribute);
 
-			// Distribute Rewards called from Synthetix contract as the authority to distribute
+			// Distribute Rewards called from Oikos contract as the authority to distribute
 			const transaction = await rewardsDistribution.distributeRewards(totalToDistribute, {
 				from: authorityAddress,
 			});
@@ -371,11 +371,11 @@ contract('RewardsDistribution', async accounts => {
 			// });
 
 			// Check Account 1 balance
-			const balanceOfAccount1 = await synthetix.balanceOf(account1);
+			const balanceOfAccount1 = await oikos.balanceOf(account1);
 			assert.bnEqual(balanceOfAccount1, toUnit('5000'));
 
 			// Check Account 2 balance
-			const balanceOfMockRewardsRecipient = await synthetix.balanceOf(mockRewardsRecipient.address);
+			const balanceOfMockRewardsRecipient = await oikos.balanceOf(mockRewardsRecipient.address);
 			assert.bnEqual(balanceOfMockRewardsRecipient, toUnit('10000'));
 
 			// Check Account 2 balance

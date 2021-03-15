@@ -1,5 +1,7 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
 const Web3 = require('web3');
 const { toWei } = require('web3-utils');
 const assert = require('assert');
@@ -9,8 +11,6 @@ require('dotenv').config();
 const { loadConnections, stringify } = require('../../publish/src/util');
 
 const { toBytes32, getSynths, getTarget, getSource } = require('../..');
-
-const sleep = ms => new Promise((resolve, reject) => setTimeout(resolve, ms));
 
 describe('deployments', () => {
 	['kovan', 'rinkeby', 'ropsten', 'mainnet'].forEach(network => {
@@ -36,7 +36,7 @@ describe('deployments', () => {
 				web3 = new Web3(new Web3.providers.HttpProvider(connections.providerUrl));
 
 				contracts = {
-					Synthetix: getContract({ source: 'Synthetix', target: 'ProxySynthetix' }),
+					Oikos: getContract({ source: 'Oikos', target: 'ProxyOikos' }),
 					ExchangeRates: getContract({ target: 'ExchangeRates' }),
 				};
 			});
@@ -44,14 +44,14 @@ describe('deployments', () => {
 			describe('synths.json', () => {
 				const synths = getSynths({ network });
 
-				it(`The number of available synths in Synthetix matches the number of synths in the JSON file: ${synths.length}`, async () => {
-					const availableSynths = await contracts.Synthetix.methods.availableCurrencyKeys().call();
+				it(`The number of available synths in Oikos matches the number of synths in the JSON file: ${synths.length}`, async () => {
+					const availableSynths = await contracts.Oikos.methods.availableCurrencyKeys().call();
 					assert.strictEqual(availableSynths.length, synths.length);
 				});
 				synths.forEach(({ name, inverted, aggregator, index }) => {
 					describe(name, () => {
-						it('Synthetix has the synth added', async () => {
-							const foundSynth = await contracts.Synthetix.methods.synths(toBytes32(name)).call();
+						it('Oikos has the synth added', async () => {
+							const foundSynth = await contracts.Oikos.methods.synths(toBytes32(name)).call();
 							assert.strictEqual(foundSynth, targets[`Synth${name}`].address);
 						});
 						if (inverted) {
@@ -118,9 +118,9 @@ describe('deployments', () => {
 						'RewardEscrow',
 						'RewardsDistribution',
 						'SupplySchedule',
-						'Synthetix',
-						'SynthetixEscrow',
-						'SynthetixState',
+						'Oikos',
+						'OikosEscrow',
+						'OikosState',
 						'SynthsUSD',
 						'SynthsETH',
 					].forEach(name => {
@@ -132,9 +132,9 @@ describe('deployments', () => {
 				});
 				Object.values(targets).forEach(({ name, source, address }) => {
 					if (
-						// SynthetixEscrow is different on mainnet (still old Havven escrow)
+						// OikosEscrow is different on mainnet (still old Havven escrow)
 						network === 'mainnet' &&
-						/^SynthetixEscrow$/.test(name)
+						/^OikosEscrow$/.test(name)
 					) {
 						return;
 					}
@@ -149,13 +149,7 @@ describe('deployments', () => {
 									apikey: process.env.ETHERSCAN_KEY,
 								},
 							});
-							let result;
-							try {
-								result = JSON.parse(response.data.result);
-							} catch (err) {
-								console.log('Error Etherscan returned the following:', response.data.result);
-								throw err;
-							}
+							const result = JSON.parse(response.data.result);
 
 							const sortByName = (a, b) =>
 								(a.name || 'constructor') > (b.name || 'constructor') ? 1 : -1;
@@ -164,16 +158,16 @@ describe('deployments', () => {
 								delete entry.signature;
 								// Some contracts, such as ProxyERC20 were deployed with different function
 								// input names than currently in the code, so reomve these from the check
-								// specifically balanceOf(address owner) was changed to balanceOf(address account)
+								// specificall balanceOf("owner") was changed to "account"
 								(entry.inputs || []).forEach(input => {
 									input.name = '';
 								});
 
-								// Special edge-case: TokenStateSynthetix on mainnet has older
+								// Special edge-case: TokenStateOikos on mainnet has older
 								// method name "nominateOwner" over "nominateNewOwner"
 								if (
 									network === 'mainnet' &&
-									name === 'TokenStateSynthetix' &&
+									name === 'TokenStateOikos' &&
 									entry.name === 'nominateOwner'
 								) {
 									entry.name = 'nominateNewOwner';
@@ -187,12 +181,11 @@ describe('deployments', () => {
 							const expected = stringify(
 								sources[source].abi.sort(sortByName).map(removeSignaturesAndVariableNames)
 							);
+							fs.writeFileSync(path.join(__dirname, 'temp.actual.json'), actual);
+
+							fs.writeFileSync(path.join(__dirname, 'temp.expected.json'), expected);
 
 							assert.strictEqual(actual, expected);
-
-							// wait 1.5s in order to prevent Etherscan rate limits (note parallel tests in CI
-							// can trigger the limit)
-							await sleep(1500);
 						});
 					});
 				});

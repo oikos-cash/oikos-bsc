@@ -2,10 +2,10 @@ pragma solidity 0.4.25;
 
 
 /**
- * @title SynthetixState interface contract
+ * @title OikosState interface contract
  * @notice Abstract contract to hold public getters
  */
-contract ISynthetixState {
+contract IOikosState {
     // A struct for handing values associated with an individual user's debt position
     struct IssuanceData {
         // Percentage of the total debt owned at the time

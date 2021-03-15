@@ -1,6 +1,6 @@
 # Publisher
 
-This script can `build` (compile and flatten), `deploy` and `verify` (on Etherscan) the Synthetix code to a testnet or mainnet.
+This script can `build` (compile and flatten), `deploy` and `verify` (on Etherscan) the Oikos code to a testnet or mainnet.
 
 ## 1. Build
 
@@ -34,7 +34,7 @@ node publish deploy # "--help" for options
   ```javascript
   // config.json
   {
-    "ProxysUSD": {
+    "ProxyoUSD": {
       "deploy": true // whether or not to deploy this or use existing instance from any deployment.json file
     },
 
@@ -93,8 +93,8 @@ node publish nominate # "--help" for options
 ### Example
 
 ```bash
-node publish nominate -n rinkeby -d publish/deployed/rinkeby -g 3 -c Synthetix -c ProxysUSD -o 0x0000000000000000000000000000000000000000
-node publish nominate -o 0xB64fF7a4a33Acdf48d97dab0D764afD0F6176882 -n kovan -c ProxysUSD -d publish/deployed/kovan -g 20
+node publish nominate -n rinkeby -d publish/deployed/rinkeby -g 3 -c Oikos -c ProxyoUSD -o 0x0000000000000000000000000000000000000000
+node publish nominate -o 0xB64fF7a4a33Acdf48d97dab0D764afD0F6176882 -n kovan -c ProxyoUSD -d publish/deployed/kovan -g 20
 ```
 
 ## 5. Owner Actions
@@ -107,7 +107,7 @@ node publish owner # "--help" for options
 
 ## 6. Remove Synths
 
-Will attempt to remove all given synths from the `Synthetix` contract (as long as they have `totalSupply` of `0`) and update the `config.json` and `synths.json` for the deployment folder.
+Will attempt to remove all given synths from the `Oikos` contract (as long as they have `totalSupply` of `0`) and update the `config.json` and `synths.json` for the deployment folder.
 
 ```bash
 node publish remove-synths # "--help" for options
@@ -146,7 +146,7 @@ node publish purge-synths # "--help" for options
 
 ## Generate token file
 
-Th `generate-token-list` command will generate an array of token proxy addresses for the given deployment to be used in the Synthetix website. The command outputs a JSON array to the console.
+Th `generate-token-list` command will generate an array of token proxy addresses for the given deployment to be used in the Oikos website. The command outputs a JSON array to the console.
 
 ```bash
 # output a list of token addresses, decimals and symbol names for all the token proxy contracts

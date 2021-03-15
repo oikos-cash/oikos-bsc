@@ -3,8 +3,8 @@ require('.'); // import common test scaffolding
 const ExchangeRates = artifacts.require('ExchangeRates');
 const MockExchanger = artifacts.require('MockExchanger');
 const FeePool = artifacts.require('FeePool');
-const SynthetixProxy = artifacts.require('Proxy');
-const Synthetix = artifacts.require('Synthetix');
+const OikosProxy = artifacts.require('Proxy');
+const Oikos = artifacts.require('Oikos');
 const Synth = artifacts.require('Synth');
 const AddressResolver = artifacts.require('AddressResolver');
 
@@ -17,7 +17,7 @@ const {
 const { toBytes32 } = require('../..');
 
 contract('Synth', async accounts => {
-	const [sUSD, SNX, sEUR] = ['sUSD', 'SNX', 'sEUR'].map(toBytes32);
+	const [oUSD, SNX, sEUR] = ['oUSD', 'SNX', 'sEUR'].map(toBytes32);
 
 	const [
 		deployerAccount,
@@ -30,8 +30,8 @@ contract('Synth', async accounts => {
 
 	let feePool,
 		FEE_ADDRESS,
-		synthetixProxy,
-		synthetix,
+		oikosProxy,
+		oikos,
 		exchangeRates,
 		sUSDContract,
 		addressResolver,
@@ -45,10 +45,10 @@ contract('Synth', async accounts => {
 		feePool = await FeePool.deployed();
 		FEE_ADDRESS = await feePool.FEE_ADDRESS();
 
-		synthetix = await Synthetix.deployed();
-		synthetixProxy = await SynthetixProxy.deployed();
-		sUSDContract = await Synth.at(await synthetix.synths(sUSD));
-		sEURContract = await Synth.at(await synthetix.synths(sEUR));
+		oikos = await Oikos.deployed();
+		oikosProxy = await OikosProxy.deployed();
+		sUSDContract = await Synth.at(await oikos.synths(oUSD));
+		sEURContract = await Synth.at(await oikos.synths(sEUR));
 
 		addressResolver = await AddressResolver.deployed();
 
@@ -62,7 +62,7 @@ contract('Synth', async accounts => {
 	});
 
 	it('should set constructor params on deployment', async () => {
-		// address _proxy, TokenState _tokenState, address _synthetixProxy, address _feePoolProxy,
+		// address _proxy, TokenState _tokenState, address _oikosProxy, address _feePoolProxy,
 		// string _tokenName, string _tokenSymbol, address _owner, bytes32 _currencyKey, uint _totalSupply)
 		const synth = await Synth.new(
 			account1,
@@ -110,7 +110,7 @@ contract('Synth', async accounts => {
 					fnc: sUSDContract.issue,
 					args: [account1, toUnit('1')],
 					accounts,
-					reason: 'Only Synthetix, FeePool, Exchanger or Issuer contracts allowed',
+					reason: 'Only Oikos, FeePool, Exchanger or Issuer contracts allowed',
 				});
 			});
 		});
@@ -120,18 +120,18 @@ contract('Synth', async accounts => {
 					fnc: sUSDContract.burn,
 					args: [account1, toUnit('1')],
 					accounts,
-					reason: 'Only Synthetix, FeePool, Exchanger or Issuer contracts allowed',
+					reason: 'Only Oikos, FeePool, Exchanger or Issuer contracts allowed',
 				});
 			});
 		});
 	});
 
 	it('should transfer (ERC20) without error', async () => {
-		// Issue 10,000 sUSD.
+		// Issue 10,000 oUSD.
 		const amount = toUnit('10000');
-		await synthetix.issueSynths(amount, { from: owner });
+		await oikos.issueSynths(amount, { from: owner });
 
-		// Do a single transfer of all our sUSD.
+		// Do a single transfer of all our oUSD.
 		const transaction = await sUSDContract.methods['transfer(address,uint256)'](account1, amount, {
 			from: owner,
 		});
@@ -152,9 +152,9 @@ contract('Synth', async accounts => {
 	});
 
 	it('should revert when transferring (ERC20) with insufficient balance', async () => {
-		// Issue 10,000 sUSD.
+		// Issue 10,000 oUSD.
 		const amount = toUnit('10000');
-		await synthetix.issueSynths(amount, { from: owner });
+		await oikos.issueSynths(amount, { from: owner });
 
 		// Try to transfer 10,000 + 1 wei, which we don't have the balance for.
 		await assert.revert(
@@ -167,14 +167,14 @@ contract('Synth', async accounts => {
 	});
 
 	it('should transferFrom (ERC20) without error', async () => {
-		// Issue 10,000 sUSD.
+		// Issue 10,000 oUSD.
 		const amount = toUnit('10000');
-		await synthetix.issueSynths(amount, { from: owner });
+		await oikos.issueSynths(amount, { from: owner });
 
 		// Give account1 permission to act on our behalf
 		await sUSDContract.approve(account1, amount, { from: owner });
 
-		// Do a single transfer of all our sUSD.
+		// Do a single transfer of all our oUSD.
 		const transaction = await sUSDContract.transferFrom(owner, account1, amount, {
 			from: account1,
 		});
@@ -198,9 +198,9 @@ contract('Synth', async accounts => {
 	});
 
 	it('should revert when calling transferFrom (ERC20) with insufficient allowance', async () => {
-		// Issue 10,000 sUSD.
+		// Issue 10,000 oUSD.
 		const amount = toUnit('10000');
-		await synthetix.issueSynths(amount, { from: owner });
+		await oikos.issueSynths(amount, { from: owner });
 
 		// Approve for 1 wei less than amount
 		await sUSDContract.approve(account1, amount.sub(web3.utils.toBN('1')), {
@@ -216,9 +216,9 @@ contract('Synth', async accounts => {
 	});
 
 	it('should revert when calling transferFrom (ERC20) with insufficient balance', async () => {
-		// Issue 10,000 - 1 wei sUSD.
+		// Issue 10,000 - 1 wei oUSD.
 		const amount = toUnit('10000');
-		await synthetix.issueSynths(amount.sub(web3.utils.toBN('1')), { from: owner });
+		await oikos.issueSynths(amount.sub(web3.utils.toBN('1')), { from: owner });
 
 		// Approve for full amount
 		await sUSDContract.approve(account1, amount, { from: owner });
@@ -231,9 +231,9 @@ contract('Synth', async accounts => {
 		);
 	});
 
-	it('should issue successfully when called by Synthetix', async () => {
-		// Overwrite Synthetix address to the owner to allow us to invoke issue on the Synth
-		await addressResolver.importAddresses(['Synthetix'].map(toBytes32), [owner], { from: owner });
+	it('should issue successfully when called by Oikos', async () => {
+		// Overwrite Oikos address to the owner to allow us to invoke issue on the Synth
+		await addressResolver.importAddresses(['Oikos'].map(toBytes32), [owner], { from: owner });
 		const transaction = await sUSDContract.issue(account1, toUnit('10000'), {
 			from: owner,
 		});
@@ -253,15 +253,15 @@ contract('Synth', async accounts => {
 		);
 	});
 
-	it('should burn successfully when called by Synthetix', async () => {
+	it('should burn successfully when called by Oikos', async () => {
 		// Issue a bunch of synths so we can play with them.
-		await synthetix.issueSynths(toUnit('10000'), { from: owner });
+		await oikos.issueSynths(toUnit('10000'), { from: owner });
 
-		// In order to invoke burn as the owner, temporarily overwrite the Synthetix address
+		// In order to invoke burn as the owner, temporarily overwrite the Oikos address
 		// in the resolver
-		await addressResolver.importAddresses(['Synthetix'].map(toBytes32), [owner], { from: owner });
+		await addressResolver.importAddresses(['Oikos'].map(toBytes32), [owner], { from: owner });
 		const transaction = await sUSDContract.burn(owner, toUnit('10000'), { from: owner });
-		await addressResolver.importAddresses(['Synthetix'].map(toBytes32), [synthetix.address], {
+		await addressResolver.importAddresses(['Oikos'].map(toBytes32), [oikos.address], {
 			from: owner,
 		});
 
@@ -276,10 +276,10 @@ contract('Synth', async accounts => {
 
 	it('should revert when burning more synths than exist', async () => {
 		// Issue a bunch of synths so we can play with them.
-		await synthetix.issueSynths(toUnit('10000'), { from: owner });
+		await oikos.issueSynths(toUnit('10000'), { from: owner });
 
-		// Set the Synthetix target of the SynthetixProxy to owner
-		await synthetixProxy.setTarget(owner, { from: owner });
+		// Set the Oikos target of the OikosProxy to owner
+		await oikosProxy.setTarget(owner, { from: owner });
 
 		// Burning 10000 + 1 wei should fail.
 		await assert.revert(
@@ -288,12 +288,12 @@ contract('Synth', async accounts => {
 	});
 
 	it('should transfer (ERC20) with no fee', async () => {
-		// Issue 10,000 sUSD.
+		// Issue 10,000 oUSD.
 		const amount = toUnit('10000');
 
-		await synthetix.issueSynths(amount, { from: owner });
+		await oikos.issueSynths(amount, { from: owner });
 
-		// Do a single transfer of all our sUSD.
+		// Do a single transfer of all our oUSD.
 		const transaction = await sUSDContract.methods['transfer(address,uint256)'](account1, amount, {
 			from: owner,
 		});
@@ -322,16 +322,16 @@ contract('Synth', async accounts => {
 		let amount;
 		beforeEach(async () => {
 			// set mock exchanger as exchanger
-			exchanger = await MockExchanger.new(synthetix.address);
+			exchanger = await MockExchanger.new(oikos.address);
 
 			await addressResolver.importAddresses(['Exchanger'].map(toBytes32), [exchanger.address], {
 				from: owner,
 			});
 
-			// Issue 1,000 sUSD.
+			// Issue 1,000 oUSD.
 			amount = toUnit('1000');
 
-			await synthetix.issueSynths(amount, { from: owner });
+			await oikos.issueSynths(amount, { from: owner });
 		});
 		it('then transferableSynths should be the total amount', async () => {
 			assert.bnEqual(await sUSDContract.transferableSynths(owner), toUnit('1000'));
@@ -344,8 +344,8 @@ contract('Synth', async accounts => {
 			it('then transferableSynths should be the total amount minus the reclaim', async () => {
 				assert.bnEqual(await sUSDContract.transferableSynths(owner), toUnit('990'));
 			});
-			it('should transfer all and settle 1000 sUSD less reclaim amount', async () => {
-				// Do a single transfer of all our sUSD.
+			it('should transfer all and settle 1000 oUSD less reclaim amount', async () => {
+				// Do a single transfer of all our oUSD.
 				await sUSDContract.transferAndSettle(account1, amount, {
 					from: owner,
 				});
@@ -358,11 +358,11 @@ contract('Synth', async accounts => {
 				// The recipient should have the correct amount minus reclaimed
 				assert.bnEqual(await sUSDContract.balanceOf(account1), expectedAmountTransferred);
 			});
-			it('should transferFrom all and settle 1000 sUSD less reclaim amount', async () => {
+			it('should transferFrom all and settle 1000 oUSD less reclaim amount', async () => {
 				// Give account1 permission to act on our behalf
 				await sUSDContract.approve(account1, amount, { from: owner });
 
-				// Do a single transfer of all our sUSD.
+				// Do a single transfer of all our oUSD.
 				await sUSDContract.transferFromAndSettle(owner, account1, amount, {
 					from: account1,
 				});
@@ -376,9 +376,9 @@ contract('Synth', async accounts => {
 				assert.bnEqual(await sUSDContract.balanceOf(account1), expectedAmountTransferred);
 			});
 			describe('when account has more balance than transfer amount + reclaim', async () => {
-				it('should transfer 50 sUSD and burn 10 sUSD', async () => {
+				it('should transfer 50 oUSD and burn 10 oUSD', async () => {
 					const transferAmount = toUnit('50');
-					// Do a single transfer of all our sUSD.
+					// Do a single transfer of all our oUSD.
 					await sUSDContract.transferAndSettle(account1, transferAmount, {
 						from: owner,
 					});
@@ -394,7 +394,7 @@ contract('Synth', async accounts => {
 					// The recipient should have the correct amount
 					assert.bnEqual(await sUSDContract.balanceOf(account1), expectedAmountTransferred);
 				});
-				it('should transferFrom 50 sUSD and settle reclaim amount', async () => {
+				it('should transferFrom 50 oUSD and settle reclaim amount', async () => {
 					const transferAmount = toUnit('50');
 
 					// Give account1 permission to act on our behalf
@@ -425,7 +425,7 @@ contract('Synth', async accounts => {
 				await exchanger.setReclaim(reclaimAmount);
 				balanceBefore = await sUSDContract.balanceOf(owner);
 			});
-			describe('when reclaim 600 sUSD and transferring 500 sUSD synths', async () => {
+			describe('when reclaim 600 oUSD and transferring 500 oUSD synths', async () => {
 				// original balance is 1000, reclaim 600 and should send 400
 				const transferAmount = toUnit('500');
 
@@ -434,7 +434,7 @@ contract('Synth', async accounts => {
 				});
 
 				it('should transfer remaining balance less reclaimed', async () => {
-					// Do a single transfer of all our sUSD.
+					// Do a single transfer of all our oUSD.
 					await sUSDContract.transferAndSettle(account1, transferAmount, {
 						from: owner,
 					});
@@ -471,15 +471,15 @@ contract('Synth', async accounts => {
 	describe('when transferring synths to FEE_ADDRESS', async () => {
 		let amount;
 		beforeEach(async () => {
-			// Issue 10,000 sUSD.
+			// Issue 10,000 oUSD.
 			amount = toUnit('10000');
 
-			await synthetix.issueSynths(amount, { from: owner });
+			await oikos.issueSynths(amount, { from: owner });
 		});
 		it('should transfer to FEE_ADDRESS and recorded as fee', async () => {
 			const feeBalanceBefore = await sUSDContract.balanceOf(FEE_ADDRESS);
 
-			// Do a single transfer of all our sUSD.
+			// Do a single transfer of all our oUSD.
 			const transaction = await sUSDContract.transfer(FEE_ADDRESS, amount, {
 				from: owner,
 			});
@@ -494,13 +494,13 @@ contract('Synth', async accounts => {
 			);
 
 			const firstFeePeriod = await feePool.recentFeePeriods(0);
-			// FEE_ADDRESS balance of sUSD increased
+			// FEE_ADDRESS balance of oUSD increased
 			assert.bnEqual(await sUSDContract.balanceOf(FEE_ADDRESS), feeBalanceBefore.add(amount));
 
 			// fees equal to amount are recorded in feesToDistribute
 			assert.bnEqual(firstFeePeriod.feesToDistribute, feeBalanceBefore.add(amount));
 		});
-		it('should transfer to FEE_ADDRESS and exchange non-sUSD synths', async () => {
+		it('should transfer to FEE_ADDRESS and exchange non-oUSD synths', async () => {
 			// allocate the user some sEUR
 			await issueSynthsToUser({ owner, user: owner, amount, synth: sEUR });
 
@@ -510,7 +510,7 @@ contract('Synth', async accounts => {
 			// balance of sEUR after exchange fees
 			const balanceOf = await sEURContract.balanceOf(owner);
 
-			const amountInUSD = await exchangeRates.effectiveValue(sEUR, balanceOf, sUSD);
+			const amountInUSD = await exchangeRates.effectiveValue(sEUR, balanceOf, oUSD);
 
 			// Do a single transfer of all sEUR to FEE_ADDRESS
 			await sEURContract.transfer(FEE_ADDRESS, balanceOf, {
@@ -519,7 +519,7 @@ contract('Synth', async accounts => {
 
 			const firstFeePeriod = await feePool.recentFeePeriods(0);
 
-			// FEE_ADDRESS balance of sUSD increased by USD amount given from exchange
+			// FEE_ADDRESS balance of oUSD increased by USD amount given from exchange
 			assert.bnEqual(await sUSDContract.balanceOf(FEE_ADDRESS), feeBalanceBefore.add(amountInUSD));
 
 			// fees equal to amountInUSD are recorded in feesToDistribute
@@ -529,16 +529,16 @@ contract('Synth', async accounts => {
 	describe('when transferring synths to ZERO_ADDRESS', async () => {
 		let amount;
 		beforeEach(async () => {
-			// Issue 10,000 sUSD.
+			// Issue 10,000 oUSD.
 			amount = toUnit('1000');
 
-			await synthetix.issueSynths(amount, { from: owner });
+			await oikos.issueSynths(amount, { from: owner });
 		});
 		it('should burn the synths and reduce totalSupply', async () => {
 			const balanceBefore = await sUSDContract.balanceOf(owner);
 			const totalSupplyBefore = await sUSDContract.totalSupply();
 
-			// Do a single transfer of all our sUSD to ZERO_ADDRESS.
+			// Do a single transfer of all our oUSD to ZERO_ADDRESS.
 			const transaction = await sUSDContract.transfer(ZERO_ADDRESS, amount, {
 				from: owner,
 			});

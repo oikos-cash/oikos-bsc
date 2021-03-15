@@ -3,15 +3,15 @@
 module.exports = {
 	addSolidityHeader({ content, contract }) {
 		return `/*
-* Synthetix - ${contract}
+* Oikos - ${contract}
 *
-* https://github.com/Synthetixio/synthetix
-* https://synthetix.io
+* https://github.com/Oikosio/oikos
+* https://oikos.io
 *
 * MIT License
 * ===========
 *
-* Copyright (c) ${new Date().getFullYear()} Synthetix
+* Copyright (c) ${new Date().getFullYear()} Oikos
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal

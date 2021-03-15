@@ -13,7 +13,7 @@ date:       2019-06-19
 MODULE DESCRIPTION
 -----------------------------------------------------------------
 
-A proxy contract that is ERC20 compliant for the Synthetix Network.
+A proxy contract that is ERC20 compliant for the Oikos Network.
 
 If it does not recognise a function being called on it, passes all
 value and call data to an underlying target contract.
@@ -95,7 +95,7 @@ contract ProxyERC20 is Proxy, IERC20 {
         // Forward the ERC20 call to the target contract
         IERC20(target).transfer(to, value);
 
-        // Event emitting will occur via Synthetix.Proxy._emit()
+        // Event emitting will occur via Oikos.Proxy._emit()
         return true;
     }
 
@@ -115,7 +115,7 @@ contract ProxyERC20 is Proxy, IERC20 {
         // Forward the ERC20 call to the target contract
         IERC20(target).approve(spender, value);
 
-        // Event emitting will occur via Synthetix.Proxy._emit()
+        // Event emitting will occur via Oikos.Proxy._emit()
         return true;
     }
 
@@ -132,7 +132,7 @@ contract ProxyERC20 is Proxy, IERC20 {
         // Forward the ERC20 call to the target contract
         IERC20(target).transferFrom(from, to, value);
 
-        // Event emitting will occur via Synthetix.Proxy._emit()
+        // Event emitting will occur via Oikos.Proxy._emit()
         return true;
     }
 }

@@ -1,7 +1,7 @@
 require('.'); // import common test scaffolding
 
 const SupplySchedule = artifacts.require('SupplySchedule');
-const SynthetixProxy = artifacts.require('Proxy');
+const OikosProxy = artifacts.require('Proxy');
 const {
 	toUnit,
 	divideDecimal,
@@ -16,9 +16,9 @@ contract('SupplySchedule', async accounts => {
 	const initialWeeklySupply = divideDecimal(75000000, 52); // 75,000,000 / 52 weeks
 	const inflationStartDate = 1551830400; // 2019-03-06T00:00:00+00:00
 
-	const [deployerAccount, owner, synthetix, account1, account2] = accounts;
+	const [deployerAccount, owner, oikos, account1, account2] = accounts;
 
-	let supplySchedule, synthetixProxy, decayRate;
+	let supplySchedule, oikosProxy, decayRate;
 
 	function getDecaySupplyForWeekNumber(initialAmount, weekNumber) {
 		const effectiveRate = powerToDecimal(toUnit(1).sub(decayRate), weekNumber);
@@ -32,10 +32,10 @@ contract('SupplySchedule', async accounts => {
 		// We do this in a beforeEach instead of before to ensure we isolate
 		// contract interfaces to prevent test bleed.
 		supplySchedule = await SupplySchedule.deployed();
-		synthetixProxy = await SynthetixProxy.deployed();
+		oikosProxy = await OikosProxy.deployed();
 
-		await supplySchedule.setSynthetixProxy(synthetixProxy.address, { from: owner });
-		await synthetixProxy.setTarget(synthetix, { from: owner });
+		await supplySchedule.setOikosProxy(oikosProxy.address, { from: owner });
+		await oikosProxy.setTarget(oikos, { from: owner });
 
 		decayRate = await supplySchedule.DECAY_RATE();
 	});
@@ -55,19 +55,19 @@ contract('SupplySchedule', async accounts => {
 		assert.bnEqual(await instance.INITIAL_WEEKLY_SUPPLY(), weeklyIssuance);
 	});
 
-	describe('linking synthetix', async () => {
-		it('should have set synthetix proxy', async () => {
-			const synthetixProxy = await supplySchedule.synthetixProxy();
-			assert.equal(synthetixProxy, synthetixProxy);
+	describe('linking oikos', async () => {
+		it('should have set oikos proxy', async () => {
+			const oikosProxy = await supplySchedule.oikosProxy();
+			assert.equal(oikosProxy, oikosProxy);
 		});
-		it('should revert when setting synthetix proxy to ZERO_ADDRESS', async () => {
-			await assert.revert(supplySchedule.setSynthetixProxy(ZERO_ADDRESS, { from: owner }));
+		it('should revert when setting oikos proxy to ZERO_ADDRESS', async () => {
+			await assert.revert(supplySchedule.setOikosProxy(ZERO_ADDRESS, { from: owner }));
 		});
 
-		it('should emit an event when setting synthetix proxy', async () => {
-			const txn = await supplySchedule.setSynthetixProxy(account2, { from: owner });
+		it('should emit an event when setting oikos proxy', async () => {
+			const txn = await supplySchedule.setOikosProxy(account2, { from: owner });
 
-			assert.eventEqual(txn, 'SynthetixProxyUpdated', {
+			assert.eventEqual(txn, 'OikosProxyUpdated', {
 				newAddress: account2,
 			});
 		});
@@ -236,9 +236,9 @@ contract('SupplySchedule', async accounts => {
 				instance = supplySchedule
 			) {
 				const weekCounterBefore = await instance.weekCounter();
-				// call updateMintValues to mimic synthetix issuing tokens
+				// call updateMintValues to mimic oikos issuing tokens
 				const transaction = await instance.recordMintEvent(mintedSupply, {
-					from: synthetix,
+					from: oikos,
 				});
 
 				const weekCounterAfter = weekCounterBefore.add(new BN(weeksIssued));
@@ -453,8 +453,8 @@ contract('SupplySchedule', async accounts => {
 					});
 
 					// setup new instance
-					await instance.setSynthetixProxy(synthetixProxy.address, { from: owner });
-					await synthetixProxy.setTarget(synthetix, { from: owner });
+					await instance.setOikosProxy(oikosProxy.address, { from: owner });
+					await oikosProxy.setTarget(oikos, { from: owner });
 				});
 
 				it('should calculate week 40 as week 1 of decay ', async () => {
@@ -531,8 +531,8 @@ contract('SupplySchedule', async accounts => {
 					});
 
 					// setup new instance
-					await instance.setSynthetixProxy(synthetixProxy.address, { from: owner });
-					await synthetixProxy.setTarget(synthetix, { from: owner });
+					await instance.setOikosProxy(oikosProxy.address, { from: owner });
+					await oikosProxy.setTarget(oikos, { from: owner });
 				});
 
 				it('should calculate week 234 as last week of decay (195th) ', async () => {

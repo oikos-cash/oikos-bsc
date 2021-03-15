@@ -5,8 +5,8 @@ const ExchangeRates = artifacts.require('ExchangeRates');
 const FeePool = artifacts.require('FeePool');
 const FeePoolProxy = artifacts.require('FeePool');
 const FeePoolState = artifacts.require('FeePoolState');
-const Synthetix = artifacts.require('Synthetix');
-const SynthetixState = artifacts.require('SynthetixState');
+const Oikos = artifacts.require('Oikos');
+const OikosState = artifacts.require('OikosState');
 const Synth = artifacts.require('Synth');
 const RewardEscrow = artifacts.require('RewardEscrow');
 const AddressResolver = artifacts.require('AddressResolver');
@@ -29,7 +29,7 @@ contract('FeePool', async accounts => {
 		const timestamp = await currentTime();
 
 		await exchangeRates.updateRates(
-			[XDR, sAUD, sEUR, SNX, sBTC, iBTC, sETH],
+			[XDR, sAUD, sEUR, SNX, oBTC, iBTC, oETH],
 			['5', '0.5', '1.25', '0.1', '5000', '4000', '172'].map(toUnit),
 			timestamp,
 			{
@@ -70,15 +70,15 @@ contract('FeePool', async accounts => {
 	// };
 
 	// CURRENCIES
-	const [XDR, sUSD, sAUD, sEUR, sBTC, SNX, iBTC, sETH] = [
+	const [XDR, oUSD, sAUD, sEUR, oBTC, SNX, iBTC, oETH] = [
 		'XDR',
-		'sUSD',
+		'oUSD',
 		'sAUD',
 		'sEUR',
-		'sBTC',
+		'oBTC',
 		'SNX',
 		'iBTC',
-		'sETH',
+		'oETH',
 	].map(toBytes32);
 
 	const [deployerAccount, owner, oracle, account1, account2, account3] = accounts;
@@ -86,8 +86,8 @@ contract('FeePool', async accounts => {
 	let feePool,
 		feePoolProxy,
 		FEE_ADDRESS,
-		synthetix,
-		synthetixState,
+		oikos,
+		oikosState,
 		exchangeRates,
 		feePoolState,
 		delegates,
@@ -108,11 +108,11 @@ contract('FeePool', async accounts => {
 		rewardEscrow = await RewardEscrow.deployed();
 		FEE_ADDRESS = await feePool.FEE_ADDRESS();
 
-		synthetix = await Synthetix.deployed();
-		synthetixState = await SynthetixState.deployed();
+		oikos = await Oikos.deployed();
+		oikosState = await OikosState.deployed();
 
-		sUSDContract = await Synth.at(await synthetix.synths(sUSD));
-		XDRContract = await Synth.at(await synthetix.synths(XDR));
+		sUSDContract = await Synth.at(await oikos.synths(oUSD));
+		XDRContract = await Synth.at(await oikos.synths(XDR));
 
 		addressResolver = await AddressResolver.deployed();
 		// Send a price update to guarantee we're not stale.
@@ -121,7 +121,7 @@ contract('FeePool', async accounts => {
 
 	it('should set constructor params on deployment', async () => {
 		const exchangeFeeRate = toUnit('0.0030');
-		// constructor(address _proxy, address _owner, Synthetix _synthetix, FeePoolState _feePoolState, FeePoolEternalStorage _feePoolEternalStorage, ISynthetixState _synthetixState, ISynthetixEscrow _rewardEscrow, uint _exchangeFeeRate)
+		// constructor(address _proxy, address _owner, Oikos _oikos, FeePoolState _feePoolState, FeePoolEternalStorage _feePoolEternalStorage, IOikosState _oikosState, IOikosEscrow _rewardEscrow, uint _exchangeFeeRate)
 		const instance = await FeePool.new(
 			account1, // proxy
 			account2, // owner
@@ -375,8 +375,8 @@ contract('FeePool', async accounts => {
 		});
 	});
 	it('should correctly roll over unclaimed fees when closing fee periods', async () => {
-		// Issue 10,000 sUSD.
-		await synthetix.issueSynths(toUnit('10000'), { from: owner });
+		// Issue 10,000 oUSD.
+		await oikos.issueSynths(toUnit('10000'), { from: owner });
 
 		// Users are only entitled to fees when they've participated in a fee period in its
 		// entirety. Roll over the fee period so fees generated below count for owner.
@@ -396,8 +396,8 @@ contract('FeePool', async accounts => {
 	it('should correctly close the current fee period when there are more than FEE_PERIOD_LENGTH periods', async () => {
 		const length = await feePool.FEE_PERIOD_LENGTH();
 
-		// Issue 10,000 sUSD.
-		await synthetix.issueSynths(toUnit('10000'), { from: owner });
+		// Issue 10,000 oUSD.
+		await oikos.issueSynths(toUnit('10000'), { from: owner });
 
 		// Users have to have minted before the close of period. Close that fee period
 		// so that there won't be any fees in period. future fees are available.
@@ -444,7 +444,7 @@ contract('FeePool', async accounts => {
 		}
 
 		// Now create the first fee
-		await synthetix.issueSynths(toUnit('10000'), { from: owner });
+		await oikos.issueSynths(toUnit('10000'), { from: owner });
 		await sUSDContract.transfer(account1, toUnit('10000'), {
 			from: owner,
 		});
@@ -502,24 +502,24 @@ contract('FeePool', async accounts => {
 		await feePool.closeCurrentFeePeriod({ from: account1 });
 	});
 
-	it('should allow a user to claim their fees in sUSD', async () => {
+	it('should allow a user to claim their fees in oUSD', async () => {
 		const length = (await feePool.FEE_PERIOD_LENGTH()).toNumber();
 
-		// Issue 10,000 sUSD for two different accounts.
-		await synthetix.transfer(account1, toUnit('1000000'), {
+		// Issue 10,000 oUSD for two different accounts.
+		await oikos.transfer(account1, toUnit('1000000'), {
 			from: owner,
 		});
 
-		await synthetix.issueSynths(toUnit('10000'), { from: owner });
-		await synthetix.issueSynths(toUnit('10000'), { from: account1 });
+		await oikos.issueSynths(toUnit('10000'), { from: owner });
+		await oikos.issueSynths(toUnit('10000'), { from: account1 });
 
 		// For each fee period (with one extra to test rollover), do two exchange transfers, then close it off.
 		for (let i = 0; i <= length; i++) {
 			const exchange1 = toUnit(((i + 1) * 10).toString());
 			const exchange2 = toUnit(((i + 1) * 15).toString());
 
-			await synthetix.exchange(sUSD, exchange1, sAUD, { from: owner });
-			await synthetix.exchange(sUSD, exchange2, sAUD, { from: account1 });
+			await oikos.exchange(oUSD, exchange1, sAUD, { from: owner });
+			await oikos.exchange(oUSD, exchange2, sAUD, { from: account1 });
 
 			await closeFeePeriod();
 		}
@@ -541,19 +541,19 @@ contract('FeePool', async accounts => {
 	});
 
 	it('should allow a user to claim their fees if they minted debt during period', async () => {
-		// Issue 10,000 sUSD for two different accounts.
-		await synthetix.transfer(account1, toUnit('1000000'), {
+		// Issue 10,000 oUSD for two different accounts.
+		await oikos.transfer(account1, toUnit('1000000'), {
 			from: owner,
 		});
 
-		await synthetix.issueSynths(toUnit('10000'), { from: owner });
+		await oikos.issueSynths(toUnit('10000'), { from: owner });
 
 		// For first fee period, do two transfers, then close it off.
 		let totalFees = web3.utils.toBN('0');
 
 		const exchange1 = toUnit((10).toString());
 
-		await synthetix.exchange(sUSD, exchange1, sAUD, { from: owner });
+		await oikos.exchange(oUSD, exchange1, sAUD, { from: owner });
 
 		totalFees = totalFees.add(exchange1.sub(await feePool.amountReceivedFromExchange(exchange1)));
 
@@ -574,10 +574,10 @@ contract('FeePool', async accounts => {
 
 		// FeePeriod 2 - account 1 joins and mints 50% of the debt
 		totalFees = web3.utils.toBN('0');
-		await synthetix.issueSynths(toUnit('10000'), { from: account1 });
+		await oikos.issueSynths(toUnit('10000'), { from: account1 });
 
 		// Generate fees
-		await synthetix.exchange(sUSD, exchange1, sAUD, { from: owner });
+		await oikos.exchange(oUSD, exchange1, sAUD, { from: owner });
 		totalFees = totalFees.add(exchange1.sub(await feePool.amountReceivedFromExchange(exchange1)));
 
 		await closeFeePeriod();
@@ -596,16 +596,16 @@ contract('FeePool', async accounts => {
 		assert.bnClose(feesAvailableAcc1[0], totalFees.div(web3.utils.toBN('2')), '8');
 	});
 
-	it('should allow a user to claim their fees in sUSD (as half of total) after some exchanging', async () => {
+	it('should allow a user to claim their fees in oUSD (as half of total) after some exchanging', async () => {
 		const length = (await feePool.FEE_PERIOD_LENGTH()).toNumber();
 
-		// Issue 10,000 sUSD for two different accounts.
-		await synthetix.transfer(account1, toUnit('1000000'), {
+		// Issue 10,000 oUSD for two different accounts.
+		await oikos.transfer(account1, toUnit('1000000'), {
 			from: owner,
 		});
 
-		await synthetix.issueSynths(toUnit('10000'), { from: owner });
-		await synthetix.issueSynths(toUnit('10000'), { from: account1 });
+		await oikos.issueSynths(toUnit('10000'), { from: owner });
+		await oikos.issueSynths(toUnit('10000'), { from: account1 });
 
 		// For each fee period (with one extra to test rollover), do two transfers, then close it off.
 		let totalFees = web3.utils.toBN('0');
@@ -614,8 +614,8 @@ contract('FeePool', async accounts => {
 			const exchange1 = toUnit(((i + 1) * 10).toString());
 			const exchange2 = toUnit(((i + 1) * 15).toString());
 
-			await synthetix.exchange(sUSD, exchange1, sAUD, { from: owner });
-			await synthetix.exchange(sUSD, exchange2, sAUD, { from: account1 });
+			await oikos.exchange(oUSD, exchange1, sAUD, { from: owner });
+			await oikos.exchange(oUSD, exchange2, sAUD, { from: account1 });
 
 			totalFees = totalFees.add(exchange1.sub(await feePool.amountReceivedFromExchange(exchange1)));
 			totalFees = totalFees.add(exchange2.sub(await feePool.amountReceivedFromExchange(exchange2)));
@@ -657,8 +657,8 @@ contract('FeePool', async accounts => {
 	});
 
 	it('should revert when a user tries to double claim their fees', async () => {
-		// Issue 10,000 sUSD.
-		await synthetix.issueSynths(toUnit('10000'), { from: owner });
+		// Issue 10,000 oUSD.
+		await oikos.issueSynths(toUnit('10000'), { from: owner });
 
 		// Users are only allowed to claim fees in periods they had an issued balance
 		// for the entire period.
@@ -666,7 +666,7 @@ contract('FeePool', async accounts => {
 
 		// Do a single exchange of all our synths to generate a fee.
 		const exchange1 = toUnit(100);
-		await synthetix.exchange(sUSD, exchange1, sAUD, { from: owner });
+		await oikos.exchange(oUSD, exchange1, sAUD, { from: owner });
 
 		// Assert that the correct fee is in the fee pool.
 		const fee = await sUSDContract.balanceOf(FEE_ADDRESS);
@@ -696,19 +696,19 @@ contract('FeePool', async accounts => {
 	it('should track fee withdrawals correctly', async () => {
 		const amount = toUnit('10000');
 
-		// Issue sUSD for two different accounts.
-		await synthetix.transfer(account1, toUnit('1000000'), {
+		// Issue oUSD for two different accounts.
+		await oikos.transfer(account1, toUnit('1000000'), {
 			from: owner,
 		});
 
-		await synthetix.issueSynths(amount, { from: owner });
-		await synthetix.issueSynths(amount, { from: account1 });
+		await oikos.issueSynths(amount, { from: owner });
+		await oikos.issueSynths(amount, { from: account1 });
 
 		await closeFeePeriod();
 
 		// Generate a fee.
 		const exchange = toUnit('10000');
-		await synthetix.exchange(sUSD, exchange, sAUD, { from: owner });
+		await oikos.exchange(oUSD, exchange, sAUD, { from: owner });
 
 		await closeFeePeriod();
 
@@ -804,16 +804,16 @@ contract('FeePool', async accounts => {
 		const amount = toUnit('10000');
 		const fee = amount.sub(await feePool.amountReceivedFromExchange(amount));
 
-		// Issue sUSD for two different accounts.
-		await synthetix.transfer(account1, toUnit('1000000'), {
+		// Issue oUSD for two different accounts.
+		await oikos.transfer(account1, toUnit('1000000'), {
 			from: owner,
 		});
 
-		await synthetix.issueSynths(amount, { from: owner });
-		await synthetix.issueSynths(amount.mul(web3.utils.toBN('2')), { from: account1 });
+		await oikos.issueSynths(amount, { from: owner });
+		await oikos.issueSynths(amount.mul(web3.utils.toBN('2')), { from: account1 });
 
 		// Generate a fee.
-		await synthetix.exchange(sUSD, amount, sAUD, { from: owner });
+		await oikos.exchange(oUSD, amount, sAUD, { from: owner });
 
 		// Should be no fees available yet because the period is still pending.
 		assert.bnEqual(await feePool.totalFeesAvailable(), 0);
@@ -830,16 +830,16 @@ contract('FeePool', async accounts => {
 		const amount2 = amount1.mul(web3.utils.toBN('2'));
 		const fee1 = amount1.sub(await feePool.amountReceivedFromExchange(amount1));
 
-		// Issue sUSD for two different accounts.
-		await synthetix.transfer(account1, toUnit('1000000'), {
+		// Issue oUSD for two different accounts.
+		await oikos.transfer(account1, toUnit('1000000'), {
 			from: owner,
 		});
 
-		await synthetix.issueSynths(amount1, { from: owner });
-		await synthetix.issueSynths(amount2, { from: account1 });
+		await oikos.issueSynths(amount1, { from: owner });
+		await oikos.issueSynths(amount2, { from: account1 });
 
 		// Generate a fee.
-		await synthetix.exchange(sUSD, amount1, sAUD, { from: owner });
+		await oikos.exchange(oUSD, amount1, sAUD, { from: owner });
 
 		// Should be no fees available yet because the period is still pending.
 		assert.bnEqual(await feePool.totalFeesAvailable(), 0);
@@ -854,7 +854,7 @@ contract('FeePool', async accounts => {
 		const fee2 = amount2.sub(await feePool.amountReceivedFromExchange(amount2));
 
 		// Generate a fee.
-		await synthetix.exchange(sUSD, amount2, sAUD, { from: account1 });
+		await oikos.exchange(oUSD, amount2, sAUD, { from: account1 });
 
 		// Should be only the previous fees available because the period is still pending.
 		assert.bnEqual(await feePool.totalFeesAvailable(), fee1);
@@ -870,19 +870,19 @@ contract('FeePool', async accounts => {
 		const amount = toUnit('10000');
 		const fee = amount.sub(await feePool.amountReceivedFromExchange(amount));
 
-		// Issue sUSD for two different accounts.
-		await synthetix.transfer(account1, toUnit('1000000'), {
+		// Issue oUSD for two different accounts.
+		await oikos.transfer(account1, toUnit('1000000'), {
 			from: owner,
 		});
 
-		await synthetix.issueSynths(amount, { from: owner });
-		await synthetix.issueSynths(amount.mul(web3.utils.toBN('2')), { from: account1 });
+		await oikos.issueSynths(amount, { from: owner });
+		await oikos.issueSynths(amount.mul(web3.utils.toBN('2')), { from: account1 });
 
 		// Close out the period to allow both users to be part of the whole fee period.
 		await closeFeePeriod();
 
 		// Generate a fee.
-		await synthetix.exchange(sUSD, amount, sAUD, { from: owner });
+		await oikos.exchange(oUSD, amount, sAUD, { from: owner });
 
 		// Should be no fees available yet because the period is still pending.
 		let feesAvailable;
@@ -918,19 +918,19 @@ contract('FeePool', async accounts => {
 		const fee = amount.sub(await feePool.amountReceivedFromExchange(amount));
 		const FEE_PERIOD_LENGTH = await feePool.FEE_PERIOD_LENGTH();
 
-		// Issue sUSD for two different accounts.
-		await synthetix.transfer(account1, toUnit('1000000'), {
+		// Issue oUSD for two different accounts.
+		await oikos.transfer(account1, toUnit('1000000'), {
 			from: owner,
 		});
 
-		await synthetix.issueSynths(amount, { from: owner });
-		await synthetix.issueSynths(amount.mul(web3.utils.toBN('2')), { from: account1 });
+		await oikos.issueSynths(amount, { from: owner });
+		await oikos.issueSynths(amount.mul(web3.utils.toBN('2')), { from: account1 });
 
 		// Close out the period to allow both users to be part of the whole fee period.
 		await closeFeePeriod();
 
 		// Generate a fee.
-		await synthetix.exchange(sUSD, amount, sAUD, { from: owner });
+		await oikos.exchange(oUSD, amount, sAUD, { from: owner });
 
 		let feesAvailable;
 		// Should be no fees available yet because the period is still pending.
@@ -1006,7 +1006,7 @@ contract('FeePool', async accounts => {
 
 			await feePool.setTargetThreshold(thresholdPercent, { from: owner });
 
-			const issuanceRatio = await synthetixState.issuanceRatio();
+			const issuanceRatio = await oikosState.issuanceRatio();
 			const penaltyThreshold = await feePool.targetThreshold();
 
 			assert.bnEqual(penaltyThreshold, toUnit(thresholdPercent / 100));
@@ -1022,7 +1022,7 @@ contract('FeePool', async accounts => {
 
 			await feePool.setTargetThreshold(thresholdPercent, { from: owner });
 
-			const issuanceRatio = await synthetixState.issuanceRatio();
+			const issuanceRatio = await oikosState.issuanceRatio();
 
 			assert.bnEqual(issuanceRatio, toUnit('0.2'));
 
@@ -1037,7 +1037,7 @@ contract('FeePool', async accounts => {
 		});
 
 		it('should be no penalty if issuance ratio is less than target ratio', async () => {
-			await synthetix.issueMaxSynths({ from: owner });
+			await oikos.issueMaxSynths({ from: owner });
 
 			// Increase the price so we start well and truly within our 20% ratio.
 			const newRate = (await exchangeRates.rateForCurrency(SNX)).add(web3.utils.toBN('1'));
@@ -1051,7 +1051,7 @@ contract('FeePool', async accounts => {
 
 		it('should correctly calculate the 10% buffer for penalties at specific issuance ratios', async () => {
 			const step = toUnit('0.01');
-			await synthetix.issueMaxSynths({ from: owner });
+			await oikos.issueMaxSynths({ from: owner });
 
 			// Increase the price so we start well and truly within our 20% ratio.
 			const newRate = (await exchangeRates.rateForCurrency(SNX)).add(
@@ -1062,14 +1062,14 @@ contract('FeePool', async accounts => {
 				from: oracle,
 			});
 
-			const issuanceRatio = fromUnit(await synthetixState.issuanceRatio());
+			const issuanceRatio = fromUnit(await oikosState.issuanceRatio());
 			const penaltyThreshold = fromUnit(await feePool.targetThreshold());
 
 			const threshold = Number(issuanceRatio) * (1 + Number(penaltyThreshold));
-			// Start from the current price of synthetix and slowly decrease the price until
+			// Start from the current price of oikos and slowly decrease the price until
 			// we hit almost zero. Assert the correct penalty at each point.
 			while ((await exchangeRates.rateForCurrency(SNX)).gt(step.mul(web3.utils.toBN('2')))) {
-				const ratio = await synthetix.collateralisationRatio(owner);
+				const ratio = await oikos.collateralisationRatio(owner);
 
 				if (ratio.lte(toUnit(threshold))) {
 					// Should be claimable
@@ -1089,18 +1089,18 @@ contract('FeePool', async accounts => {
 		});
 
 		it('should revert when users try to claim fees with > 10% of threshold', async () => {
-			// Issue 10,000 sUSD for two different accounts.
-			await synthetix.transfer(account1, toUnit('1000000'), {
+			// Issue 10,000 oUSD for two different accounts.
+			await oikos.transfer(account1, toUnit('1000000'), {
 				from: owner,
 			});
 
-			await synthetix.issueMaxSynths({ from: account1 });
+			await oikos.issueMaxSynths({ from: account1 });
 			const amount = await sUSDContract.balanceOf(account1);
-			await synthetix.issueSynths(amount, { from: owner });
+			await oikos.issueSynths(amount, { from: owner });
 			await closeFeePeriod();
 
 			// Do a transfer to generate fees
-			await synthetix.exchange(sUSD, amount, sAUD, { from: owner });
+			await oikos.exchange(oUSD, amount, sAUD, { from: owner });
 			const fee = amount.sub(await feePool.amountReceivedFromExchange(amount));
 
 			// We should have zero fees available because the period is still open.
@@ -1128,18 +1128,18 @@ contract('FeePool', async accounts => {
 		});
 
 		it('should be able to set the Target threshold to 15% and claim fees', async () => {
-			// Issue 10,000 sUSD for two different accounts.
-			await synthetix.transfer(account1, toUnit('1000000'), {
+			// Issue 10,000 oUSD for two different accounts.
+			await oikos.transfer(account1, toUnit('1000000'), {
 				from: owner,
 			});
 
-			await synthetix.issueMaxSynths({ from: account1 });
+			await oikos.issueMaxSynths({ from: account1 });
 			const amount = await sUSDContract.balanceOf(account1);
-			await synthetix.issueSynths(amount, { from: owner });
+			await oikos.issueSynths(amount, { from: owner });
 			await closeFeePeriod();
 
 			// Do a transfer to generate fees
-			await synthetix.exchange(sUSD, amount, sAUD, { from: owner });
+			await oikos.exchange(oUSD, amount, sAUD, { from: owner });
 			const fee = amount.sub(await feePool.amountReceivedFromExchange(amount));
 
 			// We should have zero fees available because the period is still open.
@@ -1190,18 +1190,18 @@ contract('FeePool', async accounts => {
 
 	describe('claimOnBehalf and approveClaimOnBehalf', async () => {
 		async function generateFees() {
-			// Issue 10,000 sUSD.
-			await synthetix.transfer(account1, toUnit('1000000'), {
+			// Issue 10,000 oUSD.
+			await oikos.transfer(account1, toUnit('1000000'), {
 				from: owner,
 			});
 
-			await synthetix.issueSynths(toUnit('10000'), { from: account1 });
+			await oikos.issueSynths(toUnit('10000'), { from: account1 });
 
 			// For first fee period, do one exchange.
 			const exchange1 = toUnit((10).toString());
 
 			// generate fee
-			await synthetix.exchange(sUSD, exchange1, sAUD, { from: account1 });
+			await oikos.exchange(oUSD, exchange1, sAUD, { from: account1 });
 
 			await closeFeePeriod();
 		}
@@ -1313,7 +1313,7 @@ contract('FeePool', async accounts => {
 		it('should be able to get fees available when feePoolState issuanceData is 6 blocks', async () => {
 			const length = (await feePool.FEE_PERIOD_LENGTH()).toNumber();
 
-			await synthetix.transfer(account1, toUnit('1000000'), {
+			await oikos.transfer(account1, toUnit('1000000'), {
 				from: owner,
 			});
 
@@ -1327,10 +1327,10 @@ contract('FeePool', async accounts => {
 				const exchange1 = toUnit(((i + 1) * 10).toString());
 
 				// Mint debt each period to fill up feelPoolState issuanceData to [6]
-				await synthetix.issueSynths(toUnit('1000'), { from: owner });
-				await synthetix.issueSynths(toUnit('1000'), { from: account1 });
+				await oikos.issueSynths(toUnit('1000'), { from: owner });
+				await oikos.issueSynths(toUnit('1000'), { from: account1 });
 
-				await synthetix.exchange(sUSD, exchange1, sAUD, { from: owner });
+				await oikos.exchange(oUSD, exchange1, sAUD, { from: owner });
 
 				totalFees = totalFees.add(
 					exchange1.sub(await feePool.amountReceivedFromExchange(exchange1))
@@ -1367,7 +1367,7 @@ contract('FeePool', async accounts => {
 
 		it('should escrow tokens on an address when called by owner', async () => {
 			// Approve FeePool to spend my fund to escrow
-			await synthetix.approve(feePool.address, escrowAmount, {
+			await oikos.approve(feePool.address, escrowAmount, {
 				from: owner,
 			});
 			await feePool.appendVestingEntry(account3, escrowAmount, { from: owner });
@@ -1377,17 +1377,17 @@ contract('FeePool', async accounts => {
 		});
 	});
 
-	describe('Converting XDR Fees to sUSD Fees', async () => {
+	describe('Converting XDR Fees to oUSD Fees', async () => {
 		const XDRAmount = toUnit('100');
 
 		beforeEach(async () => {
 			// Setup XDRs at Fee Address for testing
 
-			// overwrite the Synthetix address in the resolver so we can issue
-			await addressResolver.importAddresses(['Synthetix'].map(toBytes32), [owner], { from: owner });
+			// overwrite the Oikos address in the resolver so we can issue
+			await addressResolver.importAddresses(['Oikos'].map(toBytes32), [owner], { from: owner });
 			await XDRContract.issue(FEE_ADDRESS, XDRAmount, { from: owner });
 			// now put it back so functionality works correctly
-			await addressResolver.importAddresses(['Synthetix'].map(toBytes32), [synthetix.address], {
+			await addressResolver.importAddresses(['Oikos'].map(toBytes32), [oikos.address], {
 				from: owner,
 			});
 
@@ -1407,7 +1407,7 @@ contract('FeePool', async accounts => {
 			await assert.revert(feePool.convertXDRFeesTosUSD(account1, { from: owner }));
 		});
 
-		it('should convert XDR Synths to sUSD when called by owner', async () => {
+		it('should convert XDR Synths to oUSD when called by owner', async () => {
 			// Assert that we have correct values in the fee pool
 			const oldXDRBalance = await XDRContract.balanceOf(FEE_ADDRESS);
 			const oldsUSDBalance = await sUSDContract.balanceOf(FEE_ADDRESS);
@@ -1422,11 +1422,11 @@ contract('FeePool', async accounts => {
 			const newsUSDBalance = await sUSDContract.balanceOf(FEE_ADDRESS);
 
 			assert.bnEqual(newXDRBalance, 0);
-			const conversionAmount = await exchangeRates.effectiveValue(XDR, oldXDRBalance, sUSD);
+			const conversionAmount = await exchangeRates.effectiveValue(XDR, oldXDRBalance, oUSD);
 			assert.bnEqual(newsUSDBalance, conversionAmount);
 		});
 
-		it('should convert FeePeriod Data from XDRs to sUSD', async () => {
+		it('should convert FeePeriod Data from XDRs to oUSD', async () => {
 			const oldFeePeriods = [];
 
 			// Assert that we have correct values in the fee pool
@@ -1442,12 +1442,12 @@ contract('FeePool', async accounts => {
 				const feesToDistributesUSD = await exchangeRates.effectiveValue(
 					XDR,
 					oldFeePeriods[i].feesToDistribute,
-					sUSD
+					oUSD
 				);
 				const feesClaimedsUSD = await exchangeRates.effectiveValue(
 					XDR,
 					oldFeePeriods[i].feesClaimed,
-					sUSD
+					oUSD
 				);
 
 				const feePeriodConverted = await feePool.recentFeePeriods(i);

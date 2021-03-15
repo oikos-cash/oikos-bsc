@@ -1,9 +1,9 @@
 {
-	"name": "synthetix",
-	"version": "2.20.1",
+	"name": "@oikos/oikos-bsc",
+	"version": "0.1.2",
 	"license": "MIT",
-	"author": "Synthetix",
-	"description": "The smart contracts which make up the Synthetix system. (synthetix.io)",
+	"author": "Oikos",
+	"description": "The smart contracts which make up the Oikos system. (synthetix.io)",
 	"scripts": {
 		"clean-install": "rm -rf build && rm ./package-lock.json && rm -rf node_modules/* && npm install",
 		"coverage": "solidity-coverage",
@@ -15,17 +15,17 @@
 		"test": "concurrently --kill-others --success first \"npm run ganache > /dev/null\" \"npm run test:core -- ${TRUFFLE_TEST:=test/contracts/*}\"",
 		"test:core": "wait-port 8545 && truffle compile && truffle test",
 		"test:publish": "concurrently --kill-others --success first \"npm run ganache:int > /dev/null\" \"wait-port 8545 && mocha test/publish\"",
-		"test:deployments": "mocha test/deployments -- --timeout 15000",
+		"test:deployments": "mocha test/deployments -- --timeout 8000",
 		"test:testnet": "node test/testnet",
 		"test:local": "concurrently --kill-others --success first \"npm run ganache:int > /dev/null\" \"wait-port 8545 && node test/testnet --network local --yes\"",
 		"truffle": "truffle"
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/Synthetixio/synthetix.git"
+		"url": "git+https://github.com/Oikosio/synthetix.git"
 	},
 	"keywords": [
-		"Synthetix",
+		"Oikos",
 		"Solidity",
 		"Truffle"
 	],
@@ -43,7 +43,7 @@
 	},
 	"main": "index.js",
 	"bugs": {
-		"url": "https://github.com/Synthetixio/synthetix/issues"
+		"url": "https://github.com/Oikosio/synthetix/issues"
 	},
 	"homepage": "https://synthetix.io",
 	"directories": {

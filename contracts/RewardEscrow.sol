@@ -13,10 +13,10 @@ date:       2019-03-01
 -----------------------------------------------------------------
 MODULE DESCRIPTION
 -----------------------------------------------------------------
-Escrows the SNX rewards from the inflationary supply awarded to
-users for staking their SNX and maintaining the c-ratio target.
+Escrows the OKS rewards from the inflationary supply awarded to
+users for staking their OKS and maintaining the c-ratio target.
 
-SNX rewards are escrowed for 1 year from the claim date and users
+OKS rewards are escrowed for 1 year from the claim date and users
 can call vest in 12 months time.
 -----------------------------------------------------------------
 */
@@ -26,31 +26,31 @@ pragma solidity 0.4.25;
 import "./SafeDecimalMath.sol";
 import "./Owned.sol";
 import "./interfaces/IFeePool.sol";
-import "./interfaces/ISynthetix.sol";
+import "./interfaces/IOikos.sol";
 
 
 /**
- * @title A contract to hold escrowed SNX and free them at given schedules.
+ * @title A contract to hold escrowed OKS and free them at given schedules.
  */
 contract RewardEscrow is Owned {
     using SafeMath for uint;
 
-    /* The corresponding Synthetix contract. */
-    ISynthetix public synthetix;
+    /* The corresponding Oikos contract. */
+    IOikos public oikos;
 
     IFeePool public feePool;
 
     /* Lists of (timestamp, quantity) pairs per account, sorted in ascending time order.
-     * These are the times at which each given quantity of SNX vests. */
+     * These are the times at which each given quantity of OKS vests. */
     mapping(address => uint[2][]) public vestingSchedules;
 
-    /* An account's total escrowed synthetix balance to save recomputing this for fee extraction purposes. */
+    /* An account's total escrowed oikos balance to save recomputing this for fee extraction purposes. */
     mapping(address => uint) public totalEscrowedAccountBalance;
 
-    /* An account's total vested reward synthetix. */
+    /* An account's total vested reward oikos. */
     mapping(address => uint) public totalVestedAccountBalance;
 
-    /* The total remaining escrowed balance, for verifying the actual synthetix balance of this contract against. */
+    /* The total remaining escrowed balance, for verifying the actual oikos balance of this contract against. */
     uint public totalEscrowedBalance;
 
     uint constant TIME_INDEX = 0;
@@ -62,19 +62,19 @@ contract RewardEscrow is Owned {
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(address _owner, ISynthetix _synthetix, IFeePool _feePool) public Owned(_owner) {
-        synthetix = _synthetix;
+    constructor(address _owner, IOikos _oikos, IFeePool _feePool) public Owned(_owner) {
+        oikos = _oikos;
         feePool = _feePool;
     }
 
     /* ========== SETTERS ========== */
 
     /**
-     * @notice set the synthetix contract address as we need to transfer SNX when the user vests
+     * @notice set the oikos contract address as we need to transfer OKS when the user vests
      */
-    function setSynthetix(ISynthetix _synthetix) external onlyOwner {
-        synthetix = _synthetix;
-        emit SynthetixUpdated(_synthetix);
+    function setOikos(IOikos _oikos) external onlyOwner {
+        oikos = _oikos;
+        emit OikosUpdated(_oikos);
     }
 
     /**
@@ -104,7 +104,7 @@ contract RewardEscrow is Owned {
 
     /**
      * @notice Get a particular schedule entry for an account.
-     * @return A pair of uints: (timestamp, synthetix quantity).
+     * @return A pair of uints: (timestamp, oikos quantity).
      */
     function getVestingScheduleEntry(address account, uint index) public view returns (uint[2]) {
         return vestingSchedules[account][index];
@@ -118,7 +118,7 @@ contract RewardEscrow is Owned {
     }
 
     /**
-     * @notice Get the quantity of SNX associated with a given schedule entry.
+     * @notice Get the quantity of OKS associated with a given schedule entry.
      */
     function getVestingQuantity(address account, uint index) public view returns (uint) {
         return getVestingScheduleEntry(account, index)[QUANTITY_INDEX];
@@ -139,7 +139,7 @@ contract RewardEscrow is Owned {
 
     /**
      * @notice Obtain the next schedule entry that will vest for a given user.
-     * @return A pair of uints: (timestamp, synthetix quantity). */
+     * @return A pair of uints: (timestamp, oikos quantity). */
     function getNextVestingEntry(address account) public view returns (uint[2]) {
         uint index = getNextVestingIndex(account);
         if (index == numVestingEntries(account)) {
@@ -183,12 +183,12 @@ contract RewardEscrow is Owned {
 
     /**
      * @notice Add a new vesting entry at a given time and quantity to an account's schedule.
-     * @dev A call to this should accompany a previous successful call to synthetix.transfer(rewardEscrow, amount),
+     * @dev A call to this should accompany a previous successful call to oikos.transfer(rewardEscrow, amount),
      * to ensure that when the funds are withdrawn, there is enough balance.
      * Note; although this function could technically be used to produce unbounded
      * arrays, it's only withinn the 4 year period of the weekly inflation schedule.
      * @param account The account to append a new vesting entry to.
-     * @param quantity The quantity of SNX that will be escrowed.
+     * @param quantity The quantity of OKS that will be escrowed.
      */
     function appendVestingEntry(address account, uint quantity) public onlyFeePool {
         /* No empty or already-passed vesting entries allowed. */
@@ -197,7 +197,7 @@ contract RewardEscrow is Owned {
         /* There must be enough balance in the contract to provide for the vesting entry. */
         totalEscrowedBalance = totalEscrowedBalance.add(quantity);
         require(
-            totalEscrowedBalance <= synthetix.balanceOf(this),
+            totalEscrowedBalance <= oikos.balanceOf(this),
             "Must be enough balance in the contract to provide for the vesting entry"
         );
 
@@ -211,7 +211,7 @@ contract RewardEscrow is Owned {
         if (scheduleLength == 0) {
             totalEscrowedAccountBalance[account] = quantity;
         } else {
-            /* Disallow adding new vested SNX earlier than the last one.
+            /* Disallow adding new vested OKS earlier than the last one.
              * Since entries are only appended, this means that no vesting date can be repeated. */
             require(
                 getVestingTime(account, scheduleLength - 1) < time,
@@ -226,7 +226,7 @@ contract RewardEscrow is Owned {
     }
 
     /**
-     * @notice Allow a user to withdraw any SNX in their schedule that have vested.
+     * @notice Allow a user to withdraw any OKS in their schedule that have vested.
      */
     function vest() external {
         uint numEntries = numVestingEntries(msg.sender);
@@ -250,7 +250,7 @@ contract RewardEscrow is Owned {
             totalEscrowedBalance = totalEscrowedBalance.sub(total);
             totalEscrowedAccountBalance[msg.sender] = totalEscrowedAccountBalance[msg.sender].sub(total);
             totalVestedAccountBalance[msg.sender] = totalVestedAccountBalance[msg.sender].add(total);
-            synthetix.transfer(msg.sender, total);
+            oikos.transfer(msg.sender, total);
             emit Vested(msg.sender, now, total);
         }
     }
@@ -266,7 +266,7 @@ contract RewardEscrow is Owned {
 
     /* ========== EVENTS ========== */
 
-    event SynthetixUpdated(address newSynthetix);
+    event OikosUpdated(address newOikos);
 
     event FeePoolUpdated(address newFeePool);
 

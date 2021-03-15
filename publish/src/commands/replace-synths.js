@@ -85,7 +85,7 @@ const replaceSynths = async ({
 			console.error(red(`Synth ${synth} not found!`));
 			process.exitCode = 1;
 			return;
-		} else if (['sUSD'].indexOf(synth) >= 0) {
+		} else if (['oUSD'].indexOf(synth) >= 0) {
 			console.error(red(`Synth ${synth} cannot be replaced`));
 			process.exitCode = 1;
 			return;
@@ -201,11 +201,11 @@ const replaceSynths = async ({
 		}
 	}
 
-	const { address: synthetixAddress, source } = deployment.targets['Synthetix'];
-	const { abi: synthetixABI } = deployment.sources[source];
-	const Synthetix = new web3.eth.Contract(synthetixABI, synthetixAddress);
+	const { address: oikosAddress, source } = deployment.targets['Oikos'];
+	const { abi: oikosABI } = deployment.sources[source];
+	const Oikos = new web3.eth.Contract(oikosABI, oikosAddress);
 
-	const resolverAddress = await Synthetix.methods.resolver().call();
+	const resolverAddress = await Oikos.methods.resolver().call();
 	const updatedDeployment = JSON.parse(JSON.stringify(deployment));
 	const updatedSynths = JSON.parse(JSON.stringify(synths));
 
@@ -233,10 +233,10 @@ const replaceSynths = async ({
 			writeArg: '0',
 		});
 
-		// 2. invoke Synthetix.removeSynth(currencyKey) // owner
+		// 2. invoke Oikos.removeSynth(currencyKey) // owner
 		await runStep({
-			contract: 'Synthetix',
-			target: Synthetix,
+			contract: 'Oikos',
+			target: Oikos,
 			read: 'synths',
 			readArg: currencyKeyInBytes,
 			expected: input => input === ZERO_ADDRESS,
@@ -261,10 +261,10 @@ const replaceSynths = async ({
 			],
 		});
 
-		// 4. Synthetix.addSynth(newone) // owner
+		// 4. Oikos.addSynth(newone) // owner
 		await runStep({
-			contract: 'Synthetix',
-			target: Synthetix,
+			contract: 'Oikos',
+			target: Oikos,
 			read: 'synths',
 			readArg: currencyKeyInBytes,
 			expected: input => input === replacementSynth.options.address,

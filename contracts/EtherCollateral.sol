@@ -22,7 +22,7 @@ contract EtherCollateral is Owned, Pausable, ReentrancyGuard, MixinResolver {
 
     uint256 constant SECONDS_IN_A_YEAR = 31536000; // Common Year
 
-    // Where fees are pooled in sUSD.
+    // Where fees are pooled in oUSD.
     address constant FEE_ADDRESS = 0xfeEFEEfeefEeFeefEEFEEfEeFeefEEFeeFEEFEeF;
 
     // ========== SETTER STATE VARIABLES ==========
@@ -37,10 +37,10 @@ contract EtherCollateral is Owned, Pausable, ReentrancyGuard, MixinResolver {
     // Minting fee for issuing the synths. Default 50 bips.
     uint256 public issueFeeRate = (5 * SafeDecimalMath.unit()) / 1000;
 
-    // Maximum amount of sETH that can be issued by the EtherCollateral contract. Default 5000
+    // Maximum amount of oETH that can be issued by the EtherCollateral contract. Default 5000
     uint256 public issueLimit = SafeDecimalMath.unit() * 5000;
 
-    // Minimum amount of ETH to create loan preventing griefing and gas consumption. Min 1ETH = 0.6666666667 sETH
+    // Minimum amount of ETH to create loan preventing griefing and gas consumption. Min 1ETH = 0.6666666667 oETH
     uint256 public minLoanSize = SafeDecimalMath.unit() * 1;
 
     // Maximum number of loans an account can create
@@ -275,7 +275,7 @@ contract EtherCollateral is Owned, Pausable, ReentrancyGuard, MixinResolver {
         // Calculate issuance amount
         uint256 loanAmount = loanAmountFromCollateral(msg.value);
 
-        // Require sETH to mint does not exceed cap
+        // Require oETH to mint does not exceed cap
         require(totalIssuedSynths.add(loanAmount) < issueLimit, "Loan Amount exceeds the supply cap. ");
 
         // Get a Loan ID
@@ -344,11 +344,11 @@ contract EtherCollateral is Owned, Pausable, ReentrancyGuard, MixinResolver {
         // Burn all Synths issued for the loan
         synthsETH().burn(account, synthLoan.loanAmount);
 
-        // Fee Distribution. Purchase sUSD with ETH from Depot
-        require(synthsUSD().balanceOf(depot()) >= totalFees, "The sUSD Depot does not have enough sUSD to buy for fees");
+        // Fee Distribution. Purchase oUSD with ETH from Depot
+        require(synthsUSD().balanceOf(depot()) >= totalFees, "The oUSD Depot does not have enough oUSD to buy for fees");
         depot().exchangeEtherForSynths.value(totalFees)();
 
-        // Transfer the sUSD to distribute to SNX holders.
+        // Transfer the oUSD to distribute to OKS holders.
         synthsUSD().transfer(FEE_ADDRESS, synthsUSD().balanceOf(this));
 
         // Send remainder ETH to caller

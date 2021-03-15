@@ -3,7 +3,7 @@
 FILE INFORMATION
 -----------------------------------------------------------------
 
-file:       SynthetixState.sol
+file:       OikosState.sol
 version:    1.0
 author:     Kevin Brown
 date:       2018-10-19
@@ -13,13 +13,13 @@ MODULE DESCRIPTION
 -----------------------------------------------------------------
 
 A contract that holds issuance state and preferred currency of
-users in the Synthetix system.
+users in the Oikos system.
 
-This contract is used side by side with the Synthetix contract
+This contract is used side by side with the Oikos contract
 to make it easier to upgrade the contract logic while maintaining
 issuance state.
 
-The Synthetix contract is also quite large and on the edge of
+The Oikos contract is also quite large and on the edge of
 being beyond the contract size limit without moving this information
 out to another contract.
 
@@ -35,17 +35,17 @@ contract to the new one.
 
 pragma solidity 0.4.25;
 
-import "./Synthetix.sol";
+import "./Oikos.sol";
 import "./LimitedSetup.sol";
 import "./SafeDecimalMath.sol";
 import "./State.sol";
 
 
 /**
- * @title Synthetix State
- * @notice Stores issuance information and preferred currency information of the Synthetix contract.
+ * @title Oikos State
+ * @notice Stores issuance information and preferred currency information of the Oikos contract.
  */
-contract SynthetixState is State, LimitedSetup {
+contract OikosState is State, LimitedSetup {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
 
@@ -76,9 +76,9 @@ contract SynthetixState is State, LimitedSetup {
     uint public importedXDRAmount;
 
     // A quantity of synths greater than this ratio
-    // may not be issued against a given value of SNX.
+    // may not be issued against a given value of OKS.
     uint public issuanceRatio = SafeDecimalMath.unit() / 5;
-    // No more synths may be issued than the value of SNX backing them.
+    // No more synths may be issued than the value of OKS backing them.
     uint constant MAX_ISSUANCE_RATIO = SafeDecimalMath.unit();
 
     // Users can specify their preferred currency, in which case all synths they receive
@@ -164,7 +164,7 @@ contract SynthetixState is State, LimitedSetup {
     }
 
     /**
-     * @notice Import issuer data from the old Synthetix contract before multicurrency
+     * @notice Import issuer data from the old Oikos contract before multicurrency
      * @dev Only callable by the contract owner, and only for 1 week after deployment.
      */
     function importIssuerData(address[] accounts, uint[] sUSDAmounts) external onlyOwner onlyDuringSetup {
@@ -176,14 +176,14 @@ contract SynthetixState is State, LimitedSetup {
     }
 
     /**
-     * @notice Import issuer data from the old Synthetix contract before multicurrency
+     * @notice Import issuer data from the old Oikos contract before multicurrency
      * @dev Only used from importIssuerData above, meant to be disposable
      */
     function _addToDebtRegister(address account, uint amount) internal {
-        // Note: this function's implementation has been removed from the current Synthetix codebase
+        // Note: this function's implementation has been removed from the current Oikos codebase
         // as it could only habe been invoked during setup (see importIssuerData) which has since expired.
         // There have been changes to the functions it requires, so to ensure compiles, the below has been removed.
-        // For the previous implementation, see Synthetix._addToDebtRegister()
+        // For the previous implementation, see Oikos._addToDebtRegister()
     }
 
     /* ========== VIEWS ========== */

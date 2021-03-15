@@ -1,4 +1,4 @@
-const Synthetix = artifacts.require('Synthetix');
+const Oikos = artifacts.require('Oikos');
 const Synth = artifacts.require('Synth');
 const Exchanger = artifacts.require('Exchanger');
 const FeePool = artifacts.require('FeePool');
@@ -19,11 +19,11 @@ module.exports = {
 	async getDecodedLogs({ hash }) {
 		// Get receipt to collect all transaction events
 		const receipt = await web3.eth.getTransactionReceipt(hash);
-		const synthetix = await Synthetix.deployed();
-		const synthContract = await Synth.at(await synthetix.synths(toBytes32('sUSD')));
+		const oikos = await Oikos.deployed();
+		const synthContract = await Synth.at(await oikos.synths(toBytes32('oUSD')));
 
 		// And required ABIs to fully decode them
-		abiDecoder.addABI(synthetix.abi);
+		abiDecoder.addABI(oikos.abi);
 		abiDecoder.addABI(synthContract.abi);
 
 		return abiDecoder.decodeLogs(receipt.logs);
@@ -57,18 +57,18 @@ module.exports = {
 
 		const exchangeRates = await ExchangeRates.deployed();
 
-		const [SNX, sAUD, sEUR, sBTC, iBTC, sETH, ETH] = [
+		const [SNX, sAUD, sEUR, oBTC, iBTC, oETH, ETH] = [
 			'SNX',
 			'sAUD',
 			'sEUR',
-			'sBTC',
+			'oBTC',
 			'iBTC',
-			'sETH',
+			'oETH',
 			'ETH',
 		].map(toBytes32);
 
 		await exchangeRates.updateRates(
-			[SNX, sAUD, sEUR, sBTC, iBTC, sETH, ETH],
+			[SNX, sAUD, sEUR, oBTC, iBTC, oETH, ETH],
 			['0.1', '0.5', '1.25', '5000', '4000', '172', '172'].map(toUnit),
 			timestamp,
 			{
@@ -98,18 +98,18 @@ module.exports = {
 
 	// Helper function that can issue synths directly to a user without having to have them exchange anything
 	async issueSynthsToUser({ owner, user, amount, synth }) {
-		const synthetix = await Synthetix.deployed();
+		const oikos = await Oikos.deployed();
 		const addressResolver = await AddressResolver.deployed();
-		const synthContract = await Synth.at(await synthetix.synths(synth));
+		const synthContract = await Synth.at(await oikos.synths(synth));
 
-		// First override the resolver to make it seem the owner is the Synthetix contract
-		await addressResolver.importAddresses(['Synthetix'].map(toBytes32), [owner], {
+		// First override the resolver to make it seem the owner is the Oikos contract
+		await addressResolver.importAddresses(['Oikos'].map(toBytes32), [owner], {
 			from: owner,
 		});
 		await synthContract.issue(user, amount, {
 			from: owner,
 		});
-		await addressResolver.importAddresses(['Synthetix'].map(toBytes32), [synthetix.address], {
+		await addressResolver.importAddresses(['Oikos'].map(toBytes32), [oikos.address], {
 			from: owner,
 		});
 	},

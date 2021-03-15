@@ -51,9 +51,9 @@ describe('publish scripts', function() {
 	let gasPrice;
 	let accounts;
 	let SNX;
-	let sUSD;
-	let sBTC;
-	let sETH;
+	let oUSD;
+	let oBTC;
+	let oETH;
 	let web3;
 	let compiledSources;
 
@@ -91,7 +91,7 @@ describe('publish scripts', function() {
 		}
 
 		gasLimit = 5000000;
-		[SNX, sUSD, sBTC, sETH] = ['SNX', 'sUSD', 'sBTC', 'sETH'].map(toBytes32);
+		[SNX, oUSD, oBTC, oETH] = ['SNX', 'oUSD', 'oBTC', 'oETH'].map(toBytes32);
 		web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:8545'));
 		web3.eth.accounts.wallet.add(accounts.deployer.private);
 		gasPrice = web3.utils.toWei('5', 'gwei');
@@ -104,7 +104,7 @@ describe('publish scripts', function() {
 			let sources;
 			let targets;
 			let synths;
-			let Synthetix;
+			let Oikos;
 			let timestamp;
 			let sUSDContract;
 			let sBTCContract;
@@ -123,11 +123,11 @@ describe('publish scripts', function() {
 
 				sources = snx.getSource({ network });
 				targets = snx.getTarget({ network });
-				synths = snx.getSynths({ network }).filter(({ name }) => name !== 'sUSD' && name !== 'XDR');
+				synths = snx.getSynths({ network }).filter(({ name }) => name !== 'oUSD' && name !== 'XDR');
 
-				Synthetix = new web3.eth.Contract(
-					sources['Synthetix'].abi,
-					targets['ProxySynthetix'].address
+				Oikos = new web3.eth.Contract(
+					sources['Oikos'].abi,
+					targets['ProxyOikos'].address
 				);
 				FeePool = new web3.eth.Contract(sources['FeePool'].abi, targets['ProxyFeePool'].address);
 				Issuer = new web3.eth.Contract(sources['Issuer'].abi, targets['Issuer'].address);
@@ -389,7 +389,7 @@ describe('publish scripts', function() {
 				describe('when transferring 100k SNX to user1', () => {
 					beforeEach(async () => {
 						// transfer SNX to first account
-						await Synthetix.methods
+						await Oikos.methods
 							.transfer(accounts.first.public, web3.utils.toWei('100000'))
 							.send({
 								from: accounts.deployer.public,
@@ -398,22 +398,22 @@ describe('publish scripts', function() {
 							});
 					});
 
-					describe('when user1 issues all possible sUSD', () => {
+					describe('when user1 issues all possible oUSD', () => {
 						beforeEach(async () => {
-							await Synthetix.methods.issueMaxSynths().send({
+							await Oikos.methods.issueMaxSynths().send({
 								from: accounts.first.public,
 								gas: gasLimit,
 								gasPrice,
 							});
 						});
-						it('then the sUSD balanced must be 100k * 0.3 * 0.2 (default SynthetixState.issuanceRatio) = 6000', async () => {
+						it('then the oUSD balanced must be 100k * 0.3 * 0.2 (default OikosState.issuanceRatio) = 6000', async () => {
 							const balance = await sUSDContract.methods.balanceOf(accounts.first.public).call();
 							assert.strictEqual(web3.utils.fromWei(balance), '6000', 'Balance should match');
 						});
-						describe('when user1 exchange 1000 sUSD for sETH (the MultiCollateralSynth)', () => {
+						describe('when user1 exchange 1000 oUSD for oETH (the MultiCollateralSynth)', () => {
 							let sETHBalanceAfterExchange;
 							beforeEach(async () => {
-								await Synthetix.methods.exchange(sUSD, web3.utils.toWei('1000'), sETH).send({
+								await Oikos.methods.exchange(oUSD, web3.utils.toWei('1000'), oETH).send({
 									from: accounts.first.public,
 									gas: gasLimit,
 									gasPrice,
@@ -422,11 +422,11 @@ describe('publish scripts', function() {
 									.balanceOf(accounts.first.public)
 									.call();
 							});
-							it('then their sUSD balance is 5000', async () => {
+							it('then their oUSD balance is 5000', async () => {
 								const balance = await sUSDContract.methods.balanceOf(accounts.first.public).call();
 								assert.strictEqual(web3.utils.fromWei(balance), '5000', 'Balance should match');
 							});
-							it('and their sETH balance is 1000 - the fee', async () => {
+							it('and their oETH balance is 1000 - the fee', async () => {
 								const expected = await FeePool.methods
 									.amountReceivedFromExchange(web3.utils.toWei('1000'))
 									.call();
@@ -437,10 +437,10 @@ describe('publish scripts', function() {
 								);
 							});
 						});
-						describe('when user1 exchange 1000 sUSD for sBTC', () => {
+						describe('when user1 exchange 1000 oUSD for oBTC', () => {
 							let sBTCBalanceAfterExchange;
 							beforeEach(async () => {
-								await Synthetix.methods.exchange(sUSD, web3.utils.toWei('1000'), sBTC).send({
+								await Oikos.methods.exchange(oUSD, web3.utils.toWei('1000'), oBTC).send({
 									from: accounts.first.public,
 									gas: gasLimit,
 									gasPrice,
@@ -449,11 +449,11 @@ describe('publish scripts', function() {
 									.balanceOf(accounts.first.public)
 									.call();
 							});
-							it('then their sUSD balance is 5000', async () => {
+							it('then their oUSD balance is 5000', async () => {
 								const balance = await sUSDContract.methods.balanceOf(accounts.first.public).call();
 								assert.strictEqual(web3.utils.fromWei(balance), '5000', 'Balance should match');
 							});
-							it('and their sBTC balance is 1000 - the fee', async () => {
+							it('and their oBTC balance is 1000 - the fee', async () => {
 								const expected = await FeePool.methods
 									.amountReceivedFromExchange(web3.utils.toWei('1000'))
 									.call();
@@ -463,7 +463,7 @@ describe('publish scripts', function() {
 									'Balance should match'
 								);
 							});
-							describe('when user1 burns 10 sUSD', () => {
+							describe('when user1 burns 10 oUSD', () => {
 								beforeEach(async () => {
 									// set minimumStakeTime to 0 seconds for burning
 									await Issuer.methods.setMinimumStakeTime(0).send({
@@ -472,20 +472,20 @@ describe('publish scripts', function() {
 										gasPrice,
 									});
 									// burn
-									await Synthetix.methods.burnSynths(web3.utils.toWei('10')).send({
+									await Oikos.methods.burnSynths(web3.utils.toWei('10')).send({
 										from: accounts.first.public,
 										gas: gasLimit,
 										gasPrice,
 									});
 								});
-								it('then their sUSD balance is 4990', async () => {
+								it('then their oUSD balance is 4990', async () => {
 									const balance = await sUSDContract.methods
 										.balanceOf(accounts.first.public)
 										.call();
 									assert.strictEqual(web3.utils.fromWei(balance), '4990', 'Balance should match');
 								});
 
-								describe('when deployer replaces sBTC with PurgeableSynth', () => {
+								describe('when deployer replaces oBTC with PurgeableSynth', () => {
 									beforeEach(async () => {
 										await commands.replaceSynths({
 											network,
@@ -493,7 +493,7 @@ describe('publish scripts', function() {
 											yes: true,
 											privateKey: accounts.deployer.private,
 											subclass: 'PurgeableSynth',
-											synthsToReplace: ['sBTC'],
+											synthsToReplace: ['oBTC'],
 										});
 									});
 									describe('and deployer invokes purge', () => {
@@ -506,10 +506,10 @@ describe('publish scripts', function() {
 												yes: true,
 												privateKey: accounts.deployer.private,
 												addresses: [accounts.first.public],
-												synthsToPurge: ['sBTC'],
+												synthsToPurge: ['oBTC'],
 											});
 										});
-										it('then their sUSD balance is 4990 + sBTCBalanceAfterExchange', async () => {
+										it('then their oUSD balance is 4990 + sBTCBalanceAfterExchange', async () => {
 											const balance = await sUSDContract.methods
 												.balanceOf(accounts.first.public)
 												.call();
@@ -522,7 +522,7 @@ describe('publish scripts', function() {
 												'Balance should match'
 											);
 										});
-										it('and their sBTC balance is 0', async () => {
+										it('and their oBTC balance is 0', async () => {
 											const balance = await sBTCContract.methods
 												.balanceOf(accounts.first.public)
 												.call();
@@ -579,14 +579,14 @@ describe('publish scripts', function() {
 
 									describe('when a user has issued and exchanged into iCEX', () => {
 										beforeEach(async () => {
-											await Synthetix.methods.issueMaxSynths().send({
+											await Oikos.methods.issueMaxSynths().send({
 												from: accounts.first.public,
 												gas: gasLimit,
 												gasPrice,
 											});
 
-											await Synthetix.methods
-												.exchange(toBytes32('sUSD'), web3.utils.toWei('100'), toBytes32('iCEX'))
+											await Oikos.methods
+												.exchange(toBytes32('oUSD'), web3.utils.toWei('100'), toBytes32('iCEX'))
 												.send({
 													from: accounts.first.public,
 													gas: gasLimit,
@@ -763,7 +763,7 @@ describe('publish scripts', function() {
 												});
 											});
 
-											// Note: this is destructive as it removes the sBTC contracts and thus future calls to deploy will fail
+											// Note: this is destructive as it removes the oBTC contracts and thus future calls to deploy will fail
 											// Either have this at the end of the entire test script or manage configuration of deploys by passing in
 											// files to update rather than a file.
 											describe('when deployer invokes remove of iABC', () => {
@@ -779,7 +779,7 @@ describe('publish scripts', function() {
 
 												describe('when user tries to exchange into iABC', () => {
 													it('then it fails', done => {
-														Synthetix.methods
+														Oikos.methods
 															.exchange(
 																toBytes32('iCEX'),
 																web3.utils.toWei('1000'),
@@ -823,10 +823,10 @@ describe('publish scripts', function() {
 						gasPrice,
 					});
 				});
-				describe('when Synthetix.totalIssuedSynths is invoked', () => {
+				describe('when Oikos.totalIssuedSynths is invoked', () => {
 					it('then it reverts as expected as there are no rates', async () => {
 						try {
-							await Synthetix.methods.totalIssuedSynths(sUSD).call();
+							await Oikos.methods.totalIssuedSynths(oUSD).call();
 							assert.fail('Did not revert while trying to get totalIssuedSynths');
 						} catch (err) {
 							assert.strictEqual(true, /Rates are stale/.test(err.toString()));
@@ -896,10 +896,10 @@ describe('publish scripts', function() {
 										gasPrice,
 									});
 							});
-							describe('when Synthetix.totalIssuedSynths is invoked', () => {
+							describe('when Oikos.totalIssuedSynths is invoked', () => {
 								it('then it reverts as expected as there is no rate for sEUR', async () => {
 									try {
-										await Synthetix.methods.totalIssuedSynths(sUSD).call();
+										await Oikos.methods.totalIssuedSynths(oUSD).call();
 										assert.fail('Did not revert while trying to get totalIssuedSynths');
 									} catch (err) {
 										assert.strictEqual(true, /Rates are stale/.test(err.toString()));
@@ -929,9 +929,9 @@ describe('publish scripts', function() {
 									});
 								});
 
-								describe('when Synthetix.totalIssuedSynths is invoked', () => {
+								describe('when Oikos.totalIssuedSynths is invoked', () => {
 									it('then it returns some number successfully as no rates are stale', async () => {
-										const response = await Synthetix.methods.totalIssuedSynths(sUSD).call();
+										const response = await Oikos.methods.totalIssuedSynths(oUSD).call();
 										assert.strictEqual(Number(response) >= 0, true);
 									});
 								});
@@ -1007,9 +1007,9 @@ describe('publish scripts', function() {
 									'RewardEscrow',
 									'RewardsDistribution',
 									'SupplySchedule',
-									'Synthetix',
-									'SynthetixEscrow',
-									'SynthetixState',
+									'Oikos',
+									'OikosEscrow',
+									'OikosState',
 									'SynthsUSD',
 									'SynthsETH',
 								].map(contractName =>

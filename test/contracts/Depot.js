@@ -16,27 +16,27 @@ const {
 
 const { toBytes32 } = require('../../.');
 
-const Synthetix = artifacts.require('Synthetix');
+const Oikos = artifacts.require('Oikos');
 const Depot = artifacts.require('Depot');
 const Synth = artifacts.require('Synth');
 const AddressResolver = artifacts.require('AddressResolver');
 const ExchangeRates = artifacts.require('ExchangeRates');
 
 contract('Depot', async accounts => {
-	let synthetix, synth, depot, addressResolver, exchangeRates;
+	let oikos, synth, depot, addressResolver, exchangeRates;
 
-	// const [sUSD, sETH] = ['sUSD', 'sETH'].map(toBytes32);
+	// const [oUSD, oETH] = ['oUSD', 'oETH'].map(toBytes32);
 
 	const [deployerAccount, owner, oracle, fundsWallet, address1, address2, address3] = accounts;
 
-	const [sUSD, sAUD, sEUR, sBTC, SNX, iBTC, sETH, ETH] = [
-		'sUSD',
+	const [oUSD, sAUD, sEUR, oBTC, SNX, iBTC, oETH, ETH] = [
+		'oUSD',
 		'sAUD',
 		'sEUR',
-		'sBTC',
+		'oBTC',
 		'SNX',
 		'iBTC',
-		'sETH',
+		'oETH',
 		'ETH',
 	].map(toBytes32);
 
@@ -44,7 +44,7 @@ contract('Depot', async accounts => {
 		const timestamp = await currentTime();
 
 		await exchangeRates.updateRates(
-			[sAUD, sEUR, SNX, sBTC, iBTC, sETH, ETH],
+			[sAUD, sEUR, SNX, oBTC, iBTC, oETH, ETH],
 			['0.5', '1.25', '0.1', '5000', '4000', '172', '172'].map(toUnit),
 			timestamp,
 			{
@@ -61,19 +61,19 @@ contract('Depot', async accounts => {
 
 	const approveAndDepositSynths = async (synthsToDeposit, depositor) => {
 		// Approve Transaction
-		// console.log('Approve Transaction on sUSD');
+		// console.log('Approve Transaction on oUSD');
 		await synth.approve(depot.address, synthsToDeposit, { from: depositor });
 
-		// Deposit sUSD in Depot
-		// console.log('Deposit sUSD in Depot amount', synthsToDeposit, depositor);
+		// Deposit oUSD in Depot
+		// console.log('Deposit oUSD in Depot amount', synthsToDeposit, depositor);
 		await depot.depositSynths(synthsToDeposit, {
 			from: depositor,
 		});
 	};
 
 	beforeEach(async () => {
-		synthetix = await Synthetix.deployed();
-		synth = await Synth.at(await synthetix.synths(sUSD));
+		oikos = await Oikos.deployed();
+		synth = await Synth.at(await oikos.synths(oUSD));
 		depot = await Depot.deployed();
 		addressResolver = await AddressResolver.deployed();
 		exchangeRates = await ExchangeRates.deployed();
@@ -106,7 +106,7 @@ contract('Depot', async accounts => {
 					'setMaxEthPurchase',
 					'setMinimumDepositAmount',
 					'withdrawMyDepositedSynths',
-					'withdrawSynthetix',
+					'withdrawOikos',
 				],
 			});
 		});
@@ -199,7 +199,7 @@ contract('Depot', async accounts => {
 
 		beforeEach(async () => {
 			// We need the owner to issue synths
-			await synthetix.issueMaxSynths({ from: owner });
+			await oikos.issueMaxSynths({ from: owner });
 			// Set up the depositor with an amount of synths to deposit.
 			await synth.transfer(depositor, synthsBalance, {
 				from: owner,
@@ -252,7 +252,7 @@ contract('Depot', async accounts => {
 
 		beforeEach(async () => {
 			// We need the owner to issue synths
-			await synthetix.issueMaxSynths({ from: owner });
+			await oikos.issueMaxSynths({ from: owner });
 			// Set up the depositor with an amount of synths to deposit.
 			await synth.transfer(depositor, synthsBalance, {
 				from: owner,
@@ -318,7 +318,7 @@ contract('Depot', async accounts => {
 			fundsWalletFromContract = await depot.fundsWallet();
 			fundsWalletEthBalanceBefore = await getEthBalance(fundsWallet);
 			// We need the owner to issue synths
-			await synthetix.issueMaxSynths({ from: owner });
+			await oikos.issueMaxSynths({ from: owner });
 			// Set up the depot so it contains some synths to convert Ether for
 			synthsBalance = await synth.balanceOf(owner, { from: owner });
 			await approveAndDepositSynths(synthsBalance, owner);
@@ -380,7 +380,7 @@ contract('Depot', async accounts => {
 			});
 
 			// We need the owner to issue synths
-			await synthetix.issueMaxSynths({ from: owner });
+			await oikos.issueMaxSynths({ from: owner });
 
 			// Assert that there are no deposits already.
 			const depositStartIndex = await depot.depositStartIndex();
@@ -407,7 +407,7 @@ contract('Depot', async accounts => {
 			const approveTxn = await synth.approve(depot.address, synthsToDeposit, { from: depositor });
 			const gasPaidApprove = web3.utils.toBN(approveTxn.receipt.gasUsed * 20000000000);
 
-			// Deposit sUSD in Depot
+			// Deposit oUSD in Depot
 			const depositTxn = await depot.depositSynths(synthsToDeposit, {
 				from: depositor,
 			});
@@ -431,12 +431,12 @@ contract('Depot', async accounts => {
 				value: ethToSend,
 			});
 
-			// Exchange("ETH", msg.value, "sUSD", fulfilled);
+			// Exchange("ETH", msg.value, "oUSD", fulfilled);
 			const exchangeEvent = txn.logs.find(log => log.event === 'Exchange');
 			assert.eventEqual(exchangeEvent, 'Exchange', {
 				fromCurrency: 'ETH',
 				fromAmount: ethToSend,
-				toCurrency: 'sUSD',
+				toCurrency: 'oUSD',
 				toAmount: synthsToDeposit,
 			});
 
@@ -492,12 +492,12 @@ contract('Depot', async accounts => {
 				value: ethToSend,
 			});
 
-			// Exchange("ETH", msg.value, "sUSD", fulfilled);
+			// Exchange("ETH", msg.value, "oUSD", fulfilled);
 			const exchangeEvent = txn.logs.find(log => log.event === 'Exchange');
 			assert.eventEqual(exchangeEvent, 'Exchange', {
 				fromCurrency: 'ETH',
 				fromAmount: ethToSend,
-				toCurrency: 'sUSD',
+				toCurrency: 'oUSD',
 				toAmount: synthsToDeposit.div(web3.utils.toBN('2')),
 			});
 
@@ -539,14 +539,14 @@ contract('Depot', async accounts => {
 				value: ethToSend,
 			});
 
-			// Exchange("ETH", msg.value, "sUSD", fulfilled);
+			// Exchange("ETH", msg.value, "oUSD", fulfilled);
 			const exchangeEvent = transaction.logs.find(log => log.event === 'Exchange');
 			const synthsAmount = multiplyDecimal(ethToSend, ethUsd);
 
 			assert.eventEqual(exchangeEvent, 'Exchange', {
 				fromCurrency: 'ETH',
 				fromAmount: ethToSend,
-				toCurrency: 'sUSD',
+				toCurrency: 'oUSD',
 				toAmount: synthsAmount,
 			});
 
@@ -590,13 +590,13 @@ contract('Depot', async accounts => {
 
 			const gasPaid = web3.utils.toBN(txn.receipt.gasUsed * 20000000000);
 
-			// Exchange("ETH", msg.value, "sUSD", fulfilled);
+			// Exchange("ETH", msg.value, "oUSD", fulfilled);
 			const exchangeEvent = txn.logs.find(log => log.event === 'Exchange');
 
 			assert.eventEqual(exchangeEvent, 'Exchange', {
 				fromCurrency: 'ETH',
 				fromAmount: ethToSend,
-				toCurrency: 'sUSD',
+				toCurrency: 'oUSD',
 				toAmount: synthsToDeposit,
 			});
 
@@ -802,16 +802,16 @@ contract('Depot', async accounts => {
 		});
 	});
 
-	describe('Ensure user can exchange ETH for Synthetix', async function() {
+	describe('Ensure user can exchange ETH for Oikos', async function() {
 		const purchaser = address1;
 		let depot;
-		let synthetix;
+		let oikos;
 		const ethUSD = web3.utils.toWei('500');
 		const snxUSD = web3.utils.toWei('.10');
 
 		this.beforeEach(async () => {
 			depot = await Depot.deployed();
-			synthetix = await Synthetix.deployed();
+			oikos = await Oikos.deployed();
 			synth = await Synth.deployed();
 
 			const timestamp = await currentTime();
@@ -821,7 +821,7 @@ contract('Depot', async accounts => {
 			});
 
 			// We need to send some SNX to the Token Depot contract
-			await synthetix.transfer(depot.address, web3.utils.toWei('1000000'), {
+			await oikos.transfer(depot.address, web3.utils.toWei('1000000'), {
 				from: owner,
 			});
 		});
@@ -829,7 +829,7 @@ contract('Depot', async accounts => {
 		it('ensure user get the correct amount of SNX after sending ETH', async () => {
 			const ethToSend = toUnit('10');
 
-			const purchaserSNXStartBalance = await synthetix.balanceOf(purchaser);
+			const purchaserSNXStartBalance = await oikos.balanceOf(purchaser);
 			// Purchaser should not have SNX yet
 			assert.equal(purchaserSNXStartBalance, 0);
 
@@ -840,29 +840,29 @@ contract('Depot', async accounts => {
 			});
 
 			const purchaseValueInSynths = multiplyDecimal(ethToSend, ethUSD);
-			const purchaseValueInSynthetix = divideDecimal(purchaseValueInSynths, snxUSD);
+			const purchaseValueInOikos = divideDecimal(purchaseValueInSynths, snxUSD);
 
-			const purchaserSNXEndBalance = await synthetix.balanceOf(purchaser);
+			const purchaserSNXEndBalance = await oikos.balanceOf(purchaser);
 
 			// Purchaser SNX balance should be equal to the purchase value we calculated above
-			assert.bnEqual(purchaserSNXEndBalance, purchaseValueInSynthetix);
+			assert.bnEqual(purchaserSNXEndBalance, purchaseValueInOikos);
 		});
 	});
 
-	describe('Ensure user can exchange Synths for Synthetix', async function() {
+	describe('Ensure user can exchange Synths for Oikos', async function() {
 		const purchaser = address1;
 		const purchaserSynthAmount = toUnit('2000');
 		const depotSNXAmount = toUnit('1000000');
 		let depot;
-		let synthetix;
+		let oikos;
 		let synth;
 		const snxUSD = toUnit('.10');
 		const synthsToSend = toUnit('1');
 
 		this.beforeEach(async () => {
 			depot = await Depot.deployed();
-			synthetix = await Synthetix.deployed();
-			synth = await Synth.at(await synthetix.synths(sUSD));
+			oikos = await Oikos.deployed();
+			synth = await Synth.at(await oikos.synths(oUSD));
 
 			const timestamp = await currentTime();
 
@@ -871,49 +871,49 @@ contract('Depot', async accounts => {
 			});
 
 			// We need the owner to issue synths
-			await synthetix.issueSynths(toUnit('50000'), { from: owner });
+			await oikos.issueSynths(toUnit('50000'), { from: owner });
 			// Send the purchaser some synths
 			await synth.transfer(purchaser, purchaserSynthAmount, {
 				from: owner,
 			});
 			// We need to send some SNX to the Token Depot contract
-			await synthetix.transfer(depot.address, depotSNXAmount, {
+			await oikos.transfer(depot.address, depotSNXAmount, {
 				from: owner,
 			});
 
 			await synth.approve(depot.address, synthsToSend, { from: purchaser });
 
-			const depotSNXBalance = await synthetix.balanceOf(depot.address);
+			const depotSNXBalance = await oikos.balanceOf(depot.address);
 			const purchaserSynthBalance = await synth.balanceOf(purchaser);
 			assert.bnEqual(depotSNXBalance, depotSNXAmount);
 			assert.bnEqual(purchaserSynthBalance, purchaserSynthAmount);
 		});
 
-		it('ensure user gets the correct amount of SNX after sending 10 sUSD', async () => {
-			const purchaserSNXStartBalance = await synthetix.balanceOf(purchaser);
+		it('ensure user gets the correct amount of SNX after sending 10 oUSD', async () => {
+			const purchaserSNXStartBalance = await oikos.balanceOf(purchaser);
 			// Purchaser should not have SNX yet
 			assert.equal(purchaserSNXStartBalance, 0);
 
-			// Purchaser sends sUSD
+			// Purchaser sends oUSD
 			const txn = await depot.exchangeSynthsForSNX(synthsToSend, {
 				from: purchaser,
 			});
 
-			const purchaseValueInSynthetix = divideDecimal(synthsToSend, snxUSD);
+			const purchaseValueInOikos = divideDecimal(synthsToSend, snxUSD);
 
-			const purchaserSNXEndBalance = await synthetix.balanceOf(purchaser);
+			const purchaserSNXEndBalance = await oikos.balanceOf(purchaser);
 
 			// Purchaser SNX balance should be equal to the purchase value we calculated above
-			assert.bnEqual(purchaserSNXEndBalance, purchaseValueInSynthetix);
+			assert.bnEqual(purchaserSNXEndBalance, purchaseValueInOikos);
 
 			// assert the exchange event
 			const exchangeEvent = txn.logs.find(log => log.event === 'Exchange');
 
 			assert.eventEqual(exchangeEvent, 'Exchange', {
-				fromCurrency: 'sUSD',
+				fromCurrency: 'oUSD',
 				fromAmount: synthsToSend,
 				toCurrency: 'SNX',
-				toAmount: purchaseValueInSynthetix,
+				toAmount: purchaseValueInOikos,
 			});
 		});
 	});

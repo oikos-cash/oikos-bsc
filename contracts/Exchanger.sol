@@ -5,7 +5,7 @@ import "./SafeDecimalMath.sol";
 import "./MixinResolver.sol";
 import "./interfaces/IExchangeState.sol";
 import "./interfaces/IExchangeRates.sol";
-import "./interfaces/ISynthetix.sol";
+import "./interfaces/IOikos.sol";
 import "./interfaces/IFeePool.sol";
 import "./interfaces/IIssuer.sol";
 
@@ -16,7 +16,7 @@ contract Exchanger is MixinResolver {
 
     bool public exchangeEnabled;
 
-    bytes32 private constant sUSD = "sUSD";
+    bytes32 private constant oUSD = "oUSD";
 
     uint public waitingPeriodSecs;
 
@@ -35,8 +35,8 @@ contract Exchanger is MixinResolver {
         return IExchangeRates(resolver.requireAndGetAddress("ExchangeRates", "Missing ExchangeRates address"));
     }
 
-    function synthetix() internal view returns (ISynthetix) {
-        return ISynthetix(resolver.requireAndGetAddress("Synthetix", "Missing Synthetix address"));
+    function oikos() internal view returns (IOikos) {
+        return IOikos(resolver.requireAndGetAddress("Oikos", "Missing Oikos address"));
     }
 
     function feePool() internal view returns (IFeePool) {
@@ -54,11 +54,11 @@ contract Exchanger is MixinResolver {
 
         uint multiplier = 1;
 
-        // Is this a swing trade? I.e. long to short or vice versa, excluding when going into or out of sUSD.
+        // Is this a swing trade? I.e. long to short or vice versa, excluding when going into or out of oUSD.
         // Note: this assumes shorts begin with 'i' and longs with 's'.
         if (
-            (sourceCurrencyKey[0] == 0x73 && sourceCurrencyKey != sUSD && destinationCurrencyKey[0] == 0x69) ||
-            (sourceCurrencyKey[0] == 0x69 && destinationCurrencyKey != sUSD && destinationCurrencyKey[0] == 0x73)
+            (sourceCurrencyKey[0] == 0x73 && sourceCurrencyKey != oUSD && destinationCurrencyKey[0] == 0x69) ||
+            (sourceCurrencyKey[0] == 0x69 && destinationCurrencyKey != oUSD && destinationCurrencyKey[0] == 0x73)
         ) {
             // If so then double the exchange fee multipler
             multiplier = 2;
@@ -129,7 +129,7 @@ contract Exchanger is MixinResolver {
         amountAfterSettlement = amount;
 
         // balance of a synth will show an amount after settlement
-        uint balanceOfSourceAfterSettlement = synthetix().synths(currencyKey).balanceOf(from);
+        uint balanceOfSourceAfterSettlement = oikos().synths(currencyKey).balanceOf(from);
 
         // when there isn't enough supply (either due to reclamation settlement or because the number is too high)
         if (amountAfterSettlement > balanceOfSourceAfterSettlement) {
@@ -153,7 +153,7 @@ contract Exchanger is MixinResolver {
     )
         external
         // Note: We don't need to insist on non-stale rates because effectiveValue will do it for us.
-        onlySynthetixorSynth
+        onlyOikosorSynth
         returns (uint amountReceived)
     {
         require(sourceCurrencyKey != destinationCurrencyKey, "Can't be same synth");
@@ -162,7 +162,7 @@ contract Exchanger is MixinResolver {
 
         (, uint refunded) = _internalSettle(from, sourceCurrencyKey);
 
-        ISynthetix _synthetix = synthetix();
+        IOikos _oikos = oikos();
         IExchangeRates _exRates = exchangeRates();
 
         uint sourceAmountAfterSettlement = calculateAmountAfterSettlement(from, sourceCurrencyKey, sourceAmount, refunded);
@@ -171,7 +171,7 @@ contract Exchanger is MixinResolver {
         // the subtraction to not overflow, which would happen if their balance is not sufficient.
 
         // Burn the source amount
-        _synthetix.synths(sourceCurrencyKey).burn(from, sourceAmountAfterSettlement);
+        _oikos.synths(sourceCurrencyKey).burn(from, sourceAmountAfterSettlement);
 
         uint destinationAmount = _exRates.effectiveValue(
             sourceCurrencyKey,
@@ -188,17 +188,17 @@ contract Exchanger is MixinResolver {
         );
 
         // // Issue their new synths
-        _synthetix.synths(destinationCurrencyKey).issue(destinationAddress, amountReceived);
+        _oikos.synths(destinationCurrencyKey).issue(destinationAddress, amountReceived);
 
         // Remit the fee if required
         if (fee > 0) {
-            remitFee(_exRates, _synthetix, fee, destinationCurrencyKey);
+            remitFee(_exRates, _oikos, fee, destinationCurrencyKey);
         }
 
         // Nothing changes as far as issuance data goes because the total value in the system hasn't changed.
 
         // Let the DApps know there was a Synth exchange
-        _synthetix.emitSynthExchange(
+        _oikos.emitSynthExchange(
             from,
             sourceCurrencyKey,
             sourceAmountAfterSettlement,
@@ -225,10 +225,10 @@ contract Exchanger is MixinResolver {
 
     /* ========== INTERNAL FUNCTIONS ========== */
 
-    function remitFee(IExchangeRates _exRates, ISynthetix _synthetix, uint fee, bytes32 currencyKey) internal {
+    function remitFee(IExchangeRates _exRates, IOikos _oikos, uint fee, bytes32 currencyKey) internal {
         // Remit the fee in sUSDs
-        uint usdFeeAmount = _exRates.effectiveValue(currencyKey, fee, sUSD);
-        _synthetix.synths(sUSD).issue(feePool().FEE_ADDRESS(), usdFeeAmount);
+        uint usdFeeAmount = _exRates.effectiveValue(currencyKey, fee, oUSD);
+        _oikos.synths(oUSD).issue(feePool().FEE_ADDRESS(), usdFeeAmount);
         // Tell the fee pool about this.
         feePool().recordFeePaid(usdFeeAmount);
     }
@@ -252,14 +252,14 @@ contract Exchanger is MixinResolver {
 
     function reclaim(address from, bytes32 currencyKey, uint amount) internal {
         // burn amount from user
-        synthetix().synths(currencyKey).burn(from, amount);
-        synthetix().emitExchangeReclaim(from, currencyKey, amount);
+        oikos().synths(currencyKey).burn(from, amount);
+        oikos().emitExchangeReclaim(from, currencyKey, amount);
     }
 
     function refund(address from, bytes32 currencyKey, uint amount) internal {
         // issue amount to user
-        synthetix().synths(currencyKey).issue(from, amount);
-        synthetix().emitExchangeRebate(from, currencyKey, amount);
+        oikos().synths(currencyKey).issue(from, amount);
+        oikos().emitExchangeRebate(from, currencyKey, amount);
     }
 
     function secsLeftInWaitingPeriodForExchange(uint timestamp) internal view returns (uint) {
@@ -319,11 +319,11 @@ contract Exchanger is MixinResolver {
 
     // ========== MODIFIERS ==========
 
-    modifier onlySynthetixorSynth() {
-        ISynthetix _synthetix = synthetix();
+    modifier onlyOikosorSynth() {
+        IOikos _oikos = oikos();
         require(
-            msg.sender == address(_synthetix) || _synthetix.synthsByAddress(msg.sender) != bytes32(0),
-            "Exchanger: Only synthetix or a synth contract can perform this action"
+            msg.sender == address(_oikos) || _oikos.synthsByAddress(msg.sender) != bytes32(0),
+            "Exchanger: Only oikos or a synth contract can perform this action"
         );
         _;
     }

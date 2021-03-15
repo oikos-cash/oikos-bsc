@@ -59,7 +59,7 @@ program
 	.option('-g, --gas-price <value>', 'Gas price in GWEI', '5')
 	.option('-y, --yes', 'Dont prompt, just reply yes.')
 	.action(async ({ network, yes, gasPrice: gasPriceInGwei }) => {
-		if (!/^(kovan|rinkeby|ropsten|mainnet|local)$/.test(network)) {
+		if (!/^(kovan|rinkeby|ropsten|mainnet|local|bsc)$/.test(network)) {
 			throw Error('Unsupported environment', network);
 		}
 		let esLinkPrefix;
@@ -78,9 +78,9 @@ program
 
 			const gas = 4e6; // 4M
 			const gasPrice = web3.utils.toWei(gasPriceInGwei, 'gwei');
-			const [sUSD, sETH] = ['sUSD', 'sETH'].map(toBytes32);
+			const [oUSD, oETH] = ['oUSD', 'oETH'].map(toBytes32);
 
-			const updateableSynths = synths.filter(({ name }) => ['sUSD'].indexOf(name) < 0);
+			const updateableSynths = synths.filter(({ name }) => ['oUSD'].indexOf(name) < 0);
 			const cryptoSynths = synths
 				.filter(({ asset }) => asset !== 'USD')
 				.filter(
@@ -180,15 +180,15 @@ program
 				throw Error('Rates are stale');
 			}
 
-			// Synthetix contract
-			const Synthetix = new web3.eth.Contract(
-				sources['Synthetix'].abi,
-				targets['ProxySynthetix'].address
+			// Oikos contract
+			const Oikos = new web3.eth.Contract(
+				sources['Oikos'].abi,
+				targets['ProxyOikos'].address
 			);
 
-			const SynthetixState = new web3.eth.Contract(
-				sources['SynthetixState'].abi,
-				targets['SynthetixState'].address
+			const OikosState = new web3.eth.Contract(
+				sources['OikosState'].abi,
+				targets['OikosState'].address
 			);
 
 			const Exchanger = new web3.eth.Contract(
@@ -207,12 +207,12 @@ program
 			const SynthsUSD = new web3.eth.Contract(sources['Synth'].abi, targets['ProxysUSD'].address);
 
 			// Check totalIssuedSynths and debtLedger matches
-			const totalIssuedSynths = await Synthetix.methods.totalIssuedSynths(sUSD).call();
-			const debtLedgerLength = await SynthetixState.methods.debtLedgerLength().call();
+			const totalIssuedSynths = await Oikos.methods.totalIssuedSynths(oUSD).call();
+			const debtLedgerLength = await OikosState.methods.debtLedgerLength().call();
 
 			console.log(
 				green(
-					`TotalIssuedSynths in sUSD: ${totalIssuedSynths} - debtLedgerLenght: ${debtLedgerLength}`
+					`TotalIssuedSynths in oUSD: ${totalIssuedSynths} - debtLedgerLenght: ${debtLedgerLength}`
 				)
 			);
 
@@ -264,12 +264,12 @@ program
 			console.log(green(`Success. ${lastTxnLink()}`));
 
 			// Note: we are using numbers in WEI to 1e-13 not ether (i.e. not with 18 decimals),
-			// so that if a test fails we only lose minor amounts of SNX and sUSD (i.e. dust). - JJ
+			// so that if a test fails we only lose minor amounts of SNX and oUSD (i.e. dust). - JJ
 
 			// #2 - Now some test SNX
 			console.log(gray(`Transferring 2e-12 SNX to user1 (${user1.address})`));
 			txns.push(
-				await Synthetix.methods.transfer(user1.address, web3.utils.toWei('0.000000000002')).send({
+				await Oikos.methods.transfer(user1.address, web3.utils.toWei('0.000000000002')).send({
 					from: owner.address,
 					gas,
 					gasPrice,
@@ -277,11 +277,11 @@ program
 			);
 			console.log(green(`Success. ${lastTxnLink()}`));
 
-			// #3 - Mint some sUSD from test account
-			console.log(gray(`Issuing 1e-13 sUSD from (${user1.address}`));
+			// #3 - Mint some oUSD from test account
+			console.log(gray(`Issuing 1e-13 oUSD from (${user1.address}`));
 			const amountToIssue = web3.utils.toWei('0.0000000000001');
 			txns.push(
-				await Synthetix.methods.issueSynths(amountToIssue).send({
+				await Oikos.methods.issueSynths(amountToIssue).send({
 					from: user1.address,
 					gas,
 					gasPrice,
@@ -291,9 +291,9 @@ program
 
 			// get balance
 			const balance = await SynthsUSD.methods.balanceOf(user1.address).call();
-			console.log(gray(`User1 has sUSD balanceOf - ${balance}`));
+			console.log(gray(`User1 has oUSD balanceOf - ${balance}`));
 
-			// #4 - Deposit sUSD to Depot, approve first
+			// #4 - Deposit oUSD to Depot, approve first
 			console.log(gray(`SynthsUSD approve to use Depot`));
 			txns.push(
 				await SynthsUSD.methods.approve(Depot.options.address, toWei('1')).send({
@@ -305,7 +305,7 @@ program
 			console.log(green(`Success. ${lastTxnLink()}`));
 
 			// then deposit
-			console.log(gray(`Deposit 1e-14 sUSD to Depot from (${user1.address})`));
+			console.log(gray(`Deposit 1e-14 oUSD to Depot from (${user1.address})`));
 			const amountToDeposit = web3.utils.toWei('0.00000000000001');
 			txns.push(
 				await Depot.methods.depositSynths(amountToDeposit).send({
@@ -318,13 +318,13 @@ program
 
 			// check balance
 			const balanceAfter = await SynthsUSD.methods.balanceOf(user1.address).call();
-			console.log(gray(`User1 has sUSD balanceOf - ${balanceAfter}`));
+			console.log(gray(`User1 has oUSD balanceOf - ${balanceAfter}`));
 
-			// #5 Exchange sUSD to sETH
-			console.log(gray(`Exchange 1e-14 sUSD --> sETH for user - (${user1.address})`));
+			// #5 Exchange oUSD to oETH
+			console.log(gray(`Exchange 1e-14 oUSD --> oETH for user - (${user1.address})`));
 			const amountToExchange = web3.utils.toWei('0.00000000000001');
 			txns.push(
-				await Synthetix.methods.exchange(sUSD, amountToExchange, sETH).send({
+				await Oikos.methods.exchange(oUSD, amountToExchange, oETH).send({
 					from: user1.address,
 					gas,
 					gasPrice,
@@ -332,10 +332,10 @@ program
 			);
 			console.log(green(`Success. ${lastTxnLink()}`));
 
-			// check sETH balance after exchange
+			// check oETH balance after exchange
 			const SynthsETH = new web3.eth.Contract(sources['Synth'].abi, targets['ProxysETH'].address);
 			const sETHBalance = await SynthsETH.methods.balanceOf(user1.address).call();
-			console.log(gray(`User1 has sETH balanceOf - ${sETHBalance}`));
+			console.log(gray(`User1 has oETH balanceOf - ${sETHBalance}`));
 
 			// #6 + EtherCollateral open close loan
 			// step 1: allow a tiny loan
@@ -374,11 +374,11 @@ program
 			);
 			console.log(green(`Success. ${lastTxnLink()}`));
 
-			// #7 Exchange balance of sETH back to sUSD
+			// #7 Exchange balance of oETH back to oUSD
 			const tryExchangeBack = async () => {
-				console.log(gray(`Exchange sETH --> sUSD for user - (${user1.address})`));
+				console.log(gray(`Exchange oETH --> oUSD for user - (${user1.address})`));
 				txns.push(
-					await Synthetix.methods.exchange(sETH, sETHBalance, sUSD).send({
+					await Oikos.methods.exchange(oETH, sETHBalance, oUSD).send({
 						from: user1.address,
 						gas,
 						gasPrice,
@@ -420,9 +420,9 @@ program
 				});
 			}
 
-			// #8 Burn all remaining sUSD to unlock SNX
+			// #8 Burn all remaining oUSD to unlock SNX
 
-			// set minimumStakeTime to 0 to allow burning sUSD to unstake
+			// set minimumStakeTime to 0 to allow burning oUSD to unstake
 			console.log(gray(`Setting minimum stake time after issuing synths to 0`));
 			txns.push(
 				await Issuer.methods.setMinimumStakeTime(0).send({ from: owner.address, gas, gasPrice })
@@ -433,7 +433,7 @@ program
 			const tryBurn = async () => {
 				console.log(gray(`Burn all remaining synths for user - (${user1.address})`));
 				txns.push(
-					await Synthetix.methods.burnSynths(remainingSynthsUSD).send({
+					await Oikos.methods.burnSynths(remainingSynthsUSD).send({
 						from: user1.address,
 						gas,
 						gasPrice,
@@ -446,7 +446,7 @@ program
 				await tryBurn();
 
 				console.error(
-					red('Should have failed burning after exchanging into sUSD by Fee Reclamation')
+					red('Should have failed burning after exchanging into oUSD by Fee Reclamation')
 				);
 				process.exitCode = 1;
 				return;
@@ -475,13 +475,13 @@ program
 			}
 
 			// check transferable SNX after burning
-			const transferableSNX = await Synthetix.methods.transferableSynthetix(user1.address).call();
+			const transferableSNX = await Oikos.methods.transferableOikos(user1.address).call();
 			console.log(gray(`Transferable SNX of ${transferableSNX} for user (${user1.address}`));
 
 			// #9 Transfer SNX back to owner
 			console.log(gray(`Transferring SNX back to owner (${user1.address}`));
 			txns.push(
-				await Synthetix.methods.transfer(user1.address, transferableSNX).send({
+				await Oikos.methods.transfer(user1.address, transferableSNX).send({
 					from: user1.address,
 					gas,
 					gasPrice,
@@ -492,7 +492,7 @@ program
 			// TODO: if fees available claim, check feePeriod closable, close if it can be closed and claim fees.
 
 			// #10 Withdraw any remaining deposited synths from Depot
-			console.log(gray(`Withdraw any remaining sUSD from Depot for (${user1.address})`));
+			console.log(gray(`Withdraw any remaining oUSD from Depot for (${user1.address})`));
 			txns.push(
 				await Depot.methods.withdrawMyDepositedSynths().send({
 					from: user1.address,
@@ -506,7 +506,7 @@ program
 			} = txns.slice(-1)[0];
 
 			console.log(
-				green(`Success, withdrawed ${SynthWithdrawal.returnValues.amount} sUSD. ${lastTxnLink()}`)
+				green(`Success, withdrawed ${SynthWithdrawal.returnValues.amount} oUSD. ${lastTxnLink()}`)
 			);
 
 			// #11 finally, send back all test ETH to the owner

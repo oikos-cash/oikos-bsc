@@ -3,7 +3,7 @@
 FILE INFORMATION
 -----------------------------------------------------------------
 
-file:       SynthetixEscrow.sol
+file:       OikosEscrow.sol
 version:    1.1
 author:     Anton Jurisevic
             Dominic Romanowski
@@ -16,16 +16,16 @@ MODULE DESCRIPTION
 -----------------------------------------------------------------
 
 This contract allows the foundation to apply unique vesting
-schedules to synthetix funds sold at various discounts in the token
-sale. SynthetixEscrow gives users the ability to inspect their
+schedules to oikos funds sold at various discounts in the token
+sale. OikosEscrow gives users the ability to inspect their
 vested funds, their quantities and vesting dates, and to withdraw
 the fees that accrue on those funds.
 
 The fees are handled by withdrawing the entire fee allocation
-for all SNX inside the escrow contract, and then allowing
+for all OKS inside the escrow contract, and then allowing
 the contract itself to subdivide that pool up proportionally within
-itself. Every time the fee period rolls over in the main Synthetix
-contract, the SynthetixEscrow fee pool is remitted back into the
+itself. Every time the fee period rolls over in the main Oikos
+contract, the OikosEscrow fee pool is remitted back into the
 main fee pool to be redistributed in the next fee period.
 
 -----------------------------------------------------------------
@@ -35,27 +35,27 @@ pragma solidity 0.4.25;
 
 import "./SafeDecimalMath.sol";
 import "./Owned.sol";
-import "./interfaces/ISynthetix.sol";
+import "./interfaces/IOikos.sol";
 import "./LimitedSetup.sol";
 
 
 /**
- * @title A contract to hold escrowed SNX and free them at given schedules.
+ * @title A contract to hold escrowed OKS and free them at given schedules.
  */
-contract SynthetixEscrow is Owned, LimitedSetup(8 weeks) {
+contract OikosEscrow is Owned, LimitedSetup(8 weeks) {
     using SafeMath for uint;
 
-    /* The corresponding Synthetix contract. */
-    ISynthetix public synthetix;
+    /* The corresponding Oikos contract. */
+    IOikos public oikos;
 
     /* Lists of (timestamp, quantity) pairs per account, sorted in ascending time order.
-     * These are the times at which each given quantity of SNX vests. */
+     * These are the times at which each given quantity of OKS vests. */
     mapping(address => uint[2][]) public vestingSchedules;
 
-    /* An account's total vested synthetix balance to save recomputing this for fee extraction purposes. */
+    /* An account's total vested oikos balance to save recomputing this for fee extraction purposes. */
     mapping(address => uint) public totalVestedAccountBalance;
 
-    /* The total remaining vested balance, for verifying the actual synthetix balance of this contract against. */
+    /* The total remaining vested balance, for verifying the actual oikos balance of this contract against. */
     uint public totalVestedBalance;
 
     uint constant TIME_INDEX = 0;
@@ -66,15 +66,15 @@ contract SynthetixEscrow is Owned, LimitedSetup(8 weeks) {
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(address _owner, ISynthetix _synthetix) public Owned(_owner) {
-        synthetix = _synthetix;
+    constructor(address _owner, IOikos _oikos) public Owned(_owner) {
+        oikos = _oikos;
     }
 
     /* ========== SETTERS ========== */
 
-    function setSynthetix(ISynthetix _synthetix) external onlyOwner {
-        synthetix = _synthetix;
-        emit SynthetixUpdated(_synthetix);
+    function setOikos(IOikos _oikos) external onlyOwner {
+        oikos = _oikos;
+        emit OikosUpdated(_oikos);
     }
 
     /* ========== VIEW FUNCTIONS ========== */
@@ -95,7 +95,7 @@ contract SynthetixEscrow is Owned, LimitedSetup(8 weeks) {
 
     /**
      * @notice Get a particular schedule entry for an account.
-     * @return A pair of uints: (timestamp, synthetix quantity).
+     * @return A pair of uints: (timestamp, oikos quantity).
      */
     function getVestingScheduleEntry(address account, uint index) public view returns (uint[2]) {
         return vestingSchedules[account][index];
@@ -109,7 +109,7 @@ contract SynthetixEscrow is Owned, LimitedSetup(8 weeks) {
     }
 
     /**
-     * @notice Get the quantity of SNX associated with a given schedule entry.
+     * @notice Get the quantity of OKS associated with a given schedule entry.
      */
     function getVestingQuantity(address account, uint index) public view returns (uint) {
         return getVestingScheduleEntry(account, index)[QUANTITY_INDEX];
@@ -130,7 +130,7 @@ contract SynthetixEscrow is Owned, LimitedSetup(8 weeks) {
 
     /**
      * @notice Obtain the next schedule entry that will vest for a given user.
-     * @return A pair of uints: (timestamp, synthetix quantity). */
+     * @return A pair of uints: (timestamp, oikos quantity). */
     function getNextVestingEntry(address account) public view returns (uint[2]) {
         uint index = getNextVestingIndex(account);
         if (index == numVestingEntries(account)) {
@@ -156,11 +156,11 @@ contract SynthetixEscrow is Owned, LimitedSetup(8 weeks) {
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     /**
-     * @notice Withdraws a quantity of SNX back to the synthetix contract.
+     * @notice Withdraws a quantity of OKS back to the oikos contract.
      * @dev This may only be called by the owner during the contract's setup period.
      */
-    function withdrawSynthetix(uint quantity) external onlyOwner onlyDuringSetup {
-        synthetix.transfer(synthetix, quantity);
+    function withdrawOikos(uint quantity) external onlyOwner onlyDuringSetup {
+        oikos.transfer(oikos, quantity);
     }
 
     /**
@@ -175,7 +175,7 @@ contract SynthetixEscrow is Owned, LimitedSetup(8 weeks) {
     /**
      * @notice Add a new vesting entry at a given time and quantity to an account's schedule.
      * @dev A call to this should be accompanied by either enough balance already available
-     * in this contract, or a corresponding call to synthetix.endow(), to ensure that when
+     * in this contract, or a corresponding call to oikos.endow(), to ensure that when
      * the funds are withdrawn, there is enough balance, as well as correctly calculating
      * the fees.
      * This may only be called by the owner during the contract's setup period.
@@ -183,7 +183,7 @@ contract SynthetixEscrow is Owned, LimitedSetup(8 weeks) {
      * arrays, it's only in the foundation's command to add to these lists.
      * @param account The account to append a new vesting entry to.
      * @param time The absolute unix timestamp after which the vested quantity may be withdrawn.
-     * @param quantity The quantity of SNX that will vest.
+     * @param quantity The quantity of OKS that will vest.
      */
     function appendVestingEntry(address account, uint time, uint quantity) public onlyOwner onlyDuringSetup {
         /* No empty or already-passed vesting entries allowed. */
@@ -193,7 +193,7 @@ contract SynthetixEscrow is Owned, LimitedSetup(8 weeks) {
         /* There must be enough balance in the contract to provide for the vesting entry. */
         totalVestedBalance = totalVestedBalance.add(quantity);
         require(
-            totalVestedBalance <= synthetix.balanceOf(this),
+            totalVestedBalance <= oikos.balanceOf(this),
             "Must be enough balance in the contract to provide for the vesting entry"
         );
 
@@ -204,7 +204,7 @@ contract SynthetixEscrow is Owned, LimitedSetup(8 weeks) {
         if (scheduleLength == 0) {
             totalVestedAccountBalance[account] = quantity;
         } else {
-            /* Disallow adding new vested SNX earlier than the last one.
+            /* Disallow adding new vested OKS earlier than the last one.
              * Since entries are only appended, this means that no vesting date can be repeated. */
             require(
                 getVestingTime(account, numVestingEntries(account) - 1) < time,
@@ -217,7 +217,7 @@ contract SynthetixEscrow is Owned, LimitedSetup(8 weeks) {
     }
 
     /**
-     * @notice Construct a vesting schedule to release a quantities of SNX
+     * @notice Construct a vesting schedule to release a quantities of OKS
      * over a series of intervals.
      * @dev Assumes that the quantities are nonzero
      * and that the sequence of timestamps is strictly increasing.
@@ -230,7 +230,7 @@ contract SynthetixEscrow is Owned, LimitedSetup(8 weeks) {
     }
 
     /**
-     * @notice Allow a user to withdraw any SNX in their schedule that have vested.
+     * @notice Allow a user to withdraw any OKS in their schedule that have vested.
      */
     function vest() external {
         uint numEntries = numVestingEntries(msg.sender);
@@ -253,14 +253,14 @@ contract SynthetixEscrow is Owned, LimitedSetup(8 weeks) {
         if (total != 0) {
             totalVestedBalance = totalVestedBalance.sub(total);
             totalVestedAccountBalance[msg.sender] = totalVestedAccountBalance[msg.sender].sub(total);
-            synthetix.transfer(msg.sender, total);
+            oikos.transfer(msg.sender, total);
             emit Vested(msg.sender, now, total);
         }
     }
 
     /* ========== EVENTS ========== */
 
-    event SynthetixUpdated(address newSynthetix);
+    event OikosUpdated(address newOikos);
 
     event Vested(address indexed beneficiary, uint time, uint value);
 }

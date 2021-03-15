@@ -2,7 +2,7 @@ require('.'); // import common test scaffolding
 
 const ExchangeRates = artifacts.require('ExchangeRates');
 const FeePool = artifacts.require('FeePool');
-const Synthetix = artifacts.require('Synthetix');
+const Oikos = artifacts.require('Oikos');
 const Synth = artifacts.require('Synth');
 const PurgeableSynth = artifacts.require('PurgeableSynth');
 const TokenState = artifacts.require('TokenState');
@@ -15,7 +15,7 @@ const { toBytes32 } = require('../../.');
 const { issueSynthsToUser } = require('../utils/setupUtils');
 
 contract('PurgeableSynth', accounts => {
-	const [sUSD, SNX, sAUD, iETH] = ['sUSD', 'SNX', 'sAUD', 'iETH'].map(toBytes32);
+	const [oUSD, SNX, sAUD, iETH] = ['oUSD', 'SNX', 'sAUD', 'iETH'].map(toBytes32);
 
 	const [
 		deployerAccount,
@@ -29,8 +29,8 @@ contract('PurgeableSynth', accounts => {
 	let feePool,
 		feePoolProxy,
 		// FEE_ADDRESS,
-		synthetix,
-		synthetixProxy,
+		oikos,
+		oikosProxy,
 		exchangeRates,
 		sUSDContract,
 		sAUDContract,
@@ -48,19 +48,19 @@ contract('PurgeableSynth', accounts => {
 		// Deploy new proxy for feePool
 		feePoolProxy = await Proxy.new(owner, { from: deployerAccount });
 
-		synthetix = await Synthetix.deployed();
-		// Deploy new proxy for Synthetix
-		synthetixProxy = await Proxy.new(owner, { from: deployerAccount });
+		oikos = await Oikos.deployed();
+		// Deploy new proxy for Oikos
+		oikosProxy = await Proxy.new(owner, { from: deployerAccount });
 
-		// ensure synthetixProxy has target set to synthetix
+		// ensure oikosProxy has target set to oikos
 		await feePool.setProxy(feePoolProxy.address, { from: owner });
-		await synthetix.setProxy(synthetixProxy.address, { from: owner });
-		// set new proxies on Synthetix and FeePool
-		await synthetixProxy.setTarget(synthetix.address, { from: owner });
+		await oikos.setProxy(oikosProxy.address, { from: owner });
+		// set new proxies on Oikos and FeePool
+		await oikosProxy.setTarget(oikos.address, { from: owner });
 		await feePoolProxy.setTarget(feePool.address, { from: owner });
 
-		sUSDContract = await Synth.at(await synthetix.synths(sUSD));
-		sAUDContract = await Synth.at(await synthetix.synths(sAUD));
+		sUSDContract = await Synth.at(await oikos.synths(oUSD));
+		sAUDContract = await Synth.at(await oikos.synths(sAUD));
 
 		addressResolver = await AddressResolver.deployed();
 
@@ -93,7 +93,7 @@ contract('PurgeableSynth', accounts => {
 		return { synth, tokenState, proxy };
 	};
 
-	describe('when a Purgeable synth is added and connected to Synthetix', () => {
+	describe('when a Purgeable synth is added and connected to Oikos', () => {
 		beforeEach(async () => {
 			// Create iETH as a PurgeableSynth as we do not create any PurgeableSynth
 			// in the migration script
@@ -102,7 +102,7 @@ contract('PurgeableSynth', accounts => {
 			});
 			await tokenState.setAssociatedContract(synth.address, { from: owner });
 			await proxy.setTarget(synth.address, { from: owner });
-			await synthetix.addSynth(synth.address, { from: owner });
+			await oikos.addSynth(synth.address, { from: owner });
 
 			iETHContract = synth;
 		});
@@ -126,7 +126,7 @@ contract('PurgeableSynth', accounts => {
 				beforeEach(async () => {
 					// issue the user 100K USD worth of iETH
 					amountToExchange = toUnit(1e5);
-					const iETHAmount = await exchangeRates.effectiveValue(sUSD, amountToExchange, iETH);
+					const iETHAmount = await exchangeRates.effectiveValue(oUSD, amountToExchange, iETH);
 					await issueSynthsToUser({
 						owner,
 						user: account1,
@@ -150,12 +150,12 @@ contract('PurgeableSynth', accounts => {
 							'The user must no longer have a balance after the purge'
 						);
 					});
-					it('and they have the value added back to sUSD (with fees taken out)', async () => {
+					it('and they have the value added back to oUSD (with fees taken out)', async () => {
 						const userBalance = await sUSDContract.balanceOf(account1);
 						const effectiveValueOfPurgedSynths = await exchangeRates.effectiveValue(
 							iETH,
 							balanceBeforePurge,
-							sUSD
+							oUSD
 						);
 
 						const expectedBalancePurged = await feePool.amountReceivedFromExchange(
@@ -164,7 +164,7 @@ contract('PurgeableSynth', accounts => {
 						assert.bnEqual(
 							userBalance,
 							expectedBalancePurged.add(usersUSDBalance),
-							'User must be credited back in sUSD from the purge'
+							'User must be credited back in oUSD from the purge'
 						);
 					});
 					it('then the synth has totalSupply back at 0', async () => {
@@ -216,7 +216,7 @@ contract('PurgeableSynth', accounts => {
 						// Note: 5000 is chosen to be large enough to accommodate exchange fees which
 						// ultimately limit the total supply of that synth
 						const amountToExchange = toUnit(5000);
-						const iETHAmount = await exchangeRates.effectiveValue(sUSD, amountToExchange, iETH);
+						const iETHAmount = await exchangeRates.effectiveValue(oUSD, amountToExchange, iETH);
 						await issueSynthsToUser({
 							owner,
 							user: account2,
@@ -350,9 +350,9 @@ contract('PurgeableSynth', accounts => {
 						this.oldProxy = await Proxy.at(await this.oldSynth.proxy());
 						this.oldSynth.setTotalSupply(toUnit('0'), { from: owner });
 					});
-					describe('and the old sAUD synth is removed from Synthetix', () => {
+					describe('and the old sAUD synth is removed from Oikos', () => {
 						beforeEach(async () => {
-							await synthetix.removeSynth(sAUD, { from: owner });
+							await oikos.removeSynth(sAUD, { from: owner });
 						});
 						describe('when a Purgeable synth is added to replace the existing sAUD', () => {
 							beforeEach(async () => {
@@ -363,9 +363,9 @@ contract('PurgeableSynth', accounts => {
 								});
 								this.replacement = synth;
 							});
-							describe('and it is added to Synthetix', () => {
+							describe('and it is added to Oikos', () => {
 								beforeEach(async () => {
-									await synthetix.addSynth(this.replacement.address, { from: owner });
+									await oikos.addSynth(this.replacement.address, { from: owner });
 								});
 
 								describe('and the old sAUD TokenState and Proxy is connected to the replacement synth', () => {
@@ -387,7 +387,7 @@ contract('PurgeableSynth', accounts => {
 									});
 									describe('when owner attemps to remove new synth from the system', () => {
 										it('then it reverts', async () => {
-											await assert.revert(synthetix.removeSynth(sAUD, { from: owner }));
+											await assert.revert(oikos.removeSynth(sAUD, { from: owner }));
 										});
 									});
 									describe('and purge is called on the replacement sAUD contract', () => {
@@ -398,7 +398,7 @@ contract('PurgeableSynth', accounts => {
 											const effectiveValueOfPurgedSynths = await exchangeRates.effectiveValue(
 												sAUD,
 												userBalanceOfOldSynth,
-												sUSD
+												oUSD
 											);
 											expectedBalancePurged = await feePool.amountReceivedFromExchange(
 												effectiveValueOfPurgedSynths
@@ -408,13 +408,13 @@ contract('PurgeableSynth', accounts => {
 											const balance = await this.replacement.balanceOf(account1);
 											assert.bnEqual(balance, toUnit('0'), 'The balance after purge must be 0');
 										});
-										it('and their balance must have gone back into sUSD', async () => {
+										it('and their balance must have gone back into oUSD', async () => {
 											const balance = await sUSDContract.balanceOf(account1);
 
 											assert.bnEqual(
 												balance,
 												expectedBalancePurged.add(usersUSDBalance),
-												'The sUSD balance after purge must return to the initial amount, less fees'
+												'The oUSD balance after purge must return to the initial amount, less fees'
 											);
 										});
 										it('and the purge event is issued', async () => {
@@ -427,14 +427,14 @@ contract('PurgeableSynth', accounts => {
 										});
 										describe('when the purged synth is removed from the system', () => {
 											beforeEach(async () => {
-												await synthetix.removeSynth(sAUD, { from: owner });
+												await oikos.removeSynth(sAUD, { from: owner });
 											});
 											it('then the balance remains in USD (and no errors occur)', async () => {
 												const balance = await sUSDContract.balanceOf(account1);
 												assert.bnEqual(
 													balance,
 													expectedBalancePurged.add(usersUSDBalance),
-													'The sUSD balance after purge must return to the initial amount, less fees'
+													'The oUSD balance after purge must return to the initial amount, less fees'
 												);
 											});
 										});

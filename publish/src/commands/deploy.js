@@ -46,7 +46,7 @@ const parameterNotice = props => {
 const DEFAULTS = {
 	gasPrice: '1',
 	methodCallGasLimit: 250e3, // 250k
-	contractDeploymentGasLimit: 6.9e6, // TODO split out into seperate limits for different contracts, Proxys, Synths, Synthetix
+	contractDeploymentGasLimit: 6.9e6, // TODO split out into seperate limits for different contracts, Proxys, Synths, Oikos
 	network: 'kovan',
 	buildPath: path.join(__dirname, '..', '..', '..', BUILD_FOLDER),
 };
@@ -106,6 +106,8 @@ const deploy = async ({
 	// flags available
 	const updatedConfig = JSON.parse(JSON.stringify(config));
 
+	console.log(updatedConfig)
+
 	const { providerUrl, privateKey: envPrivateKey, etherscanLinkPrefix } = loadConnections({
 		network,
 	});
@@ -128,30 +130,39 @@ const deploy = async ({
 
 	const { account } = deployer;
 
-	const getExistingContract = ({ contract }) => {
-		const { address, source } = deployment.targets[contract];
-		const { abi } = deployment.sources[source];
+	const getExistingContract = ({ contract }) => {	
+	
+		if (typeof deployment.targets[contract] !== "undefined" ) {
+			const { address, source } = deployment.targets[contract];
+			const { abi } = deployment.sources[source];
+	
+			return deployer.getContract({
+				address,
+				abi,
+			});
+		} else {
+			console.log(`unable to get contract ${contract}`)
+		}
 
-		return deployer.getContract({
-			address,
-			abi,
-		});
 	};
 
-	let currentSynthetixSupply;
+	let currentOikosSupply;
 	let currentExchangeFee;
-	let currentSynthetixPrice;
+	let currentOikosPrice;
 	let oldExrates;
 	let currentLastMintEvent;
 	let currentWeekOfInflation;
 
 	try {
-		const oldSynthetix = getExistingContract({ contract: 'Synthetix' });
-		currentSynthetixSupply = await oldSynthetix.methods.totalSupply().call();
+		const oldOikos = getExistingContract({ contract: 'Oikos' });
+
+		currentOikosSupply = await oldOikos.methods.totalSupply().call();
+		console.log(`current total supply ${currentOikosSupply}`)
+
 
 		// inflationSupplyToDate = total supply - 100m
 		const inflationSupplyToDate = w3utils
-			.toBN(currentSynthetixSupply)
+			.toBN(currentOikosSupply)
 			.sub(w3utils.toBN(w3utils.toWei((100e6).toString())));
 
 		// current weekly inflation 75m / 52
@@ -166,18 +177,25 @@ const deploy = async ({
 		// Calculate lastMintEvent as Inflation start date + number of weeks issued * secs in weeks
 		const mintingBuffer = 86400;
 		const secondsInWeek = 604800;
-		const inflationStartDate = 1551830400;
+		const inflationStartDate = 1590969600;
 		currentLastMintEvent =
 			inflationStartDate + currentWeekOfInflation * secondsInWeek + mintingBuffer;
+
+		//if (network === 'bsc') {
+		//	currentWeekOfInflation = 40;
+		//	currentLastMintEvent = 1615204800;
+		//	currentOikosSupply = w3utils.toWei((157674278.846153846153846126).toString());
+		//}
+
 	} catch (err) {
 		if (network === 'local') {
-			currentSynthetixSupply = w3utils.toWei((100e6).toString());
-			currentWeekOfInflation = 0;
-			currentLastMintEvent = 0;
+			//currentWeekOfInflation = 40;
+			//currentLastMintEvent = 1615204800;
+			//currentOikosSupply = w3utils.toWei((100e6).toString());
 		} else {
 			console.error(
 				red(
-					'Cannot connect to existing Synthetix contract. Please double check the deploymentPath is correct for the network allocated'
+					'Cannot connect to existing Oikos contract. Please double check the deploymentPath is correct for the network allocated'
 				)
 			);
 			process.exitCode = 1;
@@ -189,7 +207,7 @@ const deploy = async ({
 		const oldFeePool = getExistingContract({ contract: 'FeePool' });
 		currentExchangeFee = await oldFeePool.methods.exchangeFeeRate().call();
 	} catch (err) {
-		if (network === 'local') {
+		if (network === 'local'  || network === 'bsc') {
 			currentExchangeFee = w3utils.toWei('0.003'.toString());
 		} else {
 			console.error(
@@ -204,13 +222,13 @@ const deploy = async ({
 
 	try {
 		oldExrates = getExistingContract({ contract: 'ExchangeRates' });
-		currentSynthetixPrice = await oldExrates.methods.rateForCurrency(toBytes32('SNX')).call();
+		currentOikosPrice = await oldExrates.methods.rateForCurrency(toBytes32('OKS')).call();
 		if (!oracleExrates) {
 			oracleExrates = await oldExrates.methods.oracle().call();
 		}
 	} catch (err) {
-		if (network === 'local') {
-			currentSynthetixPrice = w3utils.toWei('0.2');
+		if (network === 'local'  || network === 'bsc') {
+			currentOikosPrice = w3utils.toWei('0.2');
 			oracleExrates = account;
 			oldExrates = undefined; // unset to signify that a fresh one will be deployed
 		} else {
@@ -249,6 +267,12 @@ const deploy = async ({
 		aggregatedPriceResults = padding + aggResults.join(padding);
 	}
 
+	if (network == 'bsc') {
+		currentLastMintEvent = 0;
+		currentWeekOfInflation = 40
+		currentOikosSupply = w3utils.toWei(`${100e6}`)
+	}
+
 	parameterNotice({
 		'Dry Run': dryRun ? green('true') : yellow('⚠ NO'),
 		Network: network,
@@ -268,7 +292,7 @@ const deploy = async ({
 			? green('✅ YES\n\t\t\t\t') + newSynthsToAdd.join(', ')
 			: yellow('⚠ NO'),
 		'Deployer account:': account,
-		'Synthetix totalSupply': `${Math.round(w3utils.fromWei(currentSynthetixSupply) / 1e6)}m`,
+		'Oikos totalSupply': `${Math.round(w3utils.fromWei(currentOikosSupply) / 1e6)}m`,
 		'FeePool exchangeFeeRate': `${w3utils.fromWei(currentExchangeFee)}`,
 		'ExchangeRates Oracle': oracleExrates,
 		'Last Mint Event': `${currentLastMintEvent} (${new Date(currentLastMintEvent * 1000)})`,
@@ -285,7 +309,7 @@ const deploy = async ({
 					)
 						.filter(([, { deploy }]) => deploy)
 						.map(([contract]) => contract)
-						.join(', ')}` + `\nIt will also set proxy targets and add synths to Synthetix.\n`
+						.join(', ')}` + `\nIt will also set proxy targets and add synths to Oikos.\n`
 				) +
 					gray('-'.repeat(50)) +
 					'\nDo you want to continue? (y/n) '
@@ -389,7 +413,7 @@ const deploy = async ({
 
 	const exchangeRates = await deployContract({
 		name: 'ExchangeRates',
-		args: [account, oracleExrates, [toBytes32('SNX')], [currentSynthetixPrice]],
+		args: [account, oracleExrates, [toBytes32('SNX')], [currentOikosPrice]],
 	});
 
 	// Set exchangeRates.stalePeriod to 1 sec if mainnet
@@ -410,13 +434,13 @@ const deploy = async ({
 		args: [account, ZERO_ADDRESS, ZERO_ADDRESS],
 	});
 
-	const synthetixEscrow = await deployContract({
-		name: 'SynthetixEscrow',
+	const oikosEscrow = await deployContract({
+		name: 'OikosEscrow',
 		args: [account, ZERO_ADDRESS],
 	});
 
-	const synthetixState = await deployContract({
-		name: 'SynthetixState',
+	const oikosState = await deployContract({
+		name: 'OikosState',
 		args: [account, account],
 	});
 
@@ -516,8 +540,8 @@ const deploy = async ({
 		deps: ['RewardEscrow', 'ProxyFeePool'],
 		args: [
 			account, // owner
-			ZERO_ADDRESS, // authority (synthetix)
-			ZERO_ADDRESS, // Synthetix Proxy
+			ZERO_ADDRESS, // authority (oikos)
+			ZERO_ADDRESS, // Oikos Proxy
 			addressOf(rewardEscrow),
 			addressOf(proxyFeePool),
 		],
@@ -529,38 +553,39 @@ const deploy = async ({
 		args: [account, currentLastMintEvent, currentWeekOfInflation],
 	});
 
-	const proxySynthetix = await deployContract({
-		name: 'ProxySynthetix',
+	const proxyOikos = await deployContract({
+		name: 'ProxyOikos',
 		source: 'Proxy',
 		args: [account],
 	});
 
-	const tokenStateSynthetix = await deployContract({
-		name: 'TokenStateSynthetix',
+	const tokenStateOikos = await deployContract({
+		name: 'TokenStateOikos',
 		source: 'TokenState',
 		args: [account, account],
 	});
 
-	const synthetix = await deployContract({
-		name: 'Synthetix',
-		deps: ['ProxySynthetix', 'TokenStateSynthetix', 'AddressResolver'],
+	console.log(`Deploying Oikos contract with ${currentOikosSupply}`)
+	const oikos = await deployContract({
+		name: 'Oikos',
+		deps: ['ProxyOikos', 'TokenStateOikos', 'AddressResolver'],
 		args: [
-			addressOf(proxySynthetix),
-			addressOf(tokenStateSynthetix),
+			addressOf(proxyOikos),
+			addressOf(tokenStateOikos),
 			account,
-			currentSynthetixSupply,
+			currentOikosSupply,
 			resolverAddress,
 		],
 	});
 
-	if (proxySynthetix && synthetix) {
+	if (proxyOikos && oikos) {
 		await runStep({
-			contract: 'ProxySynthetix',
-			target: proxySynthetix,
+			contract: 'ProxyOikos',
+			target: proxyOikos,
 			read: 'target',
-			expected: input => input === addressOf(synthetix),
+			expected: input => input === addressOf(oikos),
 			write: 'setTarget',
-			writeArg: addressOf(synthetix),
+			writeArg: addressOf(oikos),
 		});
 	}
 
@@ -589,11 +614,11 @@ const deploy = async ({
 	}
 
 	// only reset token state if redeploying
-	if (tokenStateSynthetix && config['TokenStateSynthetix'].deploy) {
-		const initialIssuance = w3utils.toWei('100000000');
+	if (tokenStateOikos && config['TokenStateOikos'].deploy) {
+		const initialIssuance = w3utils.toWei(`${100e6}`);
 		await runStep({
-			contract: 'TokenStateSynthetix',
-			target: tokenStateSynthetix,
+			contract: 'TokenStateOikos',
+			target: tokenStateOikos,
 			read: 'balanceOf',
 			readArg: account,
 			expected: input => input === initialIssuance,
@@ -602,14 +627,14 @@ const deploy = async ({
 		});
 	}
 
-	if (tokenStateSynthetix && synthetix) {
+	if (tokenStateOikos && oikos) {
 		await runStep({
-			contract: 'TokenStateSynthetix',
-			target: tokenStateSynthetix,
+			contract: 'TokenStateOikos',
+			target: tokenStateOikos,
 			read: 'associatedContract',
-			expected: input => input === addressOf(synthetix),
+			expected: input => input === addressOf(oikos),
 			write: 'setAssociatedContract',
-			writeArg: addressOf(synthetix),
+			writeArg: addressOf(oikos),
 		});
 	}
 
@@ -638,11 +663,11 @@ const deploy = async ({
 		});
 	}
 
-	if (synthetixState && issuer) {
-		// The SynthetixState contract has Issuer as it's associated contract (after v2.19 refactor)
+	if (oikosState && issuer) {
+		// The OikosState contract has Issuer as it's associated contract (after v2.19 refactor)
 		await runStep({
-			contract: 'SynthetixState',
-			target: synthetixState,
+			contract: 'OikosState',
+			target: oikosState,
 			read: 'associatedContract',
 			expected: input => input === issuerAddress,
 			write: 'setAssociatedContract',
@@ -650,22 +675,22 @@ const deploy = async ({
 		});
 	}
 
-	if (synthetixEscrow) {
+	if (oikosEscrow) {
 		await deployContract({
 			name: 'EscrowChecker',
-			deps: ['SynthetixEscrow'],
-			args: [addressOf(synthetixEscrow)],
+			deps: ['OikosEscrow'],
+			args: [addressOf(oikosEscrow)],
 		});
 	}
 
-	if (rewardEscrow && synthetix) {
+	if (rewardEscrow && oikos) {
 		await runStep({
 			contract: 'RewardEscrow',
 			target: rewardEscrow,
-			read: 'synthetix',
-			expected: input => input === addressOf(synthetix),
-			write: 'setSynthetix',
-			writeArg: addressOf(synthetix),
+			read: 'oikos',
+			expected: input => input === addressOf(oikos),
+			write: 'setOikos',
+			writeArg: addressOf(oikos),
 		});
 	}
 
@@ -680,86 +705,86 @@ const deploy = async ({
 		});
 	}
 
-	if (supplySchedule && synthetix) {
+	if (supplySchedule && oikos) {
 		await runStep({
 			contract: 'SupplySchedule',
 			target: supplySchedule,
-			read: 'synthetixProxy',
-			expected: input => input === addressOf(proxySynthetix),
-			write: 'setSynthetixProxy',
-			writeArg: addressOf(proxySynthetix),
+			read: 'oikosProxy',
+			expected: input => input === addressOf(proxyOikos),
+			write: 'setOikosProxy',
+			writeArg: addressOf(proxyOikos),
 		});
 	}
 
-	// Setup Synthetix and deploy proxyERC20 for use in Synths
-	const proxyERC20Synthetix = await deployContract({
+	// Setup Oikos and deploy proxyERC20 for use in Synths
+	const proxyERC20Oikos = await deployContract({
 		name: 'ProxyERC20',
-		deps: ['Synthetix'],
+		deps: ['Oikos'],
 		args: [account],
 	});
 
-	if (synthetix && proxyERC20Synthetix) {
+	if (oikos && proxyERC20Oikos) {
 		await runStep({
 			contract: 'ProxyERC20',
-			target: proxyERC20Synthetix,
+			target: proxyERC20Oikos,
 			read: 'target',
-			expected: input => input === addressOf(synthetix),
+			expected: input => input === addressOf(oikos),
 			write: 'setTarget',
-			writeArg: addressOf(synthetix),
+			writeArg: addressOf(oikos),
 		});
 
 		await runStep({
-			contract: 'Synthetix',
-			target: synthetix,
+			contract: 'Oikos',
+			target: oikos,
 			read: 'integrationProxy',
-			expected: input => input === addressOf(proxyERC20Synthetix),
+			expected: input => input === addressOf(proxyERC20Oikos),
 			write: 'setIntegrationProxy',
-			writeArg: addressOf(proxyERC20Synthetix),
+			writeArg: addressOf(proxyERC20Oikos),
 		});
 	}
 
-	if (synthetix && rewardsDistribution) {
+	if (oikos && rewardsDistribution) {
 		await runStep({
 			contract: 'RewardsDistribution',
 			target: rewardsDistribution,
 			read: 'authority',
-			expected: input => input === addressOf(synthetix),
+			expected: input => input === addressOf(oikos),
 			write: 'setAuthority',
-			writeArg: addressOf(synthetix),
+			writeArg: addressOf(oikos),
 		});
 
 		await runStep({
 			contract: 'RewardsDistribution',
 			target: rewardsDistribution,
-			read: 'synthetixProxy',
-			expected: input => input === addressOf(proxyERC20Synthetix),
-			write: 'setSynthetixProxy',
-			writeArg: addressOf(proxyERC20Synthetix),
+			read: 'oikosProxy',
+			expected: input => input === addressOf(proxyERC20Oikos),
+			write: 'setOikosProxy',
+			writeArg: addressOf(proxyERC20Oikos),
 		});
 	}
 
 	// ----------------
-	// Setting proxyERC20 Synthetix for synthetixEscrow
+	// Setting proxyERC20 Oikos for oikosEscrow
 	// ----------------
 
 	// Skip setting unless redeploying either of these,
-	if (config['Synthetix'].deploy || config['SynthetixEscrow'].deploy) {
-		// Note: currently on mainnet SynthetixEscrow.methods.synthetix() does NOT exist
+	if (config['Oikos'].deploy || config['OikosEscrow'].deploy) {
+		// Note: currently on mainnet OikosEscrow.methods.oikos() does NOT exist
 		// it is "havven" and the ABI we have here is not sufficient
 		if (network === 'mainnet') {
 			appendOwnerAction({
-				key: `SynthetixEscrow.setHavven(Synthetix)`,
-				target: addressOf(synthetixEscrow),
-				action: `setHavven(${addressOf(proxyERC20Synthetix)})`,
+				key: `OikosEscrow.setHavven(Oikos)`,
+				target: addressOf(oikosEscrow),
+				action: `setHavven(${addressOf(proxyERC20Oikos)})`,
 			});
 		} else {
 			await runStep({
-				contract: 'SynthetixEscrow',
-				target: synthetixEscrow,
-				read: 'synthetix',
-				expected: input => input === addressOf(proxyERC20Synthetix),
-				write: 'setSynthetix',
-				writeArg: addressOf(proxyERC20Synthetix),
+				contract: 'OikosEscrow',
+				target: oikosEscrow,
+				read: 'oikos',
+				expected: input => input === addressOf(proxyERC20Oikos),
+				write: 'setOikos',
+				writeArg: addressOf(proxyERC20Oikos),
 			});
 		}
 	}
@@ -776,8 +801,8 @@ const deploy = async ({
 			force: addNewSynths,
 		});
 
-		// sUSD proxy is used by Kucoin and Bittrex thus requires proxy / integration proxy to be set
-		const synthProxyIsLegacy = currencyKey === 'sUSD' && network === 'mainnet';
+		// oUSD proxy is used by Kucoin and Bittrex thus requires proxy / integration proxy to be set
+		const synthProxyIsLegacy = currencyKey === 'oUSD' && network === 'mainnet';
 
 		const proxyForSynth = await deployContract({
 			name: `Proxy${currencyKey}`,
@@ -786,14 +811,14 @@ const deploy = async ({
 			force: addNewSynths,
 		});
 
-		if (currencyKey === 'sETH') {
+		if (currencyKey === 'oETH') {
 			proxysETHAddress = addressOf(proxyForSynth);
 		}
 
 		let proxyERC20ForSynth;
 
 		if (synthProxyIsLegacy) {
-			// additionally deploy an ERC20 proxy for the synth if it's legacy (sUSD and not on local)
+			// additionally deploy an ERC20 proxy for the synth if it's legacy (oUSD and not on local)
 			proxyERC20ForSynth = await deployContract({
 				name: `ProxyERC20${currencyKey}`,
 				source: `ProxyERC20`,
@@ -810,10 +835,10 @@ const deploy = async ({
 		let originalTotalSupply = 0;
 		if (synthConfig.deploy) {
 			try {
-				const oldSynth = getExistingContract({ contract: `Synth${currencyKey}` });
-				originalTotalSupply = await oldSynth.methods.totalSupply().call();
+				//const oldSynth = getExistingContract({ contract: `Synth${currencyKey}` });
+				//originalTotalSupply = await oldSynth.methods.totalSupply().call();
 			} catch (err) {
-				if (network !== 'local') {
+				if (network !== 'local' || network !== "bsc") {
 					// only throw if not local - allows local environments to handle both new
 					// and updating configurations
 					throw err;
@@ -848,7 +873,7 @@ const deploy = async ({
 		const synth = await deployContract({
 			name: `Synth${currencyKey}`,
 			source: sourceContract,
-			deps: [`TokenState${currencyKey}`, `Proxy${currencyKey}`, 'Synthetix', 'FeePool'],
+			deps: [`TokenState${currencyKey}`, `Proxy${currencyKey}`, 'Oikos', 'FeePool'],
 			args: [
 				addressOf(proxyForSynth),
 				addressOf(tokenStateForSynth),
@@ -895,7 +920,7 @@ const deploy = async ({
 			});
 		}
 
-		// Setup integration proxy (ProxyERC20) for Synth (Remove when sUSD Proxy cuts over)
+		// Setup integration proxy (ProxyERC20) for Synth (Remove when oUSD Proxy cuts over)
 		if (proxyERC20ForSynth && synth) {
 			await runStep({
 				contract: `Synth${currencyKey}`,
@@ -916,11 +941,11 @@ const deploy = async ({
 			});
 		}
 
-		// Now setup connection to the Synth with Synthetix
-		if (synth && synthetix) {
+		// Now setup connection to the Synth with Oikos
+		if (synth && oikos) {
 			await runStep({
-				contract: 'Synthetix',
-				target: synthetix,
+				contract: 'Oikos',
+				target: oikos,
 				read: 'synths',
 				readArg: currencyKeyInBytes,
 				expected: input => input === addressOf(synth),
@@ -1044,7 +1069,7 @@ const deploy = async ({
 	// ----------------
 	const depot = await deployContract({
 		name: 'Depot',
-		deps: ['ProxySynthetix', 'SynthsUSD', 'FeePool'],
+		deps: ['ProxyOikos', 'SynthoUSD', 'FeePool'],
 		args: [account, account, resolverAddress],
 	});
 
@@ -1052,10 +1077,10 @@ const deploy = async ({
 	// ArbRewarder setup
 	// ----------------
 
-	// ArbRewarder contract for sETH uniswap
+	// ArbRewarder contract for oETH uniswap
 	const arbRewarder = await deployContract({
 		name: 'ArbRewarder',
-		deps: ['Synthetix', 'ExchangeRates'],
+		deps: ['Oikos', 'ExchangeRates'],
 		args: [account],
 	});
 
@@ -1070,17 +1095,17 @@ const deploy = async ({
 			writeArg: addressOf(exchangeRates),
 		});
 
-		// Ensure synthetix ProxyERC20 on arbRewarder set
+		// Ensure oikos ProxyERC20 on arbRewarder set
 		await runStep({
 			contract: 'ArbRewarder',
 			target: arbRewarder,
-			read: 'synthetixProxy',
-			expected: input => input === addressOf(proxyERC20Synthetix),
-			write: 'setSynthetix',
-			writeArg: addressOf(proxyERC20Synthetix),
+			read: 'oikosProxy',
+			expected: input => input === addressOf(proxyERC20Oikos),
+			write: 'setOikos',
+			writeArg: addressOf(proxyERC20Oikos),
 		});
 
-		// Ensure sETH uniswap exchange address on arbRewarder set
+		// Ensure oETH uniswap exchange address on arbRewarder set
 		const requiredUniswapExchange = '0xe9Cf7887b93150D4F2Da7dFc6D502B216438F244';
 		const requiredSynthAddress = proxysETHAddress;
 		await runStep({
@@ -1092,7 +1117,7 @@ const deploy = async ({
 			writeArg: requiredUniswapExchange,
 		});
 
-		// Ensure sETH proxy address on arbRewarder set
+		// Ensure oETH proxy address on arbRewarder set
 		await runStep({
 			contract: 'ArbRewarder',
 			target: arbRewarder,
@@ -1132,11 +1157,11 @@ const deploy = async ({
 			{ name: 'RewardEscrow', address: addressOf(rewardEscrow) },
 			{ name: 'RewardsDistribution', address: addressOf(rewardsDistribution) },
 			{ name: 'SupplySchedule', address: addressOf(supplySchedule) },
-			{ name: 'Synthetix', address: addressOf(synthetix) },
-			{ name: 'SynthetixEscrow', address: addressOf(synthetixEscrow) },
-			{ name: 'SynthetixState', address: addressOf(synthetixState) },
-			{ name: 'SynthsUSD', address: addressOf(deployer.deployedContracts['SynthsUSD']) },
-			{ name: 'SynthsETH', address: addressOf(deployer.deployedContracts['SynthsETH']) },
+			{ name: 'Oikos', address: addressOf(oikos) },
+			{ name: 'OikosEscrow', address: addressOf(oikosEscrow) },
+			{ name: 'OikosState', address: addressOf(oikosState) },
+			{ name: 'SynthoUSD', address: addressOf(deployer.deployedContracts['SynthoUSD']) },
+			{ name: 'SynthoETH', address: addressOf(deployer.deployedContracts['SynthoETH']) },
 		];
 
 		// quick sanity check of names in expected list

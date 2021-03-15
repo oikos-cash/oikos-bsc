@@ -1,7 +1,7 @@
 require('.'); // import common test scaffolding
 
 const ProxyERC20 = artifacts.require('ProxyERC20');
-const Synthetix = artifacts.require('Synthetix');
+const Oikos = artifacts.require('Oikos');
 const TokenExchanger = artifacts.require('TokenExchanger');
 
 const { toUnit } = require('../utils/testUtils');
@@ -9,13 +9,13 @@ const { toUnit } = require('../utils/testUtils');
 contract('ProxyERC20', async accounts => {
 	const [deployerAccount, owner, account1, account2, account3] = accounts;
 
-	let synthetix, proxyERC20, tokenExchanger;
+	let oikos, proxyERC20, tokenExchanger;
 
 	beforeEach(async () => {
 		proxyERC20 = await ProxyERC20.new(owner, { from: deployerAccount });
-		synthetix = await Synthetix.deployed();
-		await synthetix.setIntegrationProxy(proxyERC20.address, { from: owner });
-		await proxyERC20.setTarget(synthetix.address, { from: owner });
+		oikos = await Oikos.deployed();
+		await oikos.setIntegrationProxy(proxyERC20.address, { from: owner });
+		await proxyERC20.setTarget(oikos.address, { from: owner });
 
 		// Deploy an on chain exchanger
 		tokenExchanger = await TokenExchanger.new(owner, proxyERC20.address, {
@@ -23,26 +23,26 @@ contract('ProxyERC20', async accounts => {
 		});
 
 		// Give some SNX to account1 and account2
-		await synthetix.transfer(account1, toUnit('10000'), {
+		await oikos.transfer(account1, toUnit('10000'), {
 			from: owner,
 		});
-		await synthetix.transfer(account2, toUnit('10000'), {
+		await oikos.transfer(account2, toUnit('10000'), {
 			from: owner,
 		});
 
-		// Issue 10 sUSD each
-		await synthetix.issueSynths(toUnit('10'), { from: account1 });
-		await synthetix.issueSynths(toUnit('10'), { from: account2 });
+		// Issue 10 oUSD each
+		await oikos.issueSynths(toUnit('10'), { from: account1 });
+		await oikos.issueSynths(toUnit('10'), { from: account2 });
 	});
 
-	it('should setIntegrationProxy on synthetix on deployment', async () => {
-		const _integrationProxyAddress = await synthetix.integrationProxy();
+	it('should setIntegrationProxy on oikos on deployment', async () => {
+		const _integrationProxyAddress = await oikos.integrationProxy();
 		assert.equal(proxyERC20.address, _integrationProxyAddress);
 	});
 
-	it('should setTarget on ProxyERC20 to synthetix on deployment', async () => {
+	it('should setTarget on ProxyERC20 to oikos on deployment', async () => {
 		const integrationProxyTarget = await proxyERC20.target();
-		assert.equal(synthetix.address, integrationProxyTarget);
+		assert.equal(oikos.address, integrationProxyTarget);
 	});
 
 	it('should tokenExchanger has ProxyERC20 set on deployment', async () => {
@@ -53,14 +53,14 @@ contract('ProxyERC20', async accounts => {
 	describe('ProxyERC20 should adhere to ERC20 standard', async () => {
 		it('should be able to query ERC20 totalSupply', async () => {
 			// Get SNX totalSupply
-			const snxTotalSupply = await synthetix.totalSupply();
+			const snxTotalSupply = await oikos.totalSupply();
 			const proxyTotalSupply = await proxyERC20.totalSupply();
 			assert.bnEqual(snxTotalSupply, proxyTotalSupply);
 		});
 
 		it('should be able to query ERC20 balanceOf', async () => {
 			// Get my SNX balance
-			const mySNXBalance = await synthetix.balanceOf(account1);
+			const mySNXBalance = await oikos.balanceOf(account1);
 			const myProxyBalance = await proxyERC20.balanceOf(account1);
 			assert.bnEqual(myProxyBalance, mySNXBalance);
 		});
@@ -92,11 +92,11 @@ contract('ProxyERC20', async accounts => {
 			await proxyERC20.approve(account2, amountToTransfer, { from: account1 });
 
 			// Get Before Transfer Balances
-			const account1BalanceBefore = await synthetix.balanceOf(account1);
-			const account3BalanceBefore = await synthetix.balanceOf(account3);
+			const account1BalanceBefore = await oikos.balanceOf(account1);
+			const account3BalanceBefore = await oikos.balanceOf(account3);
 
 			// Transfer SNX
-			const transferTX = await synthetix.transferFrom(account1, account3, amountToTransfer, {
+			const transferTX = await oikos.transferFrom(account1, account3, amountToTransfer, {
 				from: account2,
 			});
 
@@ -108,8 +108,8 @@ contract('ProxyERC20', async accounts => {
 			});
 
 			// Get After Transfer Balances
-			const account1BalanceAfter = await synthetix.balanceOf(account1);
-			const account3BalanceAfter = await synthetix.balanceOf(account3);
+			const account1BalanceAfter = await oikos.balanceOf(account1);
+			const account3BalanceAfter = await oikos.balanceOf(account3);
 
 			// Check Balances
 			assert.bnEqual(account1BalanceBefore.sub(amountToTransfer), account1BalanceAfter);
@@ -120,10 +120,10 @@ contract('ProxyERC20', async accounts => {
 			const amountToTransfer = toUnit('44');
 
 			// Get Before Transfer Balances
-			const account1BalanceBefore = await synthetix.balanceOf(account1);
-			const account2BalanceBefore = await synthetix.balanceOf(account2);
+			const account1BalanceBefore = await oikos.balanceOf(account1);
+			const account2BalanceBefore = await oikos.balanceOf(account2);
 
-			const transferTX = await synthetix.transfer(account2, amountToTransfer, {
+			const transferTX = await oikos.transfer(account2, amountToTransfer, {
 				from: account1,
 			});
 
@@ -135,8 +135,8 @@ contract('ProxyERC20', async accounts => {
 			});
 
 			// Get After Transfer Balances
-			const account1BalanceAfter = await synthetix.balanceOf(account1);
-			const account2BalanceAfter = await synthetix.balanceOf(account2);
+			const account1BalanceAfter = await oikos.balanceOf(account1);
+			const account2BalanceAfter = await oikos.balanceOf(account2);
 
 			// Check Balances
 			assert.bnEqual(account1BalanceBefore.sub(amountToTransfer), account1BalanceAfter);
@@ -147,7 +147,7 @@ contract('ProxyERC20', async accounts => {
 	describe('third party contracts', async () => {
 		it('should be able to query ERC20 balanceOf', async () => {
 			// Get account1 SNX balance direct
-			const mySNXBalance = await synthetix.balanceOf(account1);
+			const mySNXBalance = await oikos.balanceOf(account1);
 			// Get account1 SNX balance via ERC20 Proxy
 			const myProxyBalance = await tokenExchanger.checkBalance(account1);
 			// Assert Balance with no reverts
@@ -176,15 +176,15 @@ contract('ProxyERC20', async accounts => {
 			assert.bnEqual(allowance, amountToTransfer);
 
 			// Get Before Transfer Balances
-			const account1BalanceBefore = await synthetix.balanceOf(account1);
-			const account2BalanceBefore = await synthetix.balanceOf(account2);
+			const account1BalanceBefore = await oikos.balanceOf(account1);
+			const account2BalanceBefore = await oikos.balanceOf(account2);
 
 			// tokenExchanger to transfer Account1's SNX to Account2
 			await tokenExchanger.doTokenSpend(account1, account2, amountToTransfer);
 
 			// Get After Transfer Balances
-			const account1BalanceAfter = await synthetix.balanceOf(account1);
-			const account2BalanceAfter = await synthetix.balanceOf(account2);
+			const account1BalanceAfter = await oikos.balanceOf(account1);
+			const account2BalanceAfter = await oikos.balanceOf(account2);
 
 			// Check Balances
 			assert.bnEqual(account1BalanceBefore.sub(amountToTransfer), account1BalanceAfter);
@@ -193,8 +193,8 @@ contract('ProxyERC20', async accounts => {
 
 		it('should be able to query optional ERC20 decimals', async () => {
 			// Get decimals
-			const snxDecimals = await synthetix.decimals();
-			const snxDecimalsContract = await tokenExchanger.getDecimals(synthetix.address);
+			const snxDecimals = await oikos.decimals();
+			const snxDecimalsContract = await tokenExchanger.getDecimals(oikos.address);
 			assert.bnEqual(snxDecimals, snxDecimalsContract);
 		});
 	});

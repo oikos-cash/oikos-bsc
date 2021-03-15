@@ -2,7 +2,7 @@ pragma solidity 0.4.25;
 
 
 /**
- * @title Synthetix Depot interface
+ * @title Oikos Depot interface
  */
 contract IDepot {
     function exchangeEtherForSynths() public payable returns (uint);

@@ -11,14 +11,14 @@ const FeePoolState = artifacts.require('FeePoolState');
 const FeePoolEternalStorage = artifacts.require('FeePoolEternalStorage');
 const IssuanceEternalStorage = artifacts.require('IssuanceEternalStorage');
 const DelegateApprovals = artifacts.require('DelegateApprovals');
-const Synthetix = artifacts.require('Synthetix');
+const Oikos = artifacts.require('Oikos');
 const Exchanger = artifacts.require('Exchanger');
 const ExchangeState = artifacts.require('ExchangeState');
 const Issuer = artifacts.require('Issuer');
-const SynthetixEscrow = artifacts.require('SynthetixEscrow');
+const OikosEscrow = artifacts.require('OikosEscrow');
 const RewardEscrow = artifacts.require('RewardEscrow');
 const RewardsDistribution = artifacts.require('RewardsDistribution');
-const SynthetixState = artifacts.require('SynthetixState');
+const OikosState = artifacts.require('OikosState');
 const SupplySchedule = artifacts.require('SupplySchedule');
 const Synth = artifacts.require('Synth');
 const MultiCollateralSynth = artifacts.require('MultiCollateralSynth');
@@ -101,8 +101,8 @@ module.exports = async function(deployer, network, accounts) {
 	// ----------------
 	// Escrow
 	// ----------------
-	console.log(gray('Deploying SynthetixEscrow...'));
-	const escrow = await deployer.deploy(SynthetixEscrow, owner, ZERO_ADDRESS, {
+	console.log(gray('Deploying OikosEscrow...'));
+	const escrow = await deployer.deploy(OikosEscrow, owner, ZERO_ADDRESS, {
 		from: deployerAccount,
 	});
 
@@ -112,12 +112,12 @@ module.exports = async function(deployer, network, accounts) {
 	});
 
 	// ----------------
-	// Synthetix State
+	// Oikos State
 	// ----------------
-	console.log(gray('Deploying SynthetixState...'));
+	console.log(gray('Deploying OikosState...'));
 	// constructor(address _owner, address _associatedContract)
-	deployer.link(SafeDecimalMath, SynthetixState);
-	const synthetixState = await deployer.deploy(SynthetixState, owner, ZERO_ADDRESS, {
+	deployer.link(SafeDecimalMath, OikosState);
+	const oikosState = await deployer.deploy(OikosState, owner, ZERO_ADDRESS, {
 		from: deployerAccount,
 	});
 
@@ -176,8 +176,8 @@ module.exports = async function(deployer, network, accounts) {
 	const rewardsDistribution = await deployer.deploy(
 		RewardsDistribution,
 		owner,
-		ZERO_ADDRESS, // Authority = Synthetix Underlying
-		ZERO_ADDRESS, // Synthetix ProxyERC20
+		ZERO_ADDRESS, // Authority = Oikos Underlying
+		ZERO_ADDRESS, // Oikos ProxyERC20
 		rewardEscrow.address,
 		feePoolProxy.address, // FeePoolProxy
 		{
@@ -186,7 +186,7 @@ module.exports = async function(deployer, network, accounts) {
 	);
 
 	// ----------------
-	// Synthetix
+	// Oikos
 	// ----------------
 	console.log(gray('Deploying SupplySchedule...'));
 	// constructor(address _owner)
@@ -205,22 +205,22 @@ module.exports = async function(deployer, network, accounts) {
 		}
 	);
 
-	console.log(gray('Deploying SynthetixProxy...'));
+	console.log(gray('Deploying OikosProxy...'));
 	// constructor(address _owner)
-	const synthetixProxy = await Proxy.new(owner, { from: deployerAccount });
+	const oikosProxy = await Proxy.new(owner, { from: deployerAccount });
 
-	console.log(gray('Deploying SynthetixTokenState...'));
+	console.log(gray('Deploying OikosTokenState...'));
 	// constructor(address _owner, address _associatedContract)
-	const synthetixTokenState = await TokenState.new(owner, deployerAccount, {
+	const oikosTokenState = await TokenState.new(owner, deployerAccount, {
 		from: deployerAccount,
 	});
 
-	console.log(gray('Deploying Synthetix...'));
-	deployer.link(SafeDecimalMath, Synthetix);
-	const synthetix = await deployer.deploy(
-		Synthetix,
-		synthetixProxy.address,
-		synthetixTokenState.address,
+	console.log(gray('Deploying Oikos...'));
+	deployer.link(SafeDecimalMath, Oikos);
+	const oikos = await deployer.deploy(
+		Oikos,
+		oikosProxy.address,
+		oikosTokenState.address,
 		owner,
 		SYNTHETIX_TOTAL_SUPPLY,
 		resolver.address,
@@ -234,49 +234,49 @@ module.exports = async function(deployer, network, accounts) {
 	// Connect Token State
 	// ----------------------
 	// Set initial balance for the owner to have all Havvens.
-	await synthetixTokenState.setBalanceOf(owner, web3.utils.toWei('100000000'), {
+	await oikosTokenState.setBalanceOf(owner, web3.utils.toWei('100000000'), {
 		from: deployerAccount,
 	});
 
-	await synthetixTokenState.setAssociatedContract(synthetix.address, { from: owner });
+	await oikosTokenState.setAssociatedContract(oikos.address, { from: owner });
 
 	// ----------------------
 	// Connect Proxy
 	// ----------------------
-	await synthetixProxy.setTarget(synthetix.address, { from: owner });
+	await oikosProxy.setTarget(oikos.address, { from: owner });
 
 	// ----------------------
-	// Connect Escrow to Synthetix
+	// Connect Escrow to Oikos
 	// ----------------------
-	await escrow.setSynthetix(synthetix.address, { from: owner });
-	await rewardEscrow.setSynthetix(synthetix.address, { from: owner });
+	await escrow.setOikos(oikos.address, { from: owner });
+	await rewardEscrow.setOikos(oikos.address, { from: owner });
 
 	// ----------------------
 	// Connect SupplySchedule
 	// ----------------------
-	await supplySchedule.setSynthetixProxy(synthetixProxy.address, { from: owner });
+	await supplySchedule.setOikosProxy(oikosProxy.address, { from: owner });
 
 	// ----------------------
 	// Connect RewardsDistribution
 	// ----------------------
-	await rewardsDistribution.setAuthority(synthetix.address, { from: owner });
-	await rewardsDistribution.setSynthetixProxy(synthetixProxy.address, { from: owner });
+	await rewardsDistribution.setAuthority(oikos.address, { from: owner });
+	await rewardsDistribution.setOikosProxy(oikosProxy.address, { from: owner });
 
 	// ----------------
 	// Synths
 	// ----------------
-	const currencyKeys = ['XDR', 'sUSD', 'sAUD', 'sEUR', 'sBTC', 'iBTC', 'sETH'];
-	// const currencyKeys = ['sUSD', 'sETH'];
+	const currencyKeys = ['XDR', 'oUSD', 'sAUD', 'sEUR', 'oBTC', 'iBTC', 'oETH'];
+	// const currencyKeys = ['oUSD', 'oETH'];
 	// Initial prices
 	const { timestamp } = await web3.eth.getBlock('latest');
 	// sAUD: 0.5 USD
 	// sEUR: 1.25 USD
-	// sBTC: 0.1
+	// oBTC: 0.1
 	// iBTC: 5000 USD
 	// SNX: 4000 USD
 	await exchangeRates.updateRates(
 		currencyKeys
-			.filter(currency => currency !== 'sUSD')
+			.filter(currency => currency !== 'oUSD')
 			.concat(['SNX'])
 			.map(toBytes32),
 		// ['172', '1.20'].map(number =>
@@ -302,7 +302,7 @@ module.exports = async function(deployer, network, accounts) {
 
 		let SynthSubclass = Synth;
 		// Determine class of Synth
-		if (currencyKey === 'sETH') {
+		if (currencyKey === 'oETH') {
 			SynthSubclass = MultiCollateralSynth;
 		}
 
@@ -319,7 +319,7 @@ module.exports = async function(deployer, network, accounts) {
 			{ from: deployerAccount },
 		];
 
-		if (currencyKey === 'sETH') {
+		if (currencyKey === 'oETH') {
 			synthParams.splice(synthParams.length - 1, 0, toBytes32('EtherCollateral'));
 		}
 
@@ -334,10 +334,10 @@ module.exports = async function(deployer, network, accounts) {
 		await proxy.setTarget(synth.address, { from: owner });
 
 		// ----------------------
-		// Connect Synthetix to Synth
+		// Connect Oikos to Synth
 		// ----------------------
-		console.log(gray(`Adding ${currencyKey} to Synthetix contract...`));
-		await synthetix.addSynth(synth.address, { from: owner });
+		console.log(gray(`Adding ${currencyKey} to Oikos contract...`));
+		await oikos.addSynth(synth.address, { from: owner });
 
 		synths.push({
 			currencyKey,
@@ -361,8 +361,8 @@ module.exports = async function(deployer, network, accounts) {
 	// --------------------
 	console.log('Deploying EtherCollateral...');
 	// Needs the SynthsETH & SynthsUSD in the address resolver
-	const sETHSynth = synths.find(synth => synth.currencyKey === 'sETH');
-	const sUSDSynth = synths.find(synth => synth.currencyKey === 'sUSD');
+	const sETHSynth = synths.find(synth => synth.currencyKey === 'oETH');
+	const sUSDSynth = synths.find(synth => synth.currencyKey === 'oUSD');
 	deployer.link(SafeDecimalMath, EtherCollateral);
 	const etherCollateral = await deployer.deploy(EtherCollateral, owner, resolver.address, {
 		from: deployerAccount,
@@ -418,10 +418,10 @@ module.exports = async function(deployer, network, accounts) {
 	);
 
 	// ----------------------
-	// Connect Synthetix State to the Issuer
+	// Connect Oikos State to the Issuer
 	// ----------------------
-	console.log(gray('Setting associated contract of SynthetixState to Issuer...'));
-	await synthetixState.setAssociatedContract(issuer.address, { from: owner });
+	console.log(gray('Setting associated contract of OikosState to Issuer...'));
+	await oikosState.setAssociatedContract(issuer.address, { from: owner });
 
 	// -----------------
 	// Updating Resolver
@@ -442,9 +442,9 @@ module.exports = async function(deployer, network, accounts) {
 			'RewardEscrow',
 			'RewardsDistribution',
 			'SupplySchedule',
-			'Synthetix',
-			'SynthetixEscrow',
-			'SynthetixState',
+			'Oikos',
+			'OikosEscrow',
+			'OikosState',
 			'SynthsETH',
 			'SynthsUSD',
 			'IssuanceEternalStorage',
@@ -463,9 +463,9 @@ module.exports = async function(deployer, network, accounts) {
 			rewardEscrow.address,
 			rewardsDistribution.address,
 			supplySchedule.address,
-			synthetix.address,
+			oikos.address,
 			escrow.address,
-			synthetixState.address,
+			oikosState.address,
 			sETHSynth.synth.address,
 			sUSDSynth.synth.address,
 			issuanceEternalStorage.address,
@@ -482,11 +482,11 @@ module.exports = async function(deployer, network, accounts) {
 		['Fee Pool Proxy', feePoolProxy.address],
 		['Fee Pool State', feePoolState.address],
 		['Fee Pool Eternal Storage', feePoolEternalStorage.address],
-		['Synthetix State', synthetixState.address],
-		['Synthetix Token State', synthetixTokenState.address],
-		['Synthetix Proxy', synthetixProxy.address],
-		['Synthetix', Synthetix.address],
-		['Synthetix Escrow', SynthetixEscrow.address],
+		['Oikos State', oikosState.address],
+		['Oikos Token State', oikosTokenState.address],
+		['Oikos Proxy', oikosProxy.address],
+		['Oikos', Oikos.address],
+		['Oikos Escrow', OikosEscrow.address],
 		['Reward Escrow', RewardEscrow.address],
 		['Rewards Distribution', RewardsDistribution.address],
 		['Depot', Depot.address],

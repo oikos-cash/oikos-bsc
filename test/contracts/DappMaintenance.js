@@ -60,7 +60,7 @@ contract('DappMaintenance', async accounts => {
 		);
 	});
 
-	it('should set dapp maintenance for SynthetixExchange if owner', async () => {
+	it('should set dapp maintenance for OikosExchange if owner', async () => {
 		const isMaintenanceOn = true;
 		assert.isFalse(await dappMaintenance.isPausedSX());
 		const transaction = await dappMaintenance.setMaintenanceModeSX(isMaintenanceOn, {
@@ -72,7 +72,7 @@ contract('DappMaintenance', async accounts => {
 		assert.isTrue(await dappMaintenance.isPausedSX());
 	});
 
-	it('should not set dapp maintenance for SynthetixExchange if not owner', async () => {
+	it('should not set dapp maintenance for OikosExchange if not owner', async () => {
 		const isMaintenanceOn = true;
 		assert.isFalse(await dappMaintenance.isPausedSX());
 		await assert.revert(dappMaintenance.setMaintenanceModeSX(isMaintenanceOn, { from: address1 }));

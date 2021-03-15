@@ -16,7 +16,7 @@ const {
 const stringify = input => JSON.stringify(input, null, '\t') + '\n';
 
 const ensureNetwork = network => {
-	if (!/^(local|kovan|rinkeby|ropsten|mainnet)$/.test(network)) {
+	if (!/^(local|kovan|rinkeby|ropsten|mainnet|bsc)$/.test(network)) {
 		throw Error(
 			`Invalid network name of "${network}" supplied. Must be one of local, kovan, rinkeby, ropsten or mainnet`
 		);
@@ -67,16 +67,16 @@ const loadAndCheckRequiredSources = ({ deploymentPath, network }) => {
 };
 
 const loadConnections = ({ network }) => {
-	if (network !== 'local' && !process.env.INFURA_PROJECT_ID) {
-		throw Error('Missing .env key of INFURA_PROJECT_ID. Please add and retry.');
-	}
-
-	const providerUrl =
-		network === 'local'
-			? 'http://127.0.0.1:8545'
-			: `https://${network}.infura.io/v3/${process.env.INFURA_PROJECT_ID}`;
-	const privateKey =
-		network === 'mainnet' ? process.env.DEPLOY_PRIVATE_KEY : process.env.TESTNET_DEPLOY_PRIVATE_KEY;
+	//if (network !== 'local' && !process.env.INFURA_PROJECT_ID) {
+	//	throw Error('Missing .env key of INFURA_PROJECT_ID. Please add and retry.');
+	//}
+	//const providerUrl = 'https://bsc-dataseed.binance.org';
+	const providerUrl ='https://data-seed-prebsc-2-s3.binance.org:8545/';
+	//	network === 'local'
+	//		? 'http://127.0.0.1:8545'
+	//		: `https://${network}.infura.io/v3/${process.env.INFURA_PROJECT_ID}`;
+	const privateKey = process.env.PRIVATE_KEY;
+	//	network === 'mainnet' ? process.env.DEPLOY_PRIVATE_KEY : process.env.TESTNET_DEPLOY_PRIVATE_KEY;
 	const etherscanUrl =
 		network === 'mainnet'
 			? 'https://api.etherscan.io/api'

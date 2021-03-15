@@ -109,9 +109,9 @@ contract FeePoolState is SelfDestructible, LimitedSetup {
      * @notice Logs an accounts issuance data in the current fee period which is then stored historically
      * @param account Message.Senders account address
      * @param debtRatio Debt of this account as a percentage of the global debt.
-     * @param debtEntryIndex The index in the global debt ledger. synthetix.synthetixState().issuanceData(account)
+     * @param debtEntryIndex The index in the global debt ledger. oikos.oikosState().issuanceData(account)
      * @param currentPeriodStartDebtIndex The startingDebtIndex of the current fee period
-     * @dev onlyFeePool to call me on synthetix.issue() & synthetix.burn() calls to store the locked SNX
+     * @dev onlyFeePool to call me on oikos.issue() & oikos.burn() calls to store the locked OKS
      * per fee period so we know to allocate the correct proportions of fees and rewards per period
       accountIssuanceLedger[account][0] has the latest locked amount for the current period. This can be update as many time
       accountIssuanceLedger[account][1-2] has the last locked amount for a previous period they minted or burned
@@ -145,7 +145,7 @@ contract FeePoolState is SelfDestructible, LimitedSetup {
     }
 
     /**
-     * @notice Import issuer data from synthetixState.issuerData on FeePeriodClose() block #
+     * @notice Import issuer data from oikosState.issuerData on FeePeriodClose() block #
      * @dev Only callable by the contract owner, and only for 6 weeks after deployment.
      * @param accounts Array of issuing addresses
      * @param ratios Array of debt ratios

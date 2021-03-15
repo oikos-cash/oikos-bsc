@@ -14,12 +14,12 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
     using SafeMath for uint;
     using SafeDecimalMath for uint;
 
-    bytes32 constant SNX = "SNX";
+    bytes32 constant OKS = "OKS";
     bytes32 constant ETH = "ETH";
 
     /* ========== STATE VARIABLES ========== */
 
-    // Address where the ether and Synths raised for selling SNX is transfered to
+    // Address where the ether and Synths raised for selling OKS is transfered to
     // Any ether raised for selling Synths gets sent back to whoever deposited the Synths,
     // and doesn't have anything to do with this address.
     address public fundsWallet;
@@ -49,15 +49,15 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
     // The ending index of our queue exclusive
     uint public depositEndIndex;
 
-    /* This is a convenience variable so users and dApps can just query how much sUSD
+    /* This is a convenience variable so users and dApps can just query how much oUSD
        we have available for purchase without having to iterate the mapping with a
        O(n) amount of calls for something we'll probably want to display quite regularly. */
     uint public totalSellableDeposits;
 
-    // The minimum amount of sUSD required to enter the FiFo queue
+    // The minimum amount of oUSD required to enter the FiFo queue
     uint public minimumDepositAmount = 50 * SafeDecimalMath.unit();
 
-    // A cap on the amount of sUSD you can buy with ETH in 1 transaction
+    // A cap on the amount of oUSD you can buy with ETH in 1 transaction
     uint public maxEthPurchase = 500 * SafeDecimalMath.unit();
 
     // If a user deposits a synth amount < the minimumDepositAmount the contract will keep
@@ -101,8 +101,8 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
     }
 
     /**
-     * @notice Set the minimum deposit amount required to depoist sUSD into the FIFO queue
-     * @param _amount The new new minimum number of sUSD required to deposit
+     * @notice Set the minimum deposit amount required to depoist oUSD into the FIFO queue
+     * @param _amount The new new minimum number of oUSD required to deposit
      */
     function setMinimumDepositAmount(uint _amount) external onlyOwner {
         // Do not allow us to set it less than 1 dollar opening up to fractional desposits in the queue again
@@ -114,14 +114,14 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     /**
-     * @notice Fallback function (exchanges ETH to sUSD)
+     * @notice Fallback function (exchanges ETH to oUSD)
      */
     function() external payable {
         exchangeEtherForSynths();
     }
 
     /**
-     * @notice Exchange ETH to sUSD.
+     * @notice Exchange ETH to oUSD.
      */
     function exchangeEtherForSynths()
         public
@@ -130,7 +130,7 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
         rateNotStale(ETH)
         notPaused
         returns (
-            uint // Returns the number of Synths (sUSD) received
+            uint // Returns the number of Synths (oUSD) received
         )
     {
         require(msg.value <= maxEthPurchase, "ETH amount above maxEthPurchase limit");
@@ -164,7 +164,7 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
                     // Transfer the ETH to the depositor. Send is used instead of transfer
                     // so a non payable contract won't block the FIFO queue on a failed
                     // ETH payable for synths transaction. The proceeds to be sent to the
-                    // synthetix foundation funds wallet. This is to protect all depositors
+                    // oikos foundation funds wallet. This is to protect all depositors
                     // in the queue in this rare case that may occur.
                     ethToSend = remainingToFulfill.divideDecimal(exchangeRates().rateForCurrency(ETH));
 
@@ -200,7 +200,7 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
                     // Now fulfill by transfering the ETH to the depositor. Send is used instead of transfer
                     // so a non payable contract won't block the FIFO queue on a failed
                     // ETH payable for synths transaction. The proceeds to be sent to the
-                    // synthetix foundation funds wallet. This is to protect all depositors
+                    // oikos foundation funds wallet. This is to protect all depositors
                     // in the queue in this rare case that may occur.
                     ethToSend = deposit.amount.divideDecimal(exchangeRates().rateForCurrency(ETH));
 
@@ -239,14 +239,14 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
 
         if (fulfilled > 0) {
             // Now tell everyone that we gave them that many (only if the amount is greater than 0).
-            emit Exchange("ETH", msg.value, "sUSD", fulfilled);
+            emit Exchange("ETH", msg.value, "oUSD", fulfilled);
         }
 
         return fulfilled;
     }
 
     /**
-     * @notice Exchange ETH to sUSD while insisting on a particular rate. This allows a user to
+     * @notice Exchange ETH to oUSD while insisting on a particular rate. This allows a user to
      *         exchange while protecting against frontrunning by the contract owner on the exchange rate.
      * @param guaranteedRate The exchange rate (ether price) which must be honored or the call will revert.
      */
@@ -256,7 +256,7 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
         rateNotStale(ETH)
         notPaused
         returns (
-            uint // Returns the number of Synths (sUSD) received
+            uint // Returns the number of Synths (oUSD) received
         )
     {
         require(guaranteedRate == exchangeRates().rateForCurrency(ETH), "Guaranteed rate would not be received");
@@ -265,114 +265,114 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
     }
 
     /**
-     * @notice Exchange ETH to SNX.
+     * @notice Exchange ETH to OKS.
      */
     function exchangeEtherForSNX()
         public
         payable
-        rateNotStale(SNX)
+        rateNotStale(OKS)
         rateNotStale(ETH)
         notPaused
         returns (
-            uint // Returns the number of SNX received
+            uint // Returns the number of OKS received
         )
     {
-        // How many SNX are they going to be receiving?
-        uint synthetixToSend = synthetixReceivedForEther(msg.value);
+        // How many OKS are they going to be receiving?
+        uint oikosToSend = oikosReceivedForEther(msg.value);
 
         // Store the ETH in our funds wallet
         fundsWallet.transfer(msg.value);
 
-        // And send them the SNX.
-        synthetix().transfer(msg.sender, synthetixToSend);
+        // And send them the OKS.
+        oikos().transfer(msg.sender, oikosToSend);
 
-        emit Exchange("ETH", msg.value, "SNX", synthetixToSend);
+        emit Exchange("ETH", msg.value, "OKS", oikosToSend);
 
-        return synthetixToSend;
+        return oikosToSend;
     }
 
     /**
-     * @notice Exchange ETH to SNX while insisting on a particular set of rates. This allows a user to
+     * @notice Exchange ETH to OKS while insisting on a particular set of rates. This allows a user to
      *         exchange while protecting against frontrunning by the contract owner on the exchange rates.
      * @param guaranteedEtherRate The ether exchange rate which must be honored or the call will revert.
-     * @param guaranteedSynthetixRate The synthetix exchange rate which must be honored or the call will revert.
+     * @param guaranteedOikosRate The oikos exchange rate which must be honored or the call will revert.
      */
-    function exchangeEtherForSNXAtRate(uint guaranteedEtherRate, uint guaranteedSynthetixRate)
+    function exchangeEtherForSNXAtRate(uint guaranteedEtherRate, uint guaranteedOikosRate)
         public
         payable
-        rateNotStale(SNX)
+        rateNotStale(OKS)
         rateNotStale(ETH)
         notPaused
         returns (
-            uint // Returns the number of SNX received
+            uint // Returns the number of OKS received
         )
     {
         require(guaranteedEtherRate == exchangeRates().rateForCurrency(ETH), "Guaranteed ether rate would not be received");
         require(
-            guaranteedSynthetixRate == exchangeRates().rateForCurrency(SNX),
-            "Guaranteed synthetix rate would not be received"
+            guaranteedOikosRate == exchangeRates().rateForCurrency(OKS),
+            "Guaranteed oikos rate would not be received"
         );
 
         return exchangeEtherForSNX();
     }
 
     /**
-     * @notice Exchange sUSD for SNX
+     * @notice Exchange oUSD for OKS
      * @param synthAmount The amount of synths the user wishes to exchange.
      */
     function exchangeSynthsForSNX(uint synthAmount)
         public
-        rateNotStale(SNX)
+        rateNotStale(OKS)
         notPaused
         returns (
-            uint // Returns the number of SNX received
+            uint // Returns the number of OKS received
         )
     {
-        // How many SNX are they going to be receiving?
-        uint synthetixToSend = synthetixReceivedForSynths(synthAmount);
+        // How many OKS are they going to be receiving?
+        uint oikosToSend = oikosReceivedForSynths(synthAmount);
 
         // Ok, transfer the Synths to our funds wallet.
         // These do not go in the deposit queue as they aren't for sale as such unless
         // they're sent back in from the funds wallet.
         synthsUSD().transferFrom(msg.sender, fundsWallet, synthAmount);
 
-        // And send them the SNX.
-        synthetix().transfer(msg.sender, synthetixToSend);
+        // And send them the OKS.
+        oikos().transfer(msg.sender, oikosToSend);
 
-        emit Exchange("sUSD", synthAmount, "SNX", synthetixToSend);
+        emit Exchange("oUSD", synthAmount, "OKS", oikosToSend);
 
-        return synthetixToSend;
+        return oikosToSend;
     }
 
     /**
-     * @notice Exchange sUSD for SNX while insisting on a particular rate. This allows a user to
+     * @notice Exchange oUSD for OKS while insisting on a particular rate. This allows a user to
      *         exchange while protecting against frontrunning by the contract owner on the exchange rate.
      * @param synthAmount The amount of synths the user wishes to exchange.
-     * @param guaranteedRate A rate (synthetix price) the caller wishes to insist upon.
+     * @param guaranteedRate A rate (oikos price) the caller wishes to insist upon.
      */
     function exchangeSynthsForSNXAtRate(uint synthAmount, uint guaranteedRate)
         public
-        rateNotStale(SNX)
+        rateNotStale(OKS)
         notPaused
         returns (
-            uint // Returns the number of SNX received
+            uint // Returns the number of OKS received
         )
     {
-        require(guaranteedRate == exchangeRates().rateForCurrency(SNX), "Guaranteed rate would not be received");
+        require(guaranteedRate == exchangeRates().rateForCurrency(OKS), "Guaranteed rate would not be received");
 
         return exchangeSynthsForSNX(synthAmount);
     }
 
     /**
-     * @notice Allows the owner to withdraw SNX from this contract if needed.
-     * @param amount The amount of SNX to attempt to withdraw (in 18 decimal places).
+     * @notice Allows the owner to withdraw OKS from this contract if needed.
+     * @param amount The amount of OKS to attempt to withdraw (in 18 decimal places).
      */
-    function withdrawSynthetix(uint amount) external onlyOwner {
-        synthetix().transfer(owner, amount);
+    function withdrawOikos(uint amount) external onlyOwner {
+        oikos().transfer(owner, amount);
 
         // We don't emit our own events here because we assume that anyone
         // who wants to watch what the Depot is doing can
-        // just watch ERC20 events from the Synth and/or Synthetix contracts
+        // just watch ERC20 events from the Synth and/or Oikos contracts
         // filtered to our address.
     }
 
@@ -418,7 +418,7 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
 
     /**
      * @notice depositSynths: Allows users to deposit synths via the approve / transferFrom workflow
-     * @param amount The amount of sUSD you wish to deposit (must have been approved first)
+     * @param amount The amount of oUSD you wish to deposit (must have been approved first)
      */
     function depositSynths(uint amount) external {
         // Grab the amount of synths. Will fail if not approved first
@@ -448,26 +448,26 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
     /* ========== VIEWS ========== */
 
     /**
-     * @notice Calculate how many SNX you will receive if you transfer
+     * @notice Calculate how many OKS you will receive if you transfer
      *         an amount of synths.
      * @param amount The amount of synths (in 18 decimal places) you want to ask about
      */
-    function synthetixReceivedForSynths(uint amount) public view returns (uint) {
-        // And what would that be worth in SNX based on the current price?
-        return amount.divideDecimal(exchangeRates().rateForCurrency(SNX));
+    function oikosReceivedForSynths(uint amount) public view returns (uint) {
+        // And what would that be worth in OKS based on the current price?
+        return amount.divideDecimal(exchangeRates().rateForCurrency(OKS));
     }
 
     /**
-     * @notice Calculate how many SNX you will receive if you transfer
+     * @notice Calculate how many OKS you will receive if you transfer
      *         an amount of ether.
      * @param amount The amount of ether (in wei) you want to ask about
      */
-    function synthetixReceivedForEther(uint amount) public view returns (uint) {
-        // How much is the ETH they sent us worth in sUSD (ignoring the transfer fee)?
+    function oikosReceivedForEther(uint amount) public view returns (uint) {
+        // How much is the ETH they sent us worth in oUSD (ignoring the transfer fee)?
         uint valueSentInSynths = amount.multiplyDecimal(exchangeRates().rateForCurrency(ETH));
 
-        // Now, how many SNX will that USD amount buy?
-        return synthetixReceivedForSynths(valueSentInSynths);
+        // Now, how many OKS will that USD amount buy?
+        return oikosReceivedForSynths(valueSentInSynths);
     }
 
     /**
@@ -486,8 +486,8 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
         return ISynth(resolver.requireAndGetAddress("SynthsUSD", "Missing SynthsUSD address"));
     }
 
-    function synthetix() internal view returns (IERC20) {
-        return IERC20(resolver.requireAndGetAddress("Synthetix", "Missing Synthetix address"));
+    function oikos() internal view returns (IERC20) {
+        return IERC20(resolver.requireAndGetAddress("Oikos", "Missing Oikos address"));
     }
 
     function exchangeRates() internal view returns (IExchangeRates) {

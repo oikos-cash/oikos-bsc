@@ -21,7 +21,7 @@ contract ExchangeRates is SelfDestructible {
         uint40 time;
     }
 
-    // Exchange rates and update times stored by currency code, e.g. 'SNX', or 'sUSD'
+    // Exchange rates and update times stored by currency code, e.g. 'OKS', or 'oUSD'
     mapping(bytes32 => mapping(uint => RateAndUpdatedTime)) private _rates;
 
     // The address of the oracle which pushes rate updates to this contract
@@ -77,8 +77,8 @@ contract ExchangeRates is SelfDestructible {
 
         oracle = _oracle;
 
-        // The sUSD rate is always 1 and is never stale.
-        _setRate("sUSD", SafeDecimalMath.unit(), now);
+        // The oUSD rate is always 1 and is never stale.
+        _setRate("oUSD", SafeDecimalMath.unit(), now);
 
         internalUpdateRates(_currencyKeys, _newRates, now);
     }
@@ -357,7 +357,7 @@ contract ExchangeRates is SelfDestructible {
             RateAndUpdatedTime memory rateAndUpdateTime = getRateAndUpdatedTime(currencyKeys[i]);
             _localRates[i] = uint256(rateAndUpdateTime.rate);
             if (!anyRateStale) {
-                anyRateStale = (currencyKeys[i] != "sUSD" && uint256(rateAndUpdateTime.time).add(period) < now);
+                anyRateStale = (currencyKeys[i] != "oUSD" && uint256(rateAndUpdateTime.time).add(period) < now);
             }
         }
 
@@ -368,8 +368,8 @@ contract ExchangeRates is SelfDestructible {
      * @notice Check if a specific currency's rate hasn't been updated for longer than the stale period.
      */
     function rateIsStale(bytes32 currencyKey) public view returns (bool) {
-        // sUSD is a special case and is never stale.
-        if (currencyKey == "sUSD") return false;
+        // oUSD is a special case and is never stale.
+        if (currencyKey == "oUSD") return false;
 
         return lastRateUpdateTimes(currencyKey).add(rateStalePeriod) < now;
     }
@@ -389,8 +389,8 @@ contract ExchangeRates is SelfDestructible {
         uint256 i = 0;
 
         while (i < currencyKeys.length) {
-            // sUSD is a special case and is never false
-            if (currencyKeys[i] != "sUSD" && lastRateUpdateTimes(currencyKeys[i]).add(rateStalePeriod) < now) {
+            // oUSD is a special case and is never false
+            if (currencyKeys[i] != "oUSD" && lastRateUpdateTimes(currencyKeys[i]).add(rateStalePeriod) < now) {
                 return true;
             }
             i += 1;
@@ -431,7 +431,7 @@ contract ExchangeRates is SelfDestructible {
             // truely worthless and still valid. In this scenario, we should
             // delete the rate and remove it from the system.
             require(newRates[i] != 0, "Zero is not a valid rate, please call deleteRate instead.");
-            require(currencyKey != "sUSD", "Rate of sUSD cannot be updated, it's always UNIT.");
+            require(currencyKey != "oUSD", "Rate of oUSD cannot be updated, it's always UNIT.");
 
             // We should only update the rate if it's at least the same age as the last rate we've got.
             if (timeSent < lastRateUpdateTimes(currencyKey)) {

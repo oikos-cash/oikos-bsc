@@ -60,7 +60,7 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 				module: 'contract',
 				action: 'getabi',
 				address,
-				apikey: process.env.ETHERSCAN_KEY,
+				apikey: process.env.BSCSCAN_KEY,
 			},
 		});
 
@@ -77,7 +77,7 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 					action: 'txlist',
 					address,
 					sort: 'asc',
-					apikey: process.env.ETHERSCAN_KEY,
+					apikey: process.env.BSCSCAN_KEY,
 				},
 			});
 
@@ -131,7 +131,7 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 					runs: optimizerRuns,
 					libraryname1: 'SafeDecimalMath',
 					libraryaddress1: deployment.targets['SafeDecimalMath'].address,
-					apikey: process.env.ETHERSCAN_KEY,
+					apikey: process.env.BSCSCAN_KEY,
 				}),
 				{
 					headers: {

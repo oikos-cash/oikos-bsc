@@ -77,6 +77,7 @@ node publish verify # "--help" for options
 
 ```bash
 # verify on mainnet
+export BSCSCAN_KEY=...
 node publish verify -n bsc -d publish/deployed/bsc
 ```
 

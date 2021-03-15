@@ -170,6 +170,10 @@ contract RewardsDistribution is Owned {
         return true;
     }
 
+    function min(uint a, uint b) private pure returns (uint) {
+        return a < b ? a : b;
+    }
+
     /**
      * @notice Iterates the distributions sending set out amounts of
      * tokens to the specified address. The remainder is then sent to the RewardEscrow Contract
@@ -192,14 +196,16 @@ contract RewardsDistribution is Owned {
 
         // Iterate the array of distributions sending the configured amounts
         for (uint i = 0; i < distributions.length; i++) {
-            if (distributions[i].destination != address(0) || distributions[i].amount != 0) {
-                remainder = remainder.sub(distributions[i].amount);
+            // if distribution amount is larger than remainder, we just send all remainder
+            uint distributionAmount = min(distributions[i].amount, remainder);
+            if (distributions[i].destination != address(0) || distributionAmount != 0) {
+                remainder = remainder.sub(distributionAmount);
 
                 // Transfer the OKS
-                IERC20(oikosProxy).transfer(distributions[i].destination, distributions[i].amount);
+                IERC20(oikosProxy).transfer(distributions[i].destination, distributionAmount);
 
                 // If the contract implements RewardsDistributionRecipient.sol, inform it how many OKS its received.
-                bytes memory payload = abi.encodeWithSignature("notifyRewardAmount(uint256)", distributions[i].amount);
+                bytes memory payload = abi.encodeWithSignature("notifyRewardAmount(uint256)", distributionAmount);
                 distributions[i].destination.call(payload);
                 // Note: we're ignoring the return value as it will fail for contracts that do not implement RewardsDistributionRecipient.sol
             }

@@ -328,7 +328,7 @@ const deploy = async ({
 			name,
 			address,
 			source,
-			link: `https://${network !== 'mainnet' ? network + '.' : ''}etherscan.io/address/${
+			link: `https://${network !== 'bsc' ? network + '.' : ''}bscscan.com/address/${
 				deployer.deployedContracts[name].options.address
 			}`,
 			timestamp,

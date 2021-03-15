@@ -77,12 +77,10 @@ const loadConnections = ({ network }) => {
 	//		: `https://${network}.infura.io/v3/${process.env.INFURA_PROJECT_ID}`;
 	const privateKey = process.env.PRIVATE_KEY;
 	//	network === 'mainnet' ? process.env.DEPLOY_PRIVATE_KEY : process.env.TESTNET_DEPLOY_PRIVATE_KEY;
-	const etherscanUrl = 'https://bscscan.com'
-	//	network === 'mainnet'
-	//		? 'https://api.etherscan.io/api'
-	//		: `https://api-${network}.etherscan.io/api`;
+	const etherscanUrl =
+		network === 'bsc' ? 'https://api.bscscan.com/api' : `https://api-${network}.bscscan/api`;
 
-	const etherscanLinkPrefix = `https://${network !== 'mainnet' ? network + '.' : ''}etherscan.io`;
+	const etherscanLinkPrefix = `https://${network !== 'mainnet' ? network + '.' : ''}bscscan.com`;
 	return { providerUrl, privateKey, etherscanUrl, etherscanLinkPrefix };
 };
 

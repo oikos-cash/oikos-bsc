@@ -1,6 +1,6 @@
 # Publisher
 
-This script can `build` (compile and flatten), `deploy` and `verify` (on Etherscan) the Oikos code to a testnet or mainnet.
+This script can `build` (compile and flatten), `deploy` and `verify` (on Bscscan) the Oikos code to a testnet or mainnet.
 
 ## 1. Build
 
@@ -64,22 +64,20 @@ node publish deploy -n local -d publish/deployed/local -g 8
 
 ## 3. Verify
 
-Will attempt to verify the contracts on Etherscan (by uploading the flattened source files and ABIs).
+Will attempt to verify the contracts on Bscscan (by uploading the flattened source files and ABIs).
 
 :warning: **Note: the `build` step is required for the ABIs and the `deploy` step for the live addresses to use.**
 
 ```bash
-# verify (verify compiled sources by uploading flattened source to Etherscan via their API)
+# verify (verify compiled sources by uploading flattened source to Bscscan via their API)
 node publish verify # "--help" for options
 ```
 
 ### Examples
 
 ```bash
-# verify on rinkeby.etherscan
-node publish verify -n ropsten -d publish/deployed/ropsten
-node publish verify -n rinkeby -d publish/deployed/rinkeby
-node publish verify -n kovan -d publish/deployed/kovan
+# verify on mainnet
+node publish verify -n bsc -d publish/deployed/bsc
 ```
 
 ## 4. Nominate New Owner

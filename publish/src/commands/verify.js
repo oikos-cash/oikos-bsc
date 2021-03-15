@@ -139,10 +139,11 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 					},
 				}
 			);
+			const ALREADY_VERIFIED_STRING = 'Already Verified';
 
 			console.log(gray(' - Got result:', result.data.result));
 
-			if (result.data.result === 'Contract source code already verified') {
+			if (result.data.result === ALREADY_VERIFIED_STRING) {
 				console.log(green(` - Verified ${name}`));
 				// Ugh, ok, you lie, but fine, skip and continue.
 				tableData.push([name, address, 'Successfully verified']);

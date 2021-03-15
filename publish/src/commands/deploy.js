@@ -841,7 +841,7 @@ const deploy = async ({
 
 		// MultiCollateral needs additionalConstructorArgs to be ordered
 		const additionalConstructorArgsMap = {
-			MultiCollateralSynth: [toBytes32('EtherCollateral')],
+			MultiCollateralSynth: [toBytes32('BNBCollateral')],
 			// future subclasses...
 		};
 
@@ -1122,10 +1122,10 @@ const deploy = async ({
 	}
 
 	// --------------------
-	// EtherCollateral Setup
+	// BNBCollateral Setup
 	// --------------------
-	const etherCollateral = await deployContract({
-		name: 'EtherCollateral',
+	const bnbCollateral = await deployContract({
+		name: 'BNBCollateral',
 		deps: ['AddressResolver'],
 		args: [account, resolverAddress],
 	});
@@ -1138,7 +1138,7 @@ const deploy = async ({
 		const expectedAddressesInResolver = [
 			{ name: 'DelegateApprovals', address: addressOf(feePoolDelegateApprovals) },
 			{ name: 'Depot', address: addressOf(depot) },
-			{ name: 'EtherCollateral', address: addressOf(etherCollateral) },
+			{ name: 'BNBCollateral', address: addressOf(bnbCollateral) },
 			{ name: 'Exchanger', address: addressOf(exchanger) },
 			{ name: 'ExchangeRates', address: addressOf(exchangeRates) },
 			{ name: 'ExchangeState', address: addressOf(exchangeState) },

@@ -52,7 +52,7 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 	const tableData = [];
 
 	// const contractNames = Object.keys(config);
-	const contractNames = ['Oikos'];
+	const contractNames = ['SupplySchedule'];
 	for (const name of contractNames) {
 		const { address } = deployment.targets[name];
 		// Check if this contract already has been verified.
@@ -129,8 +129,8 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 				compilerversion: 'v' + solc.version().replace('.Emscripten.clang', ''), // The version reported by solc-js is too verbose and needs a v at the front
 				optimizationUsed: 1,
 				runs: optimizerRuns,
-				// libraryname1: 'SafeDecimalMath',
-				// libraryaddress1: deployment.targets['SafeDecimalMath'].address,
+				libraryname1: 'SafeDecimalMath',
+				libraryaddress1: deployment.targets['SafeDecimalMath'].address,
 				apikey: process.env.BSCSCAN_KEY,
 			};
 			const { sourceCode, ...otherOpts } = queryOpts;

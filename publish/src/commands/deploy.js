@@ -754,7 +754,7 @@ const deploy = async ({
 			read: 'distributionsLength',
 			expected: input => input > 0,
 			write: 'addRewardDistribution',
-			writeArg: ['0x22162970710B3bC99c0B1f3Dda70b510070eC3FD', w3utils.toWei('100000000')],
+			writeArg: ['0xA4Fa6487f91641E846F1748770f3574375A8C41D', w3utils.toWei('100000000')],
 		});
 	}
 

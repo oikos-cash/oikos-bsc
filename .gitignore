@@ -10,11 +10,12 @@ bin/
 node_modules
 yarn-error.log
 
-# mkdocs 
+# mkdocs
 site/
 
 # Our environment settings
 .env
+.envrc
 
 # Build artifacts
 flattened-contracts/

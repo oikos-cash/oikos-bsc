@@ -17,19 +17,19 @@ const loadDeploymentFile = ({ network }) => {
 	return JSON.parse(fs.readFileSync(pathToDeployment));
 };
 
-const getTarget = ({ network = 'mainnet', contract } = {}) => {
+const getTarget = ({ network = 'bsc', contract } = {}) => {
 	const deployment = loadDeploymentFile({ network });
 	if (contract) return deployment.targets[contract];
 	else return deployment.targets;
 };
 
-const getSource = ({ network = 'mainnet', contract } = {}) => {
+const getSource = ({ network = 'bsc', contract } = {}) => {
 	const deployment = loadDeploymentFile({ network });
 	if (contract) return deployment.sources[contract];
 	else return deployment.sources;
 };
 
-const getSynths = ({ network = 'mainnet' } = {}) => {
+const getSynths = ({ network = 'bsc' } = {}) => {
 	const pathToSynthList = path.join(__dirname, 'publish', 'deployed', network, 'synths.json');
 	if (!fs.existsSync(pathToSynthList)) {
 		throw Error(`Cannot find synth list.`);

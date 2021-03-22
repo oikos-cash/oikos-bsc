@@ -545,6 +545,13 @@ const deploy = async ({
 		args: [account],
 	});
 
+	// Setup Oikos and deploy proxyERC20 for use in Synths
+	const proxyERC20Oikos = await deployContract({
+		name: 'ProxyERC20',
+		deps: ['Oikos'],
+		args: [account],
+	});
+
 	const tokenStateOikos = await deployContract({
 		name: 'TokenStateOikos',
 		source: 'TokenState',
@@ -554,9 +561,9 @@ const deploy = async ({
 	console.log(`Deploying Oikos contract with ${currentOikosSupply}`);
 	const oikos = await deployContract({
 		name: 'Oikos',
-		deps: ['ProxyOikos', 'TokenStateOikos', 'AddressResolver'],
+		deps: ['ProxyERC20', 'TokenStateOikos', 'AddressResolver'],
 		args: [
-			addressOf(proxyOikos),
+			addressOf(proxyERC20Oikos),
 			addressOf(tokenStateOikos),
 			account,
 			currentOikosSupply,
@@ -696,18 +703,11 @@ const deploy = async ({
 			contract: 'SupplySchedule',
 			target: supplySchedule,
 			read: 'oikosProxy',
-			expected: input => input === addressOf(proxyOikos),
+			expected: input => input === addressOf(proxyERC20Oikos),
 			write: 'setOikosProxy',
-			writeArg: addressOf(proxyOikos),
+			writeArg: addressOf(proxyERC20Oikos),
 		});
 	}
-
-	// Setup Oikos and deploy proxyERC20 for use in Synths
-	const proxyERC20Oikos = await deployContract({
-		name: 'ProxyERC20',
-		deps: ['Oikos'],
-		args: [account],
-	});
 
 	if (oikos && proxyERC20Oikos) {
 		await runStep({
@@ -1064,7 +1064,7 @@ const deploy = async ({
 	// ----------------
 	const depot = await deployContract({
 		name: 'Depot',
-		deps: ['ProxyOikos', 'SynthoUSD', 'FeePool'],
+		deps: ['ProxyERC20', 'SynthoUSD', 'FeePool'],
 		args: [account, account, resolverAddress],
 	});
 

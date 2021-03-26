@@ -46,7 +46,7 @@ const parameterNotice = props => {
 const DEFAULTS = {
 	gasPrice: '20',
 	methodCallGasLimit: 3 * 250e3, // 250k
-	contractDeploymentGasLimit: 3 * 6.9e6, // TODO split out into seperate limits for different contracts, Proxys, Synths, Oikos
+	contractDeploymentGasLimit: 15000000, // TODO split out into seperate limits for different contracts, Proxys, Synths, Oikos
 	network: 'bsc',
 	buildPath: path.join(__dirname, '..', '..', '..', BUILD_FOLDER),
 };
@@ -256,7 +256,7 @@ const deploy = async ({
 	if (network == 'bsc') {
 		currentLastMintEvent = 0;
 		currentWeekOfInflation = 0;
-		currentOikosSupply = w3utils.toWei(`${100e6}`);
+		
 	}
 
 	parameterNotice({
@@ -548,7 +548,6 @@ const deploy = async ({
 	// Setup Oikos and deploy proxyERC20 for use in Synths
 	const proxyERC20Oikos = await deployContract({
 		name: 'ProxyERC20',
-		deps: ['Oikos'],
 		args: [account],
 	});
 
@@ -558,7 +557,7 @@ const deploy = async ({
 		args: [account, account],
 	});
 
-	console.log(`Deploying Oikos contract with ${currentOikosSupply}`);
+	//console.log(`Deploying Oikos contract with ${currentOikosSupply}`);
 	const oikos = await deployContract({
 		name: 'Oikos',
 		deps: ['ProxyERC20', 'TokenStateOikos', 'AddressResolver'],

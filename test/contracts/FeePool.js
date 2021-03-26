@@ -29,7 +29,7 @@ contract('FeePool', async accounts => {
 		const timestamp = await currentTime();
 
 		await exchangeRates.updateRates(
-			[XDR, sAUD, sEUR, SNX, oBTC, iBTC, oETH],
+			[ODR, sAUD, sEUR, OKS, oBTC, iBTC, oETH],
 			['5', '0.5', '1.25', '0.1', '5000', '4000', '172'].map(toUnit),
 			timestamp,
 			{
@@ -70,13 +70,13 @@ contract('FeePool', async accounts => {
 	// };
 
 	// CURRENCIES
-	const [XDR, oUSD, sAUD, sEUR, oBTC, SNX, iBTC, oETH] = [
-		'XDR',
+	const [ODR, oUSD, sAUD, sEUR, oBTC, OKS, iBTC, oETH] = [
+		'ODR',
 		'oUSD',
 		'sAUD',
 		'sEUR',
 		'oBTC',
-		'SNX',
+		'OKS',
 		'iBTC',
 		'oETH',
 	].map(toBytes32);
@@ -93,7 +93,7 @@ contract('FeePool', async accounts => {
 		delegates,
 		rewardEscrow,
 		sUSDContract,
-		XDRContract,
+		ODRContract,
 		addressResolver;
 
 	beforeEach(async () => {
@@ -112,7 +112,7 @@ contract('FeePool', async accounts => {
 		oikosState = await OikosState.deployed();
 
 		sUSDContract = await Synth.at(await oikos.synths(oUSD));
-		XDRContract = await Synth.at(await oikos.synths(XDR));
+		ODRContract = await Synth.at(await oikos.synths(ODR));
 
 		addressResolver = await AddressResolver.deployed();
 		// Send a price update to guarantee we're not stale.
@@ -532,7 +532,7 @@ contract('FeePool', async accounts => {
 		const claimFeesTx = await feePool.claimFees({ from: owner });
 		assert.eventEqual(claimFeesTx, 'FeesClaimed', {
 			sUSDAmount: feesAvailableUSD[0],
-			snxRewards: feesAvailableUSD[1],
+			OKSRewards: feesAvailableUSD[1],
 		});
 
 		const newUSDBalance = await sUSDContract.balanceOf(owner);
@@ -1040,9 +1040,9 @@ contract('FeePool', async accounts => {
 			await oikos.issueMaxSynths({ from: owner });
 
 			// Increase the price so we start well and truly within our 20% ratio.
-			const newRate = (await exchangeRates.rateForCurrency(SNX)).add(web3.utils.toBN('1'));
+			const newRate = (await exchangeRates.rateForCurrency(OKS)).add(web3.utils.toBN('1'));
 			const timestamp = await currentTime();
-			await exchangeRates.updateRates([SNX], [newRate], timestamp, {
+			await exchangeRates.updateRates([OKS], [newRate], timestamp, {
 				from: oracle,
 			});
 
@@ -1054,11 +1054,11 @@ contract('FeePool', async accounts => {
 			await oikos.issueMaxSynths({ from: owner });
 
 			// Increase the price so we start well and truly within our 20% ratio.
-			const newRate = (await exchangeRates.rateForCurrency(SNX)).add(
+			const newRate = (await exchangeRates.rateForCurrency(OKS)).add(
 				step.mul(web3.utils.toBN('1'))
 			);
 			const timestamp = await currentTime();
-			await exchangeRates.updateRates([SNX], [newRate], timestamp, {
+			await exchangeRates.updateRates([OKS], [newRate], timestamp, {
 				from: oracle,
 			});
 
@@ -1068,7 +1068,7 @@ contract('FeePool', async accounts => {
 			const threshold = Number(issuanceRatio) * (1 + Number(penaltyThreshold));
 			// Start from the current price of oikos and slowly decrease the price until
 			// we hit almost zero. Assert the correct penalty at each point.
-			while ((await exchangeRates.rateForCurrency(SNX)).gt(step.mul(web3.utils.toBN('2')))) {
+			while ((await exchangeRates.rateForCurrency(OKS)).gt(step.mul(web3.utils.toBN('2')))) {
 				const ratio = await oikos.collateralisationRatio(owner);
 
 				if (ratio.lte(toUnit(threshold))) {
@@ -1080,9 +1080,9 @@ contract('FeePool', async accounts => {
 				}
 
 				// Bump the rate down.
-				const newRate = (await exchangeRates.rateForCurrency(SNX)).sub(step);
+				const newRate = (await exchangeRates.rateForCurrency(OKS)).sub(step);
 				const timestamp = await currentTime();
-				await exchangeRates.updateRates([SNX], [newRate], timestamp, {
+				await exchangeRates.updateRates([OKS], [newRate], timestamp, {
 					from: oracle,
 				});
 			}
@@ -1111,12 +1111,12 @@ contract('FeePool', async accounts => {
 			await closeFeePeriod();
 			assert.bnClose(await getFeesAvailable(account1), fee.div(web3.utils.toBN('2')));
 
-			// But if the price of SNX decreases by 15%, we will lose all the fees.
-			const currentRate = await exchangeRates.rateForCurrency(SNX);
+			// But if the price of OKS decreases by 15%, we will lose all the fees.
+			const currentRate = await exchangeRates.rateForCurrency(OKS);
 			const newRate = currentRate.sub(multiplyDecimal(currentRate, toUnit('0.15')));
 
 			const timestamp = await currentTime();
-			await exchangeRates.updateRates([SNX], [newRate], timestamp, {
+			await exchangeRates.updateRates([OKS], [newRate], timestamp, {
 				from: oracle,
 			});
 
@@ -1150,12 +1150,12 @@ contract('FeePool', async accounts => {
 			await closeFeePeriod();
 			assert.bnClose(await getFeesAvailable(account1), fee.div(web3.utils.toBN('2')));
 
-			// But if the price of SNX decreases by 15%, we will lose all the fees.
-			const currentRate = await exchangeRates.rateForCurrency(SNX);
+			// But if the price of OKS decreases by 15%, we will lose all the fees.
+			const currentRate = await exchangeRates.rateForCurrency(OKS);
 			const newRate = currentRate.sub(multiplyDecimal(currentRate, toUnit('0.15')));
 
 			const timestamp = await currentTime();
-			await exchangeRates.updateRates([SNX], [newRate], timestamp, {
+			await exchangeRates.updateRates([OKS], [newRate], timestamp, {
 				from: oracle,
 			});
 
@@ -1377,15 +1377,15 @@ contract('FeePool', async accounts => {
 		});
 	});
 
-	describe('Converting XDR Fees to oUSD Fees', async () => {
-		const XDRAmount = toUnit('100');
+	describe('Converting ODR Fees to oUSD Fees', async () => {
+		const ODRAmount = toUnit('100');
 
 		beforeEach(async () => {
-			// Setup XDRs at Fee Address for testing
+			// Setup ODRs at Fee Address for testing
 
 			// overwrite the Oikos address in the resolver so we can issue
 			await addressResolver.importAddresses(['Oikos'].map(toBytes32), [owner], { from: owner });
-			await XDRContract.issue(FEE_ADDRESS, XDRAmount, { from: owner });
+			await ODRContract.issue(FEE_ADDRESS, ODRAmount, { from: owner });
 			// now put it back so functionality works correctly
 			await addressResolver.importAddresses(['Oikos'].map(toBytes32), [oikos.address], {
 				from: owner,
@@ -1399,34 +1399,34 @@ contract('FeePool', async accounts => {
 			await updateRatesWithDefaults();
 		});
 
-		it('should revert if non owner calls convertXDRFeesTosUSD', async () => {
-			await assert.revert(feePool.convertXDRFeesTosUSD(exchangeRates.address, { from: account1 }));
+		it('should revert if non owner calls convertODRFeesTosUSD', async () => {
+			await assert.revert(feePool.convertODRFeesTosUSD(exchangeRates.address, { from: account1 }));
 		});
 
 		it('should revert if invalid ExchangeRates address passed in', async () => {
-			await assert.revert(feePool.convertXDRFeesTosUSD(account1, { from: owner }));
+			await assert.revert(feePool.convertODRFeesTosUSD(account1, { from: owner }));
 		});
 
-		it('should convert XDR Synths to oUSD when called by owner', async () => {
+		it('should convert ODR Synths to oUSD when called by owner', async () => {
 			// Assert that we have correct values in the fee pool
-			const oldXDRBalance = await XDRContract.balanceOf(FEE_ADDRESS);
+			const oldODRBalance = await ODRContract.balanceOf(FEE_ADDRESS);
 			const oldsUSDBalance = await sUSDContract.balanceOf(FEE_ADDRESS);
 
 			assert.bnEqual(oldsUSDBalance, 0);
-			assert.bnEqual(oldXDRBalance, XDRAmount);
+			assert.bnEqual(oldODRBalance, ODRAmount);
 
 			// Convert
-			await feePool.convertXDRFeesTosUSD(exchangeRates.address, { from: owner });
+			await feePool.convertODRFeesTosUSD(exchangeRates.address, { from: owner });
 
-			const newXDRBalance = await XDRContract.balanceOf(FEE_ADDRESS);
+			const newODRBalance = await ODRContract.balanceOf(FEE_ADDRESS);
 			const newsUSDBalance = await sUSDContract.balanceOf(FEE_ADDRESS);
 
-			assert.bnEqual(newXDRBalance, 0);
-			const conversionAmount = await exchangeRates.effectiveValue(XDR, oldXDRBalance, oUSD);
+			assert.bnEqual(newODRBalance, 0);
+			const conversionAmount = await exchangeRates.effectiveValue(ODR, oldODRBalance, oUSD);
 			assert.bnEqual(newsUSDBalance, conversionAmount);
 		});
 
-		it('should convert FeePeriod Data from XDRs to oUSD', async () => {
+		it('should convert FeePeriod Data from ODRs to oUSD', async () => {
 			const oldFeePeriods = [];
 
 			// Assert that we have correct values in the fee pool
@@ -1435,17 +1435,17 @@ contract('FeePool', async accounts => {
 			}
 
 			// Convert
-			await feePool.convertXDRFeesTosUSD(exchangeRates.address, { from: owner });
+			await feePool.convertODRFeesTosUSD(exchangeRates.address, { from: owner });
 
 			// Assert
 			for (let i = 0; i <= 3; i++) {
 				const feesToDistributesUSD = await exchangeRates.effectiveValue(
-					XDR,
+					ODR,
 					oldFeePeriods[i].feesToDistribute,
 					oUSD
 				);
 				const feesClaimedsUSD = await exchangeRates.effectiveValue(
-					XDR,
+					ODR,
 					oldFeePeriods[i].feesClaimed,
 					oUSD
 				);

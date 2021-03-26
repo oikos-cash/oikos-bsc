@@ -32,15 +32,15 @@ contract('EtherCollateral', async accounts => {
 	const MONTH = 2629743;
 	const YEAR = 31536000;
 
-	const [oUSD, oETH, ETH, SNX] = ['oUSD', 'oETH', 'ETH', 'SNX'].map(toBytes32);
+	const [oUSD, oETH, ETH, OKS] = ['oUSD', 'oETH', 'ETH', 'OKS'].map(toBytes32);
 
-	// const [XDR, oUSD, sAUD, sEUR, oBTC, SNX, iBTC, oETH] = [
-	// 	'XDR',
+	// const [ODR, oUSD, sAUD, sEUR, oBTC, OKS, iBTC, oETH] = [
+	// 	'ODR',
 	// 	'oUSD',
 	// 	'sAUD',
 	// 	'sEUR',
 	// 	'oBTC',
-	// 	'SNX',
+	// 	'OKS',
 	// 	'iBTC',
 	// 	'oETH',
 	// ].map(toBytes32);
@@ -73,7 +73,7 @@ contract('EtherCollateral', async accounts => {
 	// 	const timestamp = await currentTime();
 
 	// 	await exchangeRates.updateRates(
-	// 		[XDR, sAUD, sEUR, SNX, oBTC, iBTC, oETH],
+	// 		[ODR, sAUD, sEUR, OKS, oBTC, iBTC, oETH],
 	// 		['5', '0.5', '1.25', '0.1', '5000', '4000', '172'].map(toUnit),
 	// 		timestamp,
 	// 		{
@@ -157,9 +157,9 @@ contract('EtherCollateral', async accounts => {
 	const updateRatesWithDefaults = async () => {
 		const timestamp = await currentTime();
 
-		// Depot requires SNX and ETH rates
+		// Depot requires OKS and ETH rates
 		await exchangeRates.updateRates(
-			[SNX, oETH, ETH],
+			[OKS, oETH, ETH],
 			['0.1', '172', '172'].map(toUnit),
 			timestamp,
 			{

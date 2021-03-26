@@ -123,7 +123,7 @@ describe('publish scripts', function() {
 
 				sources = snx.getSource({ network });
 				targets = snx.getTarget({ network });
-				synths = snx.getSynths({ network }).filter(({ name }) => name !== 'oUSD' && name !== 'XDR');
+				synths = snx.getSynths({ network }).filter(({ name }) => name !== 'oUSD' && name !== 'ODR');
 
 				Oikos = new web3.eth.Contract(
 					sources['Oikos'].abi,

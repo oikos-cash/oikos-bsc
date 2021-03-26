@@ -92,11 +92,11 @@
 		},
 		"FeePool": {
 			"name": "FeePool",
-			"address": "0xb4eEFb6884d8824846B5b26d9Ce188bF7c1F6bE6",
+			"address": "0x4a7644B4b3ae6E4e2c53D01a39E7C4afA25061aF",
 			"source": "FeePool",
-			"link": "https://bscscan.com/address/0xb4eEFb6884d8824846B5b26d9Ce188bF7c1F6bE6",
-			"timestamp": "2021-03-26T16:11:14.852Z",
-			"txn": "",
+			"link": "https://bscscan.com/address/0x4a7644B4b3ae6E4e2c53D01a39E7C4afA25061aF",
+			"timestamp": "2021-03-15T21:32:10.000Z",
+			"txn": "https://bscscan.com/tx/0xbb087cbacc380b2991947d0f6c288c57c7fb111f2f0184503eccefa109ae165c",
 			"network": "bsc"
 		},
 		"FeePoolState": {
@@ -5225,8 +5225,7 @@
 					],
 					"payable": false,
 					"stateMutability": "nonpayable",
-					"type": "constructor",
-					"signature": "constructor"
+					"type": "constructor"
 				},
 				{
 					"anonymous": false,

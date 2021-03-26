@@ -265,7 +265,7 @@ module.exports = async function(deployer, network, accounts) {
 	// ----------------
 	// Synths
 	// ----------------
-	const currencyKeys = ['XDR', 'oUSD', 'sAUD', 'sEUR', 'oBTC', 'iBTC', 'oETH'];
+	const currencyKeys = ['ODR', 'oUSD', 'sAUD', 'sEUR', 'oBTC', 'iBTC', 'oETH'];
 	// const currencyKeys = ['oUSD', 'oETH'];
 	// Initial prices
 	const { timestamp } = await web3.eth.getBlock('latest');

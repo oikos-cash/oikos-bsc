@@ -1,6 +1,6 @@
 {
 	"name": "@oikos/oikos-bsc",
-	"version": "0.2.11",
+	"version": "0.2.14",
 	"license": "MIT",
 	"author": "Oikos",
 	"description": "The smart contracts which make up the Oikos system. (synthetix.io)",

@@ -360,24 +360,24 @@ contract FeePool is Proxyable, SelfDestructible, LimitedSetup, MixinResolver {
     /**
     * @notice One time onlyOwner call to convert all ODR balance in the FEE_ADDRESS to oUSD
     */
-    function convertXDRFeesTosUSD(address exchangeRatesAddress) public optionalProxy_onlyOwner {
+    function convertODRFeesTosUSD(address exchangeRatesAddress) public optionalProxy_onlyOwner {
         // Get the ExchageRates address with the ODR rate (its not in the new one)
-        address _exchangeRates = 0xE95Ef4e7a04d2fB05cb625c62CA58da10112c605;
+        address _exchangeRates = 0x9A1D6d7900eC1E34bF22f85a139a21461D4bFB42;
         if (exchangeRatesAddress != 0) {
             _exchangeRates = exchangeRatesAddress;
         }
 
-        Synth xdrSynth = oikos().synths("ODR");
+        Synth ODRSynth = oikos().synths("ODR");
         Synth sUSDSynth = oikos().synths(oUSD);
 
         // FeePools ODR Balance
-        uint xdrAmount = xdrSynth.balanceOf(FEE_ADDRESS);
+        uint ODRAmount = ODRSynth.balanceOf(FEE_ADDRESS);
 
         // How much oUSD should be minted from the ODR's
-        uint sUSDAmount = IExchangeRates(_exchangeRates).effectiveValue("ODR", xdrAmount, oUSD);
+        uint sUSDAmount = IExchangeRates(_exchangeRates).effectiveValue("ODR", ODRAmount, oUSD);
 
-        // Burn the XDRs
-        xdrSynth.burn(FEE_ADDRESS, xdrAmount);
+        // Burn the ODRs
+        ODRSynth.burn(FEE_ADDRESS, ODRAmount);
 
         // Mint their new synths
         sUSDSynth.issue(FEE_ADDRESS, sUSDAmount);

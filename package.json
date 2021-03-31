@@ -3,7 +3,7 @@
 	"version": "0.2.17",
 	"license": "MIT",
 	"author": "Oikos",
-	"description": "The smart contracts which make up the Oikos system. (synthetix.io)",
+	"description": "The smart contracts which make up the Oikos system. (oikos.cash)",
 	"scripts": {
 		"clean-install": "rm -rf build && rm ./package-lock.json && rm -rf node_modules/* && npm install",
 		"coverage": "solidity-coverage",
@@ -22,7 +22,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/Oikosio/synthetix.git"
+		"url": "git+https://github.com/oikos-cash/oikos-bsc/oikos-bsc.git"
 	},
 	"keywords": [
 		"Oikos",
@@ -33,6 +33,7 @@
 		"node": ">=8.10.0"
 	},
 	"files": [
+		"contracts/*",
 		"index.js",
 		"bin.js",
 		"publish/deployed/*/synths.json",
@@ -43,9 +44,9 @@
 	},
 	"main": "index.js",
 	"bugs": {
-		"url": "https://github.com/Oikosio/synthetix/issues"
+		"url": "https://github.com/oikos-cash/oikos-bsc/issues"
 	},
-	"homepage": "https://synthetix.io",
+	"homepage": "https://oikos.cash",
 	"directories": {
 		"test": "test"
 	},

@@ -470,12 +470,12 @@
 		},
 		"BNBCollateral": {
 			"name": "BNBCollateral",
-			"address": "0xc5A7f060243A2BE4e8f1d78b09731e847F9212B1",
+			"address": "0xBc409D48E5cDa3E0bFf933Ccc1fbb484019E14Fa",
 			"source": "BNBCollateral",
-			"link": "https://bscscan.com/address/0xc5A7f060243A2BE4e8f1d78b09731e847F9212B1",
-			"timestamp": "2021-03-15T22:07:37.000Z",
-			"txn": "https://bscscan.com/tx/0x1c5d75f96a2118f243744e69b82e14c6501c4c5633d0c175c066d95c42f007e7",
-			"network": "bsc"
+			"link": "https://mainnet.bscscan.com/address/0xBc409D48E5cDa3E0bFf933Ccc1fbb484019E14Fa",
+			"timestamp": "2021-05-21T21:02:51.011Z",
+			"txn": "",
+			"network": "mainnet"
 		}
 	},
 	"sources": {

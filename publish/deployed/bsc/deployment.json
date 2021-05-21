@@ -470,10 +470,10 @@
 		},
 		"BNBCollateral": {
 			"name": "BNBCollateral",
-			"address": "0xBc409D48E5cDa3E0bFf933Ccc1fbb484019E14Fa",
+			"address": "0x3f38679F38B31Efb29b0fE6609FA7875FC39357D",
 			"source": "BNBCollateral",
-			"link": "https://mainnet.bscscan.com/address/0xBc409D48E5cDa3E0bFf933Ccc1fbb484019E14Fa",
-			"timestamp": "2021-05-21T21:02:51.011Z",
+			"link": "https://mainnet.bscscan.com/address/0x3f38679F38B31Efb29b0fE6609FA7875FC39357D",
+			"timestamp": "2021-05-21T22:45:05.908Z",
 			"txn": "",
 			"network": "mainnet"
 		}

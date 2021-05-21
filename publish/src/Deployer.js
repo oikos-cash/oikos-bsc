@@ -128,7 +128,7 @@ class Deployer {
 		} else if (existingAddress) {
 			deployedContract = this.getContract({ abi: compiled.abi, address: existingAddress });
 			console.log(gray(` - Reusing instance of ${name} at ${existingAddress}`));
-		} else if (!existingAddress && name !== "DappMaintenance") {
+		} else if (!existingAddress && name !== "DappMaintenance" && name !=="ProxyERC20oUSD") {
 			throw new Error(
 				`Settings for contract: ${name} specify an existing contract, but do not give an address.`
 			);

@@ -404,11 +404,11 @@ contract BNBCollateral is Owned, Pausable, ReentrancyGuard, MixinResolver {
     /* ========== INTERNAL VIEWS ========== */
 
     function synthsETH() internal view returns (ISynth) {
-        return ISynth(resolver.requireAndGetAddress("SynthsETH", "Missing SynthsETH address"));
+        return ISynth(resolver.requireAndGetAddress("SynthoETH", "Missing SynthoETH address"));
     }
 
     function synthsUSD() internal view returns (ISynth) {
-        return ISynth(resolver.requireAndGetAddress("SynthsUSD", "Missing SynthsUSD address"));
+        return ISynth(resolver.requireAndGetAddress("SynthoUSD", "Missing SynthoUSD address"));
     }
 
     function depot() internal view returns (IDepot) {

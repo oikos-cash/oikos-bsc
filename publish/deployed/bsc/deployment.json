@@ -470,10 +470,10 @@
 		},
 		"BNBCollateral": {
 			"name": "BNBCollateral",
-			"address": "0xBc409D48E5cDa3E0bFf933Ccc1fbb484019E14Fa",
+			"address": "0x5E7DEcdb32c6e830c2f7D25434681278ae643b30",
 			"source": "BNBCollateral",
-			"link": "https://mainnet.bscscan.com/address/0xBc409D48E5cDa3E0bFf933Ccc1fbb484019E14Fa",
-			"timestamp": "2021-05-21T21:02:51.011Z",
+			"link": "https://mainnet.bscscan.com/address/0x5E7DEcdb32c6e830c2f7D25434681278ae643b30",
+			"timestamp": "2021-05-21T23:39:11.867Z",
 			"txn": "",
 			"network": "mainnet"
 		}
@@ -15475,7 +15475,8 @@
 					],
 					"payable": false,
 					"stateMutability": "nonpayable",
-					"type": "constructor"
+					"type": "constructor",
+					"signature": "constructor"
 				},
 				{
 					"anonymous": false,

@@ -298,7 +298,7 @@ contract BNBCollateral is Owned, Pausable, ReentrancyGuard, MixinResolver {
         totalIssuedSynths = totalIssuedSynths.add(loanAmount);
 
         // Issue the synth
-        synthsETH().issue(msg.sender, loanAmount);
+        SynthoBNB().issue(msg.sender, loanAmount);
 
         // Tell the Dapps a loan was created
         emit LoanCreated(msg.sender, loanID, loanAmount);
@@ -326,7 +326,7 @@ contract BNBCollateral is Owned, Pausable, ReentrancyGuard, MixinResolver {
         require(synthLoan.loanID > 0, "Loan does not exist");
         require(synthLoan.timeClosed == 0, "Loan already closed");
         require(
-            synthsETH().balanceOf(msg.sender) >= synthLoan.loanAmount,
+            SynthoBNB().balanceOf(msg.sender) >= synthLoan.loanAmount,
             "You do not have the required Synth balance to close this loan."
         );
 
@@ -342,7 +342,7 @@ contract BNBCollateral is Owned, Pausable, ReentrancyGuard, MixinResolver {
         uint256 totalFees = interestAmount.add(mintingFee);
 
         // Burn all Synths issued for the loan
-        synthsETH().burn(account, synthLoan.loanAmount);
+        SynthoBNB().burn(account, synthLoan.loanAmount);
 
         // Fee Distribution. Purchase oUSD with ETH from Depot
         require(synthsUSD().balanceOf(depot()) >= totalFees, "The oUSD Depot does not have enough oUSD to buy for fees");
@@ -403,8 +403,8 @@ contract BNBCollateral is Owned, Pausable, ReentrancyGuard, MixinResolver {
 
     /* ========== INTERNAL VIEWS ========== */
 
-    function synthsETH() internal view returns (ISynth) {
-        return ISynth(resolver.requireAndGetAddress("SynthoETH", "Missing SynthoETH address"));
+    function SynthoBNB() internal view returns (ISynth) {
+        return ISynth(resolver.requireAndGetAddress("SynthoBNB", "Missing SynthoBNB address"));
     }
 
     function synthsUSD() internal view returns (ISynth) {

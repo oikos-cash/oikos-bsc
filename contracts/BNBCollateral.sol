@@ -345,11 +345,11 @@ contract BNBCollateral is Owned, Pausable, ReentrancyGuard, MixinResolver {
         synthoBNB().burn(account, synthLoan.loanAmount);
 
         // Fee Distribution. Purchase oUSD with ETH from Depot
-        require(synthsUSD().balanceOf(depot()) >= totalFees, "The oUSD Depot does not have enough oUSD to buy for fees");
+        require(synthoUSD().balanceOf(depot()) >= totalFees, "The oUSD Depot does not have enough oUSD to buy for fees");
         depot().exchangeEtherForSynths.value(totalFees)();
 
         // Transfer the oUSD to distribute to OKS holders.
-        synthsUSD().transfer(FEE_ADDRESS, synthsUSD().balanceOf(this));
+        synthoUSD().transfer(FEE_ADDRESS, synthoUSD().balanceOf(this));
 
         // Send remainder ETH to caller
         address(msg.sender).transfer(synthLoan.collateralAmount.sub(totalFees));
@@ -407,8 +407,8 @@ contract BNBCollateral is Owned, Pausable, ReentrancyGuard, MixinResolver {
         return ISynth(resolver.requireAndGetAddress("SynthoBNB", "Missing SynthoBNB address"));
     }
 
-    function synthsUSD() internal view returns (ISynth) {
-        return ISynth(resolver.requireAndGetAddress("SynthsUSD", "Missing SynthsUSD address"));
+    function synthoUSD() internal view returns (ISynth) {
+        return ISynth(resolver.requireAndGetAddress("SynthoUSD", "Missing SynthoUSD address"));
     }
 
     function depot() internal view returns (IDepot) {

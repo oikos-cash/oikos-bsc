@@ -15,12 +15,12 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
     using SafeDecimalMath for uint;
 
     bytes32 constant OKS = "OKS";
-    bytes32 constant ETH = "BNB";
+    bytes32 constant BNB = "oBNB";
 
     /* ========== STATE VARIABLES ========== */
 
-    // Address where the ether and Synths raised for selling OKS is transfered to
-    // Any ether raised for selling Synths gets sent back to whoever deposited the Synths,
+    // Address where the Ether and Synths raised for selling OKS is transfered to
+    // Any Ether raised for selling Synths gets sent back to whoever deposited the Synths,
     // and doesn't have anything to do with this address.
     address public fundsWallet;
 
@@ -51,14 +51,14 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
 
     /* This is a convenience variable so users and dApps can just query how much oUSD
        we have available for purchase without having to iterate the mapping with a
-       O(n) amount of calls for something we'll probably want to display quite regularly. */
+       O(n) amount of calls for somBNBing we'll probably want to display quite regularly. */
     uint public totalSellableDeposits;
 
     // The minimum amount of oUSD required to enter the FiFo queue
     uint public minimumDepositAmount = 50 * SafeDecimalMath.unit();
 
-    // A cap on the amount of oUSD you can buy with ETH in 1 transaction
-    uint public maxEthPurchase = 500 * SafeDecimalMath.unit();
+    // A cap on the amount of oUSD you can buy with BNB in 1 transaction
+    uint public maxBNBPurchase = 500 * SafeDecimalMath.unit();
 
     // If a user deposits a synth amount < the minimumDepositAmount the contract will keep
     // the total of small deposits which will not be sold on market and the sender
@@ -86,14 +86,14 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
 
     /* ========== SETTERS ========== */
 
-    function setMaxEthPurchase(uint _maxEthPurchase) external onlyOwner {
-        maxEthPurchase = _maxEthPurchase;
-        emit MaxEthPurchaseUpdated(maxEthPurchase);
+    function setMaxBNBPurchase(uint _maxBNBPurchase) external onlyOwner {
+        maxBNBPurchase = _maxBNBPurchase;
+        emit MaxBNBPurchaseUpdated(maxBNBPurchase);
     }
 
     /**
-     * @notice Set the funds wallet where ETH raised is held
-     * @param _fundsWallet The new address to forward ETH and Synths to
+     * @notice Set the funds wallet where BNB raised is held
+     * @param _fundsWallet The new address to forward BNB and Synths to
      */
     function setFundsWallet(address _fundsWallet) external onlyOwner {
         fundsWallet = _fundsWallet;
@@ -114,31 +114,31 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     /**
-     * @notice Fallback function (exchanges ETH to oUSD)
+     * @notice Fallback function (exchanges BNB to oUSD)
      */
     function() external payable {
         exchangeEtherForSynths();
     }
 
     /**
-     * @notice Exchange ETH to oUSD.
+     * @notice Exchange BNB to oUSD.
      */
     function exchangeEtherForSynths()
         public
         payable
         nonReentrant
-        rateNotStale(ETH)
+        rateNotStale(BNB)
         notPaused
         returns (
             uint // Returns the number of Synths (oUSD) received
         )
     {
-        require(msg.value <= maxEthPurchase, "ETH amount above maxEthPurchase limit");
-        uint ethToSend;
+        require(msg.value <= maxBNBPurchase, "BNB amount above maxBNBPurchase limit");
+        uint BNBToSend;
 
-        // The multiplication works here because exchangeRates().rateForCurrency(ETH) is specified in
+        // The multiplication works here because exchangeRates().rateForCurrency(BNB) is specified in
         // 18 decimal places, just like our currency base.
-        uint requestedToPurchase = msg.value.multiplyDecimal(exchangeRates().rateForCurrency(ETH));
+        uint requestedToPurchase = msg.value.multiplyDecimal(exchangeRates().rateForCurrency(BNB));
         uint remainingToFulfill = requestedToPurchase;
 
         // Iterate through our outstanding deposits and sell them one at a time.
@@ -161,29 +161,29 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
 
                     totalSellableDeposits = totalSellableDeposits.sub(remainingToFulfill);
 
-                    // Transfer the ETH to the depositor. Send is used instead of transfer
+                    // Transfer the BNB to the depositor. Send is used instead of transfer
                     // so a non payable contract won't block the FIFO queue on a failed
-                    // ETH payable for synths transaction. The proceeds to be sent to the
+                    // BNB payable for synths transaction. The proceeds to be sent to the
                     // oikos foundation funds wallet. This is to protect all depositors
                     // in the queue in this rare case that may occur.
-                    ethToSend = remainingToFulfill.divideDecimal(exchangeRates().rateForCurrency(ETH));
+                    BNBToSend = remainingToFulfill.divideDecimal(exchangeRates().rateForCurrency(BNB));
 
                     // We need to use send here instead of transfer because transfer reverts
                     // if the recipient is a non-payable contract. Send will just tell us it
                     // failed by returning false at which point we can continue.
                     // solium-disable-next-line security/no-send
-                    if (!deposit.user.send(ethToSend)) {
-                        fundsWallet.transfer(ethToSend);
-                        emit NonPayableContract(deposit.user, ethToSend);
+                    if (!deposit.user.send(BNBToSend)) {
+                        fundsWallet.transfer(BNBToSend);
+                        emit NonPayableContract(deposit.user, BNBToSend);
                     } else {
-                        emit ClearedDeposit(msg.sender, deposit.user, ethToSend, remainingToFulfill, i);
+                        emit ClearedDeposit(msg.sender, deposit.user, BNBToSend, remainingToFulfill, i);
                     }
 
                     // And the Synths to the recipient.
                     // Note: Fees are calculated by the Synth contract, so when
                     //       we request a specific transfer here, the fee is
                     //       automatically deducted and sent to the fee pool.
-                    synthsUSD().transfer(msg.sender, remainingToFulfill);
+                    synthoUSD().transfer(msg.sender, remainingToFulfill);
 
                     // And we have nothing left to fulfill on this order.
                     remainingToFulfill = 0;
@@ -197,29 +197,29 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
                     // We also need to tell our total it's decreased
                     totalSellableDeposits = totalSellableDeposits.sub(deposit.amount);
 
-                    // Now fulfill by transfering the ETH to the depositor. Send is used instead of transfer
+                    // Now fulfill by transfering the BNB to the depositor. Send is used instead of transfer
                     // so a non payable contract won't block the FIFO queue on a failed
-                    // ETH payable for synths transaction. The proceeds to be sent to the
+                    // BNB payable for synths transaction. The proceeds to be sent to the
                     // oikos foundation funds wallet. This is to protect all depositors
                     // in the queue in this rare case that may occur.
-                    ethToSend = deposit.amount.divideDecimal(exchangeRates().rateForCurrency(ETH));
+                    BNBToSend = deposit.amount.divideDecimal(exchangeRates().rateForCurrency(BNB));
 
                     // We need to use send here instead of transfer because transfer reverts
                     // if the recipient is a non-payable contract. Send will just tell us it
                     // failed by returning false at which point we can continue.
                     // solium-disable-next-line security/no-send
-                    if (!deposit.user.send(ethToSend)) {
-                        fundsWallet.transfer(ethToSend);
-                        emit NonPayableContract(deposit.user, ethToSend);
+                    if (!deposit.user.send(BNBToSend)) {
+                        fundsWallet.transfer(BNBToSend);
+                        emit NonPayableContract(deposit.user, BNBToSend);
                     } else {
-                        emit ClearedDeposit(msg.sender, deposit.user, ethToSend, deposit.amount, i);
+                        emit ClearedDeposit(msg.sender, deposit.user, BNBToSend, deposit.amount, i);
                     }
 
                     // And the Synths to the recipient.
                     // Note: Fees are calculated by the Synth contract, so when
                     //       we request a specific transfer here, the fee is
                     //       automatically deducted and sent to the fee pool.
-                    synthsUSD().transfer(msg.sender, deposit.amount);
+                    synthoUSD().transfer(msg.sender, deposit.amount);
 
                     // And subtract the order from our outstanding amount remaining
                     // for the next iteration of the loop.
@@ -229,9 +229,9 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
         }
 
         // Ok, if we're here and 'remainingToFulfill' isn't zero, then
-        // we need to refund the remainder of their ETH back to them.
+        // we need to refund the remainder of their BNB back to them.
         if (remainingToFulfill > 0) {
-            msg.sender.transfer(remainingToFulfill.divideDecimal(exchangeRates().rateForCurrency(ETH)));
+            msg.sender.transfer(remainingToFulfill.divideDecimal(exchangeRates().rateForCurrency(BNB)));
         }
 
         // How many did we actually give them?
@@ -239,39 +239,39 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
 
         if (fulfilled > 0) {
             // Now tell everyone that we gave them that many (only if the amount is greater than 0).
-            emit Exchange("ETH", msg.value, "oUSD", fulfilled);
+            emit Exchange("BNB", msg.value, "oUSD", fulfilled);
         }
 
         return fulfilled;
     }
 
     /**
-     * @notice Exchange ETH to oUSD while insisting on a particular rate. This allows a user to
+     * @notice Exchange BNB to oUSD while insisting on a particular rate. This allows a user to
      *         exchange while protecting against frontrunning by the contract owner on the exchange rate.
-     * @param guaranteedRate The exchange rate (ether price) which must be honored or the call will revert.
+     * @param guaranteedRate The exchange rate (Ether price) which must be honored or the call will revert.
      */
     function exchangeEtherForSynthsAtRate(uint guaranteedRate)
         public
         payable
-        rateNotStale(ETH)
+        rateNotStale(BNB)
         notPaused
         returns (
             uint // Returns the number of Synths (oUSD) received
         )
     {
-        require(guaranteedRate == exchangeRates().rateForCurrency(ETH), "Guaranteed rate would not be received");
+        require(guaranteedRate == exchangeRates().rateForCurrency(BNB), "Guaranteed rate would not be received");
 
         return exchangeEtherForSynths();
     }
 
     /**
-     * @notice Exchange ETH to OKS.
+     * @notice Exchange BNB to OKS.
      */
     function exchangeEtherForOKS()
         public
         payable
         rateNotStale(OKS)
-        rateNotStale(ETH)
+        rateNotStale(BNB)
         notPaused
         returns (
             uint // Returns the number of OKS received
@@ -280,34 +280,34 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
         // How many OKS are they going to be receiving?
         uint oikosToSend = oikosReceivedForEther(msg.value);
 
-        // Store the ETH in our funds wallet
+        // Store the BNB in our funds wallet
         fundsWallet.transfer(msg.value);
 
         // And send them the OKS.
         oikos().transfer(msg.sender, oikosToSend);
 
-        emit Exchange("ETH", msg.value, "OKS", oikosToSend);
+        emit Exchange("BNB", msg.value, "OKS", oikosToSend);
 
         return oikosToSend;
     }
 
     /**
-     * @notice Exchange ETH to OKS while insisting on a particular set of rates. This allows a user to
+     * @notice Exchange BNB to OKS while insisting on a particular set of rates. This allows a user to
      *         exchange while protecting against frontrunning by the contract owner on the exchange rates.
-     * @param guaranteedEtherRate The ether exchange rate which must be honored or the call will revert.
+     * @param guaranteedEtherRate The Ether exchange rate which must be honored or the call will revert.
      * @param guaranteedOikosRate The oikos exchange rate which must be honored or the call will revert.
      */
     function exchangeEtherForOKSAtRate(uint guaranteedEtherRate, uint guaranteedOikosRate)
         public
         payable
         rateNotStale(OKS)
-        rateNotStale(ETH)
+        rateNotStale(BNB)
         notPaused
         returns (
             uint // Returns the number of OKS received
         )
     {
-        require(guaranteedEtherRate == exchangeRates().rateForCurrency(ETH), "Guaranteed ether rate would not be received");
+        require(guaranteedEtherRate == exchangeRates().rateForCurrency(BNB), "Guaranteed Ether rate would not be received");
         require(
             guaranteedOikosRate == exchangeRates().rateForCurrency(OKS),
             "Guaranteed oikos rate would not be received"
@@ -334,7 +334,7 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
         // Ok, transfer the Synths to our funds wallet.
         // These do not go in the deposit queue as they aren't for sale as such unless
         // they're sent back in from the funds wallet.
-        synthsUSD().transferFrom(msg.sender, fundsWallet, synthAmount);
+        synthoUSD().transferFrom(msg.sender, fundsWallet, synthAmount);
 
         // And send them the OKS.
         oikos().transfer(msg.sender, oikosToSend);
@@ -411,7 +411,7 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
         require(synthsToSend > 0, "You have no deposits to withdraw.");
 
         // Send their deposits back to them (minus fees)
-        synthsUSD().transfer(msg.sender, synthsToSend);
+        synthoUSD().transfer(msg.sender, synthsToSend);
 
         emit SynthWithdrawal(msg.sender, synthsToSend);
     }
@@ -422,7 +422,7 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
      */
     function depositSynths(uint amount) external {
         // Grab the amount of synths. Will fail if not approved first
-        synthsUSD().transferFrom(msg.sender, this, amount);
+        synthoUSD().transferFrom(msg.sender, this, amount);
 
         // A minimum deposit amount is designed to protect purchasers from over paying
         // gas for fullfilling multiple small synth deposits
@@ -459,12 +459,12 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
 
     /**
      * @notice Calculate how many OKS you will receive if you transfer
-     *         an amount of ether.
-     * @param amount The amount of ether (in wei) you want to ask about
+     *         an amount of Ether.
+     * @param amount The amount of Ether (in wei) you want to ask about
      */
     function oikosReceivedForEther(uint amount) public view returns (uint) {
-        // How much is the ETH they sent us worth in oUSD (ignoring the transfer fee)?
-        uint valueSentInSynths = amount.multiplyDecimal(exchangeRates().rateForCurrency(ETH));
+        // How much is the BNB they sent us worth in oUSD (ignoring the transfer fee)?
+        uint valueSentInSynths = amount.multiplyDecimal(exchangeRates().rateForCurrency(BNB));
 
         // Now, how many OKS will that USD amount buy?
         return oikosReceivedForSynths(valueSentInSynths);
@@ -472,18 +472,18 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
 
     /**
      * @notice Calculate how many synths you will receive if you transfer
-     *         an amount of ether.
-     * @param amount The amount of ether (in wei) you want to ask about
+     *         an amount of Ether.
+     * @param amount The amount of Ether (in wei) you want to ask about
      */
     function synthsReceivedForEther(uint amount) public view returns (uint) {
-        // How many synths would that amount of ether be worth?
-        return amount.multiplyDecimal(exchangeRates().rateForCurrency(ETH));
+        // How many synths would that amount of Ether be worth?
+        return amount.multiplyDecimal(exchangeRates().rateForCurrency(BNB));
     }
 
     /* ========== INTERNAL VIEWS ========== */
 
-    function synthsUSD() internal view returns (ISynth) {
-        return ISynth(resolver.requireAndGetAddress("SynthsUSD", "Missing SynthsUSD address"));
+    function synthoUSD() internal view returns (ISynth) {
+        return ISynth(resolver.requireAndGetAddress("SynthoUSD", "Missing SynthoUSD address"));
     }
 
     function oikos() internal view returns (IERC20) {
@@ -503,7 +503,7 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
 
     /* ========== EVENTS ========== */
 
-    event MaxEthPurchaseUpdated(uint amount);
+    event MaxBNBPurchaseUpdated(uint amount);
     event FundsWalletUpdated(address newFundsWallet);
     event Exchange(string fromCurrency, uint fromAmount, string toCurrency, uint toAmount);
     event SynthWithdrawal(address user, uint amount);
@@ -515,7 +515,7 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
     event ClearedDeposit(
         address indexed fromAddress,
         address indexed toAddress,
-        uint fromETHAmount,
+        uint fromBNBAmount,
         uint toAmount,
         uint indexed depositIndex
     );

@@ -15,7 +15,7 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
     using SafeDecimalMath for uint;
 
     bytes32 constant OKS = "OKS";
-    bytes32 constant ETH = "ETH";
+    bytes32 constant ETH = "BNB";
 
     /* ========== STATE VARIABLES ========== */
 

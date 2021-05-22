@@ -113,8 +113,8 @@ contract Oikos is ExternStateToken, MixinResolver {
             //       iteration of the loop
             uint totalSynths = availableSynths[i].totalSupply();
 
-            // minus total issued synths from Ether Collateral from oETH.totalSupply()
-            if (excludeBNBCollateral && availableSynths[i] == synths["oETH"]) {
+            // minus total issued synths from BNBCollateral from oBNB.totalSupply()
+            if (excludeBNBCollateral && availableSynths[i] == synths["oBNB"]) {
                 totalSynths = totalSynths.sub(bnbCollateral().totalIssuedSynths());
             }
 

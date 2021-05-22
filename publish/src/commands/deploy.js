@@ -747,14 +747,14 @@ const deploy = async ({
 			writeArg: addressOf(proxyERC20Oikos),
 		});
 
-		await runStep({
+		/*await runStep({
 			contract: 'RewardsDistribution',
 			target: rewardsDistribution,
 			read: 'distributionsLength',
 			expected: input => input > 0,
 			write: 'addRewardDistribution',
 			writeArg: ['0xA4Fa6487f91641E846F1748770f3574375A8C41D', w3utils.toWei('100000000')],
-		});
+		});*/
 	}
 
 	// ----------------
@@ -805,7 +805,7 @@ const deploy = async ({
 			force: addNewSynths,
 		});
 
-		if (currencyKey === 'oETH') {
+		if (currencyKey === 'oETH' || currencyKey === 'oBNB') {
 			proxysETHAddress = addressOf(proxyForSynth);
 		}
 
@@ -1155,6 +1155,7 @@ const deploy = async ({
 			{ name: 'OikosEscrow', address: addressOf(oikosEscrow) },
 			{ name: 'OikosState', address: addressOf(oikosState) },
 			{ name: 'SynthoUSD', address: addressOf(deployer.deployedContracts['SynthoUSD']) },
+			{ name: 'SynthoBNB', address: addressOf(deployer.deployedContracts['SynthoBNB']) },
 			{ name: 'SynthoETH', address: addressOf(deployer.deployedContracts['SynthoETH']) },
 		];
 
@@ -1172,7 +1173,7 @@ const deploy = async ({
 			await Promise.all(
 				expectedAddressesInResolver.map(async ({ name, address }) => {
 					const foundAddress = addressResolver.methods.getAddress(toBytes32(name)).call();
-					console.log({ foundAddress });
+					 
 					return { name, address, found: address === foundAddress }; // return name if not found
 				})
 			)

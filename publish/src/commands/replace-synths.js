@@ -258,7 +258,8 @@ const replaceSynths = async ({
 				currencyKeyInBytes,
 				totalSupplies[currencyKey], // ensure new Synth gets totalSupply set from old Synth
 				resolverAddress,
-				toBytes32('BNBCollateral'),
+				//Add this if replacing a multicollateral Synth
+				//toBytes32('BNBCollateral'),
 			],
 		});
 

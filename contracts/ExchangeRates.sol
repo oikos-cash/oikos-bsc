@@ -5,8 +5,8 @@ import "./SafeDecimalMath.sol";
 import "./SelfDestructible.sol";
 
 // AggregatorInterface from Chainlink represents a decentralized pricing network for a single currency key
-import "chainlink/contracts/interfaces/AggregatorInterface.sol";
-
+//import "chainlink/contracts/interfaces/AggregatorInterface.sol";
+import "@chainlink/contracts/src/v0.5/interfaces/AggregatorV2V3Interface.sol";
 
 /**
  * @title The repository for exchange rates
@@ -28,7 +28,8 @@ contract ExchangeRates is SelfDestructible {
     address public oracle;
 
     // Decentralized oracle networks that feed into pricing aggregators
-    mapping(bytes32 => AggregatorInterface) public aggregators;
+    mapping(bytes32 => AggregatorV2V3Interface) public aggregators;
+    mapping(bytes32 => uint8) public currencyKeyDecimals;
 
     // List of aggregator keys for convenient iteration
     bytes32[] public aggregatorKeys;
@@ -207,13 +208,20 @@ contract ExchangeRates is SelfDestructible {
      * @param currencyKey The currency key to add an aggregator for
      */
     function addAggregator(bytes32 currencyKey, address aggregatorAddress) external onlyOwner {
-        AggregatorInterface aggregator = AggregatorInterface(aggregatorAddress);
+        AggregatorV2V3Interface aggregator = AggregatorV2V3Interface(aggregatorAddress);
+        // This check tries to make sure that a valid aggregator is being added.
+        // It checks if the aggregator is an existing smart contract that has implemented `latestTimestamp` function.
         require(aggregator.latestTimestamp() >= 0, "Given Aggregator is invalid");
-        if (aggregators[currencyKey] == address(0)) {
+
+        require(aggregator.latestRound() >= 0, "Given Aggregator is invalid");
+        uint8 decimals = aggregator.decimals();
+        require(decimals <= 18, "Aggregator decimals should be lower or equal to 18");
+        if (address(aggregators[currencyKey]) == address(0)) {
             aggregatorKeys.push(currencyKey);
         }
         aggregators[currencyKey] = aggregator;
-        emit AggregatorAdded(currencyKey, aggregator);
+        currencyKeyDecimals[currencyKey] = decimals;
+        emit AggregatorAdded(currencyKey, address(aggregator));
     }
 
     /**
@@ -221,9 +229,10 @@ contract ExchangeRates is SelfDestructible {
      * @param currencyKey The currency key to remove an aggregator for
      */
     function removeAggregator(bytes32 currencyKey) external onlyOwner {
-        address aggregator = aggregators[currencyKey];
+        address aggregator = address(aggregators[currencyKey]);
         require(aggregator != address(0), "No aggregator exists for key");
         delete aggregators[currencyKey];
+        delete currencyKeyDecimals[currencyKey];
 
         bool wasRemoved = removeFromArray(currencyKey, aggregatorKeys);
 
@@ -231,6 +240,15 @@ contract ExchangeRates is SelfDestructible {
             emit AggregatorRemoved(currencyKey, aggregator);
         }
     }
+
+    function _formatAggregatorAnswer(bytes32 currencyKey, int256 rate) internal view returns (uint) {
+        if (currencyKeyDecimals[currencyKey] > 0) {
+            uint multiplier = 10**uint(18 - currencyKeyDecimals[currencyKey]);
+            return uint(rate * int(multiplier));
+        }
+        return uint(rate);
+    }
+
 
     function getLastRoundIdBeforeElapsedSecs(
         bytes32 currencyKey,
@@ -253,7 +271,7 @@ contract ExchangeRates is SelfDestructible {
 
     function getCurrentRoundId(bytes32 currencyKey) external view returns (uint) {
         if (aggregators[currencyKey] != address(0)) {
-            AggregatorInterface aggregator = aggregators[currencyKey];
+        AggregatorV2V3Interface aggregator = aggregators[currencyKey];
             return aggregator.latestRound();
         } else {
             return currentRoundForRate[currencyKey];
@@ -513,12 +531,15 @@ contract ExchangeRates is SelfDestructible {
     }
 
     function getRateAndUpdatedTime(bytes32 currencyKey) internal view returns (RateAndUpdatedTime) {
-        if (aggregators[currencyKey] != address(0)) {
+        AggregatorV2V3Interface aggregator = aggregators[currencyKey];
+
+        if (aggregator != AggregatorV2V3Interface(0)) {
+            (, int256 answer, , uint256 updatedAt, ) = aggregator.latestRoundData();
             return
                 RateAndUpdatedTime({
-                    rate: uint216(aggregators[currencyKey].latestAnswer() * 1e10),
-                    time: uint40(aggregators[currencyKey].latestTimestamp())
-                });
+                    rate: uint216( _formatAggregatorAnswer(currencyKey, answer)),
+                    time: uint40(updatedAt)
+                });                
         } else {
             return _rates[currencyKey][currentRoundForRate[currencyKey]];
         }
@@ -550,8 +571,9 @@ contract ExchangeRates is SelfDestructible {
     }
 
     function getRateAndTimestampAtRound(bytes32 currencyKey, uint roundId) internal view returns (uint rate, uint time) {
+        AggregatorV2V3Interface aggregator = aggregators[currencyKey];
+
         if (aggregators[currencyKey] != address(0)) {
-            AggregatorInterface aggregator = aggregators[currencyKey];
             return (uint(aggregator.getAnswer(roundId) * 1e10), aggregator.getTimestamp(roundId));
         } else {
             RateAndUpdatedTime storage update = _rates[currencyKey][roundId];

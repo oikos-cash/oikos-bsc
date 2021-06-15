@@ -102,7 +102,10 @@ const build = async ({ buildPath = DEFAULTS.buildPath, showWarnings, showContrac
 	console.log(
 		yellow(`Compiled with ${allWarnings.length} warnings and ${allErrors.length} errors`)
 	);
+
+	
 	if (allErrors.length > 0) {
+		console.log(allErrors)
 		console.error(red(errors.map(({ formattedMessage }) => formattedMessage)));
 		console.error();
 		console.error(gray('Exiting because of compile errors.'));

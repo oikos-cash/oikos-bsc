@@ -1202,15 +1202,19 @@ const deploy = async ({
 
 		// Now for all targets that have a setResolver, we need to ensure the resolver is set
 		for (const [contract, target] of Object.entries(deployer.deployedContracts)) {
-			if (target.options.jsonInterface.find(({ name }) => name === 'setResolver')) {
-				await runStep({
-					contract,
-					target,
-					read: 'resolver',
-					expected: input => input === resolverAddress,
-					write: 'setResolver',
-					writeArg: resolverAddress,
-				});
+			if (typeof target !== "undefined") {
+				if (target.options.jsonInterface.find(({ name }) => name === 'setResolver')) {
+					await runStep({
+						contract,
+						target,
+						read: 'resolver',
+						expected: input => input === resolverAddress,
+						write: 'setResolver',
+						writeArg: resolverAddress,
+					});
+				}
+			} else {
+				console.log(red(`Error with ${contract}`))
 			}
 		}
 	}

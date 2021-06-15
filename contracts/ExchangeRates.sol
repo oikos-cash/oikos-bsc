@@ -573,8 +573,9 @@ contract ExchangeRates is SelfDestructible {
     function getRateAndTimestampAtRound(bytes32 currencyKey, uint roundId) internal view returns (uint rate, uint time) {
         AggregatorV2V3Interface aggregator = aggregators[currencyKey];
 
-        if (aggregators[currencyKey] != address(0)) {
-            return (uint(aggregator.getAnswer(roundId) * 1e10), aggregator.getTimestamp(roundId));
+        if (aggregator != AggregatorV2V3Interface(0)) {
+            (, int256 answer, , uint256 updatedAt, ) = aggregator.getRoundData(uint80(roundId));
+            return (rateOrInverted(currencyKey, _formatAggregatorAnswer(currencyKey, answer)), updatedAt);
         } else {
             RateAndUpdatedTime storage update = _rates[currencyKey][roundId];
             return (update.rate, update.time);

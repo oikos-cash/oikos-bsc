@@ -578,7 +578,7 @@ contract ExchangeRates is SelfDestructible {
             return (rateOrInverted(currencyKey, _formatAggregatorAnswer(currencyKey, answer)), updatedAt);
         } else {
             RateAndUpdatedTime storage update = _rates[currencyKey][roundId];
-            return (update.rate, update.time);
+            return (rateOrInverted(currencyKey, update.rate), update.time);
         }
     }
 

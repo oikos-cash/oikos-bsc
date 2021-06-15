@@ -537,7 +537,7 @@ contract ExchangeRates is SelfDestructible {
             (, int256 answer, , uint256 updatedAt, ) = aggregator.latestRoundData();
             return
                 RateAndUpdatedTime({
-                    rate: uint216( _formatAggregatorAnswer(currencyKey, answer)),
+                    rate: uint216( rateOrInverted(currencyKey, _formatAggregatorAnswer(currencyKey, answer))),
                     time: uint40(updatedAt)
                 });                
         } else {

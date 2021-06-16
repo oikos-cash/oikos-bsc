@@ -29,9 +29,9 @@
 		},
 		"ExchangeRates": {
 			"name": "ExchangeRates",
-			"address": "0x08daeA602Dd2c19445bC8236760B8383f88A40ED",
+			"address": "0x9A1D6d7900eC1E34bF22f85a139a21461D4bFB42",
 			"source": "ExchangeRates",
-			"link": "https://bscscan.com/address/0x08daeA602Dd2c19445bC8236760B8383f88A40ED",
+			"link": "https://bscscan.com/address/0x9A1D6d7900eC1E34bF22f85a139a21461D4bFB42",
 			"timestamp": "2021-06-15T21:22:45.000Z",
 			"txn": "https://bscscan.com/tx/0x4f286b126bb9ae53d82771520f61e16d408e68170c499b203e39c18bd8e95c31",
 			"network": "bsc"
@@ -1554,8 +1554,7 @@
 					],
 					"payable": false,
 					"stateMutability": "nonpayable",
-					"type": "constructor",
-					"signature": "constructor"
+					"type": "constructor"
 				},
 				{
 					"anonymous": false,

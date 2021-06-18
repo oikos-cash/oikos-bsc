@@ -5,7 +5,6 @@ import "./SafeDecimalMath.sol";
 import "./SelfDestructible.sol";
 
 // AggregatorInterface from Chainlink represents a decentralized pricing network for a single currency key
-//import "chainlink/contracts/interfaces/AggregatorInterface.sol";
 import "@chainlink/contracts/src/v0.5/interfaces/AggregatorV2V3Interface.sol";
 
 /**
@@ -341,6 +340,20 @@ contract ExchangeRates is SelfDestructible {
             sourceAmount.multiplyDecimalRound(getRate(sourceCurrencyKey)).divideDecimalRound(
                 getRate(destinationCurrencyKey)
             );
+    }
+
+    /**
+     * @notice abc
+     */
+    function currenciesUsingAggregator(address aggregator) external view returns (bytes32[] memory currencies) {
+        uint count = 0;
+        currencies = new bytes32[](aggregatorKeys.length);
+        for (uint i = 0; i < aggregatorKeys.length; i++) {
+            bytes32 currencyKey = aggregatorKeys[i];
+            if (address(aggregators[currencyKey]) == aggregator) {
+                currencies[count++] = currencyKey;
+            }
+        }
     }
 
     /**

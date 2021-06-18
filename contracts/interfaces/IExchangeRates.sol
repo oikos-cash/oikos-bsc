@@ -22,6 +22,8 @@ interface IExchangeRates {
 
     function getCurrentRoundId(bytes32 currencyKey) external view returns (uint);
 
+    function currenciesUsingAggregator(address aggregator) external view returns (bytes32[] memory);
+
     function effectiveValueAtRound(
         bytes32 sourceCurrencyKey,
         uint sourceAmount,

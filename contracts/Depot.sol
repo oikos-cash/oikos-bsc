@@ -307,7 +307,7 @@ contract Depot is SelfDestructible, Pausable, ReentrancyGuard, MixinResolver {
             uint // Returns the number of OKS received
         )
     {
-        require(guaranteedEtherRate == exchangeRates().rateForCurrency(BNB), "Guaranteed Ether rate would not be received");
+        require(guaranteedEtherRate == exchangeRates().rateForCurrency(BNB), "Guaranteed BNB rate would not be received");
         require(
             guaranteedOikosRate == exchangeRates().rateForCurrency(OKS),
             "Guaranteed oikos rate would not be received"

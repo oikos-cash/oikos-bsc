@@ -57,8 +57,8 @@ contract Exchanger is MixinResolver {
         // Is this a swing trade? I.e. long to short or vice versa, excluding when going into or out of oUSD.
         // Note: this assumes shorts begin with 'i' and longs with 's'.
         if (
-            (sourceCurrencyKey[0] == 0x73 && sourceCurrencyKey != oUSD && destinationCurrencyKey[0] == 0x69) ||
-            (sourceCurrencyKey[0] == 0x69 && destinationCurrencyKey != oUSD && destinationCurrencyKey[0] == 0x73)
+            (sourceCurrencyKey[0] == 0x6f && sourceCurrencyKey != oUSD && destinationCurrencyKey[0] == 0x69) ||
+            (sourceCurrencyKey[0] == 0x69 && destinationCurrencyKey != oUSD && destinationCurrencyKey[0] == 0x6f)
         ) {
             // If so then double the exchange fee multipler
             multiplier = 2;

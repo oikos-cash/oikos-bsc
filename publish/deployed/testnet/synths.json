@@ -1,0 +1,78 @@
+[
+	{
+		"name": "oXAU",
+		"asset": "XAU",
+		"category": "commodity",
+		"sign": "",
+		"desc": "Gold"
+	},
+	{
+		"name": "oUSD",
+		"asset": "USD",
+		"category": "forex",
+		"sign": "$",
+		"desc": "US Dollars"
+	},
+	{
+		"name": "oBTC",
+		"asset": "BTC",
+		"category": "crypto",
+		"sign": "₿",
+		"desc": "Bitcoin"
+	},
+	{
+		"name": "oETH",
+		"asset": "ETH",
+		"category": "crypto",
+		"sign": "Ξ",
+		"desc": "Ether",
+		"subclass": "MultiCollateralSynth"
+	},
+	{
+		"name": "oBNB",
+		"asset": "BNB",
+		"category": "crypto",
+		"sign": "",
+		"desc": "Binance Coin",
+		"subclass": "MultiCollateralSynth"
+	},
+	{
+		"name": "iBTC",
+		"asset": "BTC",
+		"category": "crypto",
+		"sign": "₿",
+		"desc": "Inverse Bitcoin",
+		"subclass": "PurgeableSynth",
+		"inverted": {
+			"entryPoint": 9659,
+			"upperLimit": 14488.5,
+			"lowerLimit": 4829.5
+		}
+	},
+	{
+		"name": "iETH",
+		"asset": "ETH",
+		"category": "crypto",
+		"sign": "Ξ",
+		"desc": "Inverse Ether",
+		"subclass": "PurgeableSynth",
+		"inverted": {
+			"entryPoint": 180.16,
+			"upperLimit": 315.28,
+			"lowerLimit": 45.04
+		}
+	},
+	{
+		"name": "iBNB",
+		"asset": "BNB",
+		"category": "crypto",
+		"sign": "",
+		"desc": "Inverse Binance Coin",
+		"subclass": "PurgeableSynth",
+		"inverted": {
+			"entryPoint": 16.13,
+			"upperLimit": 24.195,
+			"lowerLimit": 8.065
+		}
+	}
+]

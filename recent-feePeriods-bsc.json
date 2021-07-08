@@ -1,0 +1,29 @@
+[
+	{
+		"feePeriodId": "16",
+		"startingDebtIndex": "2367",
+		"startTime": "1625102573",
+		"feesToDistribute": "101807661981055381708",
+		"feesClaimed": "0",
+		"rewardsToDistribute": "0",
+		"rewardsClaimed": "0"
+	},
+	{
+		"feePeriodId": "15",
+		"startingDebtIndex": "2291",
+		"startTime": "1624497723",
+		"feesToDistribute": "358070410770760894428",
+		"feesClaimed": "0",
+		"rewardsToDistribute": "524431930296153806249999",
+		"rewardsClaimed": "0"
+	},
+	{
+		"feePeriodId": "14",
+		"startingDebtIndex": "2243",
+		"startTime": "1623890529",
+		"feesToDistribute": "381208625605756525790",
+		"feesClaimed": "65196178837943350041",
+		"rewardsToDistribute": "1755866929929012116988565",
+		"rewardsClaimed": "175144943461539444648625"
+	}
+]

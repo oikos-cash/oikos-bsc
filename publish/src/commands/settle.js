@@ -18,10 +18,10 @@ const fromBlockMap = {
 	// bsc: 9518299,
 
 	// blocks from the Acrux deploy (everything prior to this has been settled)
-	testnet: 19220640,
-	rinkeby: 6750628,
-	ropsten: 8195362,
-	bsc: 10364175,
+	testnet: 10367492,
+	//rinkeby: 6750628,
+	//ropsten: 8195362,
+	bsc: 8957355,
 };
 
 const pathToLocal = name => path.join(__dirname, `${name}.json`);
@@ -104,7 +104,7 @@ const settle = async ({
 	const Exchanger = getContract({ label: 'Exchanger', source: 'Exchanger' });
 	const ExchangeRates = getContract({ label: 'ExchangeRates', source: 'ExchangeRates' });
 
-	const fetchAllEvents = ({ pageSize = 10e3, startingBlock = fromBlock, target }) => {
+	const fetchAllEvents = ({ pageSize = 1e3, startingBlock = fromBlock, target }) => {
 		const innerFnc = async () => {
 			if (startingBlock > currentBlock) {
 				return [];
@@ -177,7 +177,7 @@ const settle = async ({
 									reclaimAmount > rebateAmount ? reclaimAmount.toString() : rebateAmount.toString(),
 									toBytes32('oUSD')
 								)
-								.call(blockNumber)
+								.call()
 					  )
 					: 0;
 

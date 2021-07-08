@@ -151,7 +151,6 @@ const deploy = async ({
 	try {
 		const oldOikos = getExistingContract({ contract: 'Oikos' });
 		currentOikosSupply = await oldOikos.methods.totalSupply().call();
-
 		// inflationSupplyToDate = total supply - 100m
 		const inflationSupplyToDate = w3utils
 			.toBN(currentOikosSupply)
@@ -169,7 +168,7 @@ const deploy = async ({
 		// Calculate lastMintEvent as Inflation start date + number of weeks issued * secs in weeks
 		const mintingBuffer = 86400;
 		const secondsInWeek = 604800;
-		const inflationStartDate = inflationStartTimestampInSecs;
+		const inflationStartDate = 1590969600;
 		currentLastMintEvent =
 			inflationStartDate + currentWeekOfInflation * secondsInWeek + mintingBuffer;
 	} catch (err) {
@@ -595,8 +594,8 @@ const deploy = async ({
 
 	if (oikos && proxyERC20Oikos) {
 		await runStep({
-			contract: 'ProxyOikos',
-			target: proxyOikos,
+			contract: 'ProxyERC20',
+			target: proxyERC20Oikos,
 			read: 'target',
 			expected: input => input === addressOf(oikos),
 			write: 'setTarget',
@@ -1008,7 +1007,7 @@ const deploy = async ({
 
 		// Now setup connection to the Synth with Oikos
 		if (synth && issuer) {
-		/*	await runStep({
+			await runStep({
 				contract: 'Issuer',
 				target: issuer,
 				read: 'synths',
@@ -1016,7 +1015,7 @@ const deploy = async ({
 				expected: input => input === addressOf(synth),
 				write: 'addSynth',
 				writeArg: addressOf(synth),
-			});*/
+			});
 		}
 
 		// now setup price aggregator if any for the synth
@@ -1056,7 +1055,7 @@ const deploy = async ({
 
 			// when the oldExrates exists - meaning there is a valid ExchangeRates in the existing deployment.json
 			// for this environment (true for all environments except the initial deploy in 'local' during those tests)
-			if (oldExrates && typeof synth !== "undefined") {
+			/*if (oldExrates && typeof synth !== "undefined") {
 				// get inverse synth's params from the old exrates, if any exist
 				const {
 					entryPoint: oldEntryPoint,
@@ -1139,13 +1138,13 @@ const deploy = async ({
 			} else {
 				// When no exrates, then totally fresh deploy (local deployment)
 				//await setInversePricing({ freeze: false, freezeAtUpperLimit: false });
-			}
+			}*/
 		}
 	}
 	// ----------------
 	// Depot setup
 	// ----------------
-	await deployContract({
+	let depot = await deployContract({
 		name: 'Depot',
 		deps: ['ProxyERC20', 'SynthoUSD', 'FeePool'],
 		args: [account, account, resolverAddress],
@@ -1154,7 +1153,7 @@ const deploy = async ({
 	// --------------------
 	// EtherCollateral Setup
 	// --------------------
-	await deployContract({
+	let bnbCollateral = await deployContract({
 		name: 'BNBCollateral',
 		deps: ['AddressResolver'],
 		args: [account, resolverAddress],
@@ -1163,8 +1162,90 @@ const deploy = async ({
 	// -------------------------
 	// Address Resolver imports
 	// -------------------------
-
 	if (addressResolver) {
+		const expectedAddressesInResolver = [
+			{ name: 'DelegateApprovals', address: addressOf(delegateApprovals) },
+			{ name: 'Depot', address: addressOf(depot) },
+			{ name: 'BNBCollateral', address: addressOf(bnbCollateral) },
+			{ name: 'Exchanger', address: addressOf(exchanger) },
+			{ name: 'ExchangeRates', address: addressOf(exchangeRates) },
+			{ name: 'ExchangeState', address: addressOf(exchangeState) },
+			{ name: 'FeePool', address: addressOf(feePool) },
+			{ name: 'FeePoolEternalStorage', address: addressOf(feePoolEternalStorage) },
+			{ name: 'FeePoolState', address: addressOf(feePoolState) },
+			{ name: 'Issuer', address: addressOf(issuer) },
+			{ name: 'IssuanceEternalStorage', address: addressOf(issuanceEternalStorage) },
+			{ name: 'RewardEscrow', address: addressOf(rewardEscrow) },
+			{ name: 'RewardsDistribution', address: addressOf(rewardsDistribution) },
+			{ name: 'SupplySchedule', address: addressOf(supplySchedule) },
+			{ name: 'Oikos', address: addressOf(oikos) },
+			{ name: 'OikosEscrow', address: addressOf(oikosEscrow) },
+			{ name: 'OikosState', address: addressOf(oikosState) },
+			{ name: 'SynthoUSD', address: addressOf(deployer.deployedContracts['SynthoUSD']) },
+			{ name: 'SynthoBNB', address: addressOf(deployer.deployedContracts['SynthoBNB']) },
+			{ name: 'SynthoETH', address: addressOf(deployer.deployedContracts['SynthoETH']) },
+		];
+
+		// quick sanity check of names in expected list
+		for (const { name } of expectedAddressesInResolver) {
+			if (!deployer.deployedContracts[name]) {
+				throw Error(
+					`Error setting up AddressResolver: cannot find ${name} in the list of deployment targets`
+				);
+			}
+		}
+
+		// Count how many addresses are not yet in the resolver
+		const addressesNotInResolver = (
+			await Promise.all(
+				expectedAddressesInResolver.map(async ({ name, address }) => {
+					const foundAddress = addressResolver.methods.getAddress(toBytes32(name)).call();
+					 
+					return { name, address, found: address === foundAddress }; // return name if not found
+				})
+			)
+		).filter(entry => !entry.found);
+
+		// and add everything if any not found (will overwrite any conflicts)
+		if (addressesNotInResolver.length > 0) {
+			console.log(
+				gray(
+					`Detected ${addressesNotInResolver.length} / ${expectedAddressesInResolver.length} missing or incorrect in the AddressResolver.\n\t` +
+						addressesNotInResolver.map(({ name, address }) => `${name} ${address}`).join('\n\t') +
+						`\nAdding all addresses in one transaction.`
+				)
+			);
+			await runStep({
+				gasLimit: 750e3, // higher gas required
+				contract: `AddressResolver`,
+				target: addressResolver,
+				write: 'importAddresses',
+				writeArg: [
+					addressesNotInResolver.map(({ name }) => toBytes32(name)),
+					addressesNotInResolver.map(({ address }) => address),
+				],
+			});
+		}
+
+		// Now for all targets that have a setResolver, we need to ensure the resolver is set
+		for (const [contract, target] of Object.entries(deployer.deployedContracts)) {
+			if (typeof target !== "undefined") {
+				if (target.options.jsonInterface.find(({ name }) => name === 'setResolver')) {
+					await runStep({
+						contract,
+						target,
+						read: 'resolver',
+						expected: input => input === resolverAddress,
+						write: 'setResolver',
+						writeArg: resolverAddress,
+					});
+				}
+			} else {
+				console.log(red(`Error with ${contract}`))
+			}
+		}
+	}
+	/*if (addressResolver) {
 		// collect all required addresses on-chain
 		const allRequiredAddressesInContracts = await Promise.all(
 			Object.entries(deployer.deployedContracts)
@@ -1196,7 +1277,8 @@ const deploy = async ({
 			)
 		).sort();
 
-		allRequiredAddresses = allRequiredAddresses.filter(address => address !== "EtherCollateral");
+		allRequiredAddresses = allRequiredAddresses.filter(name => name !== "EtherCollateral");
+		allRequiredAddresses.push("AddressResolver");
 		// now map these into a list of names and addreses
 		console.log(allRequiredAddresses)
 		const expectedAddressesInResolver = allRequiredAddresses.map(name => {
@@ -1277,12 +1359,21 @@ const deploy = async ({
 						writeArg: resolverAddress,
 					});
 				} else {
-					console.log('Bug with issuer, investigate')
+					await runStep({
+						gasLimit: 750e3, // higher gas required
+						contract,
+						target,
+						read:  'isResolverCached',
+						readArg: resolverAddress,
+						expected: input => (input),
+						write: 'setResolverAndSyncCache',
+						writeArg: resolverAddress,
+					});
 				}
 
 			}
 		}
-	}
+	} */
 
 	// Now ensure all the fee rates are set for various synths (this must be done after the AddressResolver
 	// has populated all references).

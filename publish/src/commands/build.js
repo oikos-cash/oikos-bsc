@@ -56,10 +56,14 @@ const build = async ({
 		)
 	);
 	console.log(gray('Flattening contracts...'));
+	
 	const sources = await flatten({ files: allSolFiles, contracts });
+
+
 
 	const unchangedContracts = [];
 	const flattenedPath = path.join(buildPath, FLATTENED_FOLDER);
+
 	Object.entries(sources).forEach(([key, { content }]) => {
 		const toWrite = path.join(flattenedPath, key);
 

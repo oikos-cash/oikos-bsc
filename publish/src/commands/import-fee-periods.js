@@ -113,9 +113,9 @@ const importFeePeriods = async ({
 	const sourceContract = new web3.eth.Contract(abi, "0x4a7644B4b3ae6E4e2c53D01a39E7C4afA25061aF");
 	const targetContract = new web3.eth.Contract(abi, targetContractAddress);
 
-	//const feePeriodLength = await sourceContract.methods.FEE_PERIOD_LENGTH().call();
+	const feePeriodLength = await sourceContract.methods.FEE_PERIOD_LENGTH().call();
 
-	/*
+	
 	// Check sources
 	for (let i = 0; i <= feePeriodLength - 1; i++) {
 		const period = await sourceContract.methods.recentFeePeriods(i).call();
@@ -170,7 +170,7 @@ const importFeePeriods = async ({
 	if (network !== 'local') {
 		saveFeePeriodsToFile({ network, feePeriods, sourceContractAddress });
 	}
-*/
+/*
 	const feePeriods = [
 		{
 			"feePeriodId": "16",
@@ -200,6 +200,7 @@ const importFeePeriods = async ({
 			"rewardsClaimed": "175144943461539444648625"
 		}
 	]
+	
 	
 	let index = 0;
 	for (const feePeriod of feePeriods) {
@@ -243,7 +244,7 @@ const importFeePeriods = async ({
 			)
 		);
 	}
-
+*/
 	console.log(gray('Action complete.'));
 };
 

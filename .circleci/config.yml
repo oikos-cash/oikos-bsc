@@ -1,0 +1,219 @@
+# Below is the configuration of the CI build
+env_defaults: &env_defaults
+  working_directory: ~/repo
+  docker:
+    - image: circleci/node:10.16
+
+version: 2.1
+commands:
+  testnet_pvt:
+    description: Run testnet PVT
+    parameters:
+      network:
+        type: string
+    steps:
+      - run: npm run test:testnet --  --yes --network << parameters.network >>
+
+  etherscan_check:
+    description: Run etherscan ABI check
+    parameters:
+      network:
+        type: string
+    steps:
+      - run: npm run test:etherscan --  --network << parameters.network >>
+
+jobs:
+  prepare:
+    <<: *env_defaults
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - 'v2-dependencies-{{ checksum "package-lock.json" }}'
+            - v2-dependencies-
+      - run: npm install
+      - save_cache:
+          paths:
+            - node_modules
+          key: 'v2-dependencies-{{ checksum "package-lock.json" }}'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - node_modules
+
+  lint:
+    <<: *env_defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: npm run lint
+
+  test-contracts:
+    <<: *env_defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: npx buidler compile --showsize --optimizer
+      - run:
+          name: Test and output gas used
+          command: |
+            set +e
+            npm test
+            EXIT_CODE=$?
+            cat test-gas-used.log
+            printf "\\n"
+            exit $EXIT_CODE
+
+  test-contracts-legacy:
+    <<: *env_defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: npm run compile:legacy
+      - run: npx buidler test:legacy
+
+  test-publish:
+    <<: *env_defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Test and output logs
+          command: |
+            set +e
+            npm run test:publish
+            EXIT_CODE=$?
+            if [ $EXIT_CODE -gt 0 ]; then
+              tail -n 2000 test/publish/test.log; # show tail of logs here if test failed
+            fi
+            exit $EXIT_CODE
+      - run: cat test/publish/test.log
+
+  test-deployments:
+    <<: *env_defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: npm run test:deployments
+
+  test-local:
+    <<: *env_defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: npm run test:local
+
+  test-testnet:
+    <<: *env_defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - testnet_pvt:
+          network: testnet
+      - etherscan_check:
+          network: testnet
+
+  test-rinkeby:
+    <<: *env_defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - testnet_pvt:
+          network: rinkeby
+      - etherscan_check:
+          network: rinkeby
+
+  test-ropsten:
+    <<: *env_defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - testnet_pvt:
+          network: ropsten
+      - etherscan_check:
+          network: ropsten
+
+  test-bsc:
+    <<: *env_defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      # - run: No PVT for bsc just yet
+      - etherscan_check:
+          network: bsc
+
+  slither:
+    docker:
+      - image: trailofbits/eth-security-toolbox
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Show Slither output
+          # ignore slither error codes
+          command: |
+            set +e
+            slither .
+            exit 0
+
+workflows:
+  version: 2
+  dev:
+    jobs:
+      - prepare
+      - lint:
+          requires:
+            - prepare
+      - test-contracts:
+          requires:
+            - prepare
+      - test-contracts-legacy:
+          requires:
+            - prepare
+      - test-publish:
+          requires:
+            - prepare
+      - test-deployments:
+          requires:
+            - prepare
+      - test-local:
+          requires:
+            - prepare
+      - test-testnet:
+          requires:
+            - prepare
+          filters:
+            branches:
+              only: staging
+      - test-rinkeby:
+          requires:
+            - prepare
+          filters:
+            branches:
+              only: staging
+      - test-ropsten:
+          requires:
+            - prepare
+          filters:
+            branches:
+              only: staging
+      - test-bsc:
+          requires:
+            - prepare
+          filters:
+            branches:
+              only: master
+      - slither:
+          requires:
+            - prepare

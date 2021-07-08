@@ -21,7 +21,7 @@ const fromBlockMap = {
 	testnet: 10367492,
 	//rinkeby: 6750628,
 	//ropsten: 8195362,
-	bsc: 8957355,
+	bsc: 8981610,
 };
 
 const pathToLocal = name => path.join(__dirname, `${name}.json`);
@@ -44,15 +44,20 @@ const settle = async ({
 	privateKey,
 	ethToSeed,
 	showDebt,
+	args,
 }) => {
 	ensureNetwork(network);
-
+	 
 	console.log(gray('Using network:', yellow(network)));
 
 	const { providerUrl, privateKey: envPrivateKey, etherscanLinkPrefix } = loadConnections({
 		network,
 	});
 
+	if (!isNaN(args[0])) {
+		fromBlock = args[0];
+	}
+	
 	privateKey = privateKey || envPrivateKey;
 
 	const web3 = new Web3(new Web3.providers.HttpProvider(providerUrl));
@@ -104,8 +109,11 @@ const settle = async ({
 	const Exchanger = getContract({ label: 'Exchanger', source: 'Exchanger' });
 	const ExchangeRates = getContract({ label: 'ExchangeRates', source: 'ExchangeRates' });
 
-	const fetchAllEvents = ({ pageSize = 1e3, startingBlock = fromBlock, target }) => {
+	const fetchAllEvents = ({ pageSize = 10e3, startingBlock = fromBlock, target }) => {
 		const innerFnc = async () => {
+			
+			console.log(`Starting block ${startingBlock} Current block ${currentBlock} ${startingBlock > currentBlock}`)
+			
 			if (startingBlock > currentBlock) {
 				return [];
 			}
@@ -151,11 +159,27 @@ const settle = async ({
 		if (cache[account + toCurrencyKey]) continue;
 		cache[account + toCurrencyKey] = true;
 
-		const { reclaimAmount, rebateAmount, numEntries } = await Exchanger.methods
-			.settlementOwing(account, toCurrencyKey)
-			.call();
+		//console.log(exchanges)
+		//const { reclaimAmount, rebateAmount, numEntries } = await Exchanger.methods
+		//	.settlementOwing(account, toCurrencyKey)
+		//	.call();
 
-		if (+numEntries > 0) {
+		const reclaimAmount = 0;
+		const rebateAmount = 0;
+		const numEntries = exchanges.length;
+
+		let _numEntries
+		if (numEntries == 0) {
+			_numEntries = exchanges.length;
+		} else {
+			_numEntries = numEntries;
+		}
+
+		console.log(reclaimAmount, rebateAmount, numEntries)
+
+
+		if (_numEntries > 0) {
+		//if (numEntries > 0) {
 			process.stdout.write(
 				gray(
 					'Block',
@@ -271,5 +295,12 @@ module.exports = {
 				'-r, --dry-run',
 				'If enabled, will not run any transactions but merely report on them.'
 			)
-			.action(settle),
-};
+			.action(async (...args) => {
+				try {
+					await settle(...args);
+				} catch (err) {
+					// show pretty errors for CLI users
+					console.error(red(err));
+					process.exitCode = 1;
+				}
+			}),};

@@ -11,17 +11,8 @@ const { ensureNetwork, loadConnections, stringify } = require('../util');
 
 // The block where Oikos first had SIP-37 added (when ExchangeState was added)
 const fromBlockMap = {
-	// these were from when ExchangeState was first deployed (SIP-37)
-	// testnet: 16814289,
-	// rinkeby: 6001476,
-	// ropsten: 7363114,
-	// bsc: 9518299,
-
-	// blocks from the Acrux deploy (everything prior to this has been settled)
 	testnet: 10367492,
-	//rinkeby: 6750628,
-	//ropsten: 8195362,
-	bsc: 8981610,
+	bsc: 8982536,
 };
 
 const pathToLocal = name => path.join(__dirname, `${name}.json`);
@@ -109,7 +100,8 @@ const settle = async ({
 	const Exchanger = getContract({ label: 'Exchanger', source: 'Exchanger' });
 	const ExchangeRates = getContract({ label: 'ExchangeRates', source: 'ExchangeRates' });
 
-	const fetchAllEvents = ({ pageSize = 10e3, startingBlock = fromBlock, target }) => {
+
+	const fetchAllEvents = ({ pageSize = 500e3, startingBlock = fromBlock, target }) => {
 		const innerFnc = async () => {
 			
 			console.log(`Starting block ${startingBlock} Current block ${currentBlock} ${startingBlock > currentBlock}`)
@@ -159,11 +151,10 @@ const settle = async ({
 		if (cache[account + toCurrencyKey]) continue;
 		cache[account + toCurrencyKey] = true;
 
-		//console.log(exchanges)
-		//const { reclaimAmount, rebateAmount, numEntries } = await Exchanger.methods
-		//	.settlementOwing(account, toCurrencyKey)
-		//	.call();
-
+		const { reclaimAmount, rebateAmount, numEntries } = await Exchanger.methods
+			.settlementOwing(account, toCurrencyKey)
+			.call();
+/*
 		const reclaimAmount = 0;
 		const rebateAmount = 0;
 		const numEntries = exchanges.length;
@@ -174,12 +165,9 @@ const settle = async ({
 		} else {
 			_numEntries = numEntries;
 		}
-
-		console.log(reclaimAmount, rebateAmount, numEntries)
-
-
-		if (_numEntries > 0) {
-		//if (numEntries > 0) {
+*/
+		//if (_numEntries > 0) {
+		if (numEntries > 0) {
 			process.stdout.write(
 				gray(
 					'Block',

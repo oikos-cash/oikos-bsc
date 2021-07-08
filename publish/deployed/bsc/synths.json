@@ -10,9 +10,16 @@
 		"name": "oBTC",
 		"asset": "BTC",
 		"category": "crypto",
-		"sign": "₿",
+		"sign": "฿",
 		"desc": "Bitcoin"
 	},
+	{
+		"name": "oXAU",
+		"asset": "XAU",
+		"category": "commodity",
+		"sign": "Au",
+		"desc": "Gold"
+	},	
 	{
 		"name": "oETH",
 		"asset": "ETH",

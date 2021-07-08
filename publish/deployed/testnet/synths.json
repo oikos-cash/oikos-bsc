@@ -3,9 +3,9 @@
 		"name": "oXAU",
 		"asset": "XAU",
 		"category": "commodity",
-		"sign": "",
+		"sign": "Au",
 		"desc": "Gold"
-	},
+	},	
 	{
 		"name": "oUSD",
 		"asset": "USD",

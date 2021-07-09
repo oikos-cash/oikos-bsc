@@ -9,7 +9,6 @@ const { getTarget, getSource, toBytes32 } = require('../../..');
 
 const { ensureNetwork, loadConnections, stringify } = require('../util');
 
-// The block where Oikos first had SIP-37 added (when ExchangeState was added)
 const fromBlockMap = {
 	testnet: 10367492,
 	bsc: 8982536,

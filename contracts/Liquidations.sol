@@ -68,30 +68,30 @@ contract Liquidations is Owned, MixinResolver, ILiquidations {
 
     /* ========== VIEWS ========== */
     function oikos() internal view returns (IOikos) {
-        return IOikos(requireAndGetAddress(CONTRACT_OIKOS, "Missing Oikos address"));
+        return IOikos(resolver.requireAndGetAddress(CONTRACT_OIKOS, "Missing Oikos address"));
     }
 
     function oikosState() internal view returns (IOikosState) {
-        return IOikosState(requireAndGetAddress(CONTRACT_OIKOSSTATE, "Missing OikosState address"));
+        return IOikosState(resolver.requireAndGetAddress(CONTRACT_OIKOSSTATE, "Missing OikosState address"));
     }
 
     function systemStatus() internal view returns (ISystemStatus) {
-        return ISystemStatus(requireAndGetAddress(CONTRACT_SYSTEMSTATUS, "Missing SystemStatus address"));
+        return ISystemStatus(resolver.requireAndGetAddress(CONTRACT_SYSTEMSTATUS, "Missing SystemStatus address"));
     }
 
     function issuer() internal view returns (IIssuer) {
-        return IIssuer(requireAndGetAddress(CONTRACT_ISSUER, "Missing Issuer address"));
+        return IIssuer(resolver.requireAndGetAddress(CONTRACT_ISSUER, "Missing Issuer address"));
     }
 
     function exchangeRates() internal view returns (IExchangeRates) {
-        return IExchangeRates(requireAndGetAddress(CONTRACT_EXRATES, "Missing ExchangeRates address"));
+        return IExchangeRates(resolver.requireAndGetAddress(CONTRACT_EXRATES, "Missing ExchangeRates address"));
     }
 
     // refactor to oikos storage eternal storage contract once that's ready
     function eternalStorageLiquidations() internal view returns (EternalStorage) {
         return
             EternalStorage(
-                requireAndGetAddress(CONTRACT_ETERNALSTORAGE_LIQUIDATIONS, "Missing EternalStorageLiquidations address")
+                resolver.requireAndGetAddress(CONTRACT_ETERNALSTORAGE_LIQUIDATIONS, "Missing EternalStorageLiquidations address")
             );
     }
 

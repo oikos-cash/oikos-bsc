@@ -405,7 +405,7 @@ const deploy = async ({
 		});
 	}
 
-	await deployContract({
+	let systemStatus = await deployContract({
 		name: 'SystemStatus',
 		args: [account],
 	});
@@ -1181,9 +1181,14 @@ const deploy = async ({
 			{ name: 'Oikos', address: addressOf(oikos) },
 			{ name: 'OikosEscrow', address: addressOf(oikosEscrow) },
 			{ name: 'OikosState', address: addressOf(oikosState) },
+			{ name: 'Liquidations', address: addressOf(liquidations)},
+			{ name: 'SystemStatus', address: addressOf(systemStatus)},
+			{ name: 'EternalStorageLiquidations', address: addressOf(eternalStorageLiquidations)},
 			{ name: 'SynthoUSD', address: addressOf(deployer.deployedContracts['SynthoUSD']) },
 			{ name: 'SynthoBNB', address: addressOf(deployer.deployedContracts['SynthoBNB']) },
 			{ name: 'SynthoETH', address: addressOf(deployer.deployedContracts['SynthoETH']) },
+			{ name: 'SynthoXAU', address: addressOf(deployer.deployedContracts['SynthoXAU']) },
+			{ name: 'SynthoBTC', address: addressOf(deployer.deployedContracts['SynthoBTC']) },
 		];
 
 		// quick sanity check of names in expected list

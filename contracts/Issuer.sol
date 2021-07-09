@@ -614,9 +614,9 @@ contract Issuer is Owned, MixinResolver, IIssuer {
 
         // Check and remove liquidation if existingDebt after burning is <= maxIssuableSynths
         // Issuance ratio is fixed so should remove any liquidations
-        if (existingDebt.sub(amountToBurn) <= maxIssuableSynthsForAccount) {
-            liquidations().removeAccountInLiquidation(from);
-        }
+        //if (existingDebt.sub(amountToBurn) <= maxIssuableSynthsForAccount) {
+        //    liquidations().removeAccountInLiquidation(from);
+        //}
     }
 
     function liquidateDelinquentAccount(

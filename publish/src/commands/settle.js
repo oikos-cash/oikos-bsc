@@ -61,7 +61,7 @@ const settle = async ({
 	let nonce = await web3.eth.getTransactionCount(user.address);
 	console.log(gray('Starting at nonce'), yellow(nonce));
 
-	if (balance < '0.1') {
+	if (balance < '0.01') {
 		if (dryRun) {
 			console.log(green('[DRY RUN] Sending'), yellow(ethToSeed), green('ETH to address'));
 		} else {

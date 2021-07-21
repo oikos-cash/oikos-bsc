@@ -11,7 +11,7 @@ const { ensureNetwork, loadConnections, stringify } = require('../util');
 
 const fromBlockMap = {
 	testnet: 10367492,
-	bsc: 8982536,
+	bsc: 9350000,
 };
 
 const pathToLocal = name => path.join(__dirname, `${name}.json`);
@@ -25,7 +25,7 @@ const loadExchangesFromFile = ({ network, fromBlock }) => {
 };
 
 const settle = async ({
-	network="bsc",
+	network,
 	fromBlock = fromBlockMap[network],
 	dryRun,
 	latest,
@@ -44,10 +44,7 @@ const settle = async ({
 		network,
 	});
 
-	if (!isNaN(args[0])) {
-		fromBlock = args[0];
-	}
-	
+
 	privateKey = privateKey || envPrivateKey;
 
 	const web3 = new Web3(new Web3.providers.HttpProvider(providerUrl));
@@ -64,7 +61,7 @@ const settle = async ({
 	let nonce = await web3.eth.getTransactionCount(user.address);
 	console.log(gray('Starting at nonce'), yellow(nonce));
 
-	if (balance < '0.01') {
+	if (balance < '0.1') {
 		if (dryRun) {
 			console.log(green('[DRY RUN] Sending'), yellow(ethToSeed), green('ETH to address'));
 		} else {
@@ -82,10 +79,14 @@ const settle = async ({
 			console.log(gray(`${etherscanLinkPrefix}/tx/${transactionHash}`));
 		}
 	}
-	let computed = Number(fromBlock) + 4000;
-	 
+ 
 	const { number: currentBlock } = await web3.eth.getBlock('latest');
-
+	if (!isNaN(args[0])) {
+		fromBlock = args[0];
+	} else {
+		fromBlock = Number(currentBlock) - 1000;
+	}
+	
 	const getContract = ({ label, source }) =>
 		new web3.eth.Contract(
 			getSource({ network, contract: source }).abi,
@@ -150,10 +151,13 @@ const settle = async ({
 	} of exchanges) {
 		if (cache[account + toCurrencyKey]) continue;
 		cache[account + toCurrencyKey] = true;
-
+		
+		console.log({"acct":account, "cKey": toCurrencyKey})
 		const { reclaimAmount, rebateAmount, numEntries } = await Exchanger.methods
 			.settlementOwing(account, toCurrencyKey)
 			.call();
+
+
 /*
 		const reclaimAmount = 0;
 		const rebateAmount = 0;
@@ -241,7 +245,7 @@ const settle = async ({
 						console.log(gray(`${etherscanLinkPrefix}/tx/${transactionHash}`))
 					)
 					.catch(err => {
-						console.log(err)
+						//console.log(err)
 						/*console.error(
 							red('Error settling'),
 							yellow(account),

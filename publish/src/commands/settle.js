@@ -84,7 +84,7 @@ const settle = async ({
 	if (!isNaN(args[0])) {
 		fromBlock = args[0];
 	} else {
-		fromBlock = Number(currentBlock) - 1000;
+		fromBlock = Number(currentBlock) - 500;
 	}
 	
 	const getContract = ({ label, source }) =>
@@ -208,7 +208,7 @@ const settle = async ({
 							? (reclaimAmount > rebateAmount ? green : red)('USD $' + Math.round(valueInUSD))
 							: '($0)',
 						wasReclaimOrRebate ? 'Tally: ' + debtTally : '',
-						'Settling...'
+						valueInUSD > 0 ? 'Settling...' : ''
 					)
 				);
 			} else {
@@ -226,34 +226,40 @@ const settle = async ({
 					)
 				);
 			}
+			if (reclaimAmount > rebateAmount) {
+				if (dryRun) {
+					console.log(green(`[DRY RUN] > Invoke settle()`));
+				} else {
+					console.log(green(`Invoking settle()`));
 
-			if (dryRun) {
-				console.log(green(`[DRY RUN] > Invoke settle()`));
-			} else {
-				console.log(green(`Invoking settle()`));
-
-				// do not await, just emit using the nonce
-				Exchanger.methods
-					.settle(account, toCurrencyKey)
-					.send({
-						from: user.address,
-						gas: `${14000000}`,
-						gasPrice:5000000000,
-						nonce: nonce++,
-					})
-					.then(({ transactionHash }) =>
-						console.log(gray(`${etherscanLinkPrefix}/tx/${transactionHash}`))
-					)
-					.catch(err => {
-						//console.log(err)
-						/*console.error(
-							red('Error settling'),
-							yellow(account),
-							yellow(web3.utils.hexToAscii(toCurrencyKey)),
-							gray(`${etherscanLinkPrefix}/tx/${err.receipt.transactionHash}`)
-						);*/
-					});
+					// do not await, just emit using the nonce
+					Exchanger.methods
+						.settle(account, toCurrencyKey)
+						.send({
+							from: user.address,
+							gas: `${14000000}`,
+							gasPrice:5000000000,
+							nonce: nonce++,
+						})
+						.then(({ transactionHash }) =>
+							console.log(gray(`${etherscanLinkPrefix}/tx/${transactionHash}`))
+						)
+						.catch(err => {
+							console.log(err.toString())
+							if (err.toString().indexOf("reverted") > -1){
+								console.log("tx reverted")
+							}
+							//console.log(err)
+							/*console.error(
+								red('Error settling'),
+								yellow(account),
+								yellow(web3.utils.hexToAscii(toCurrencyKey)),
+								gray(`${etherscanLinkPrefix}/tx/${err.receipt.transactionHash}`)
+							);*/
+						});
+				}
 			}
+
 		} else if (process.env.DEBUG) {
 			console.log(
 				gray(

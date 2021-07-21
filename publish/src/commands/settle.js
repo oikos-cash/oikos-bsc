@@ -228,7 +228,7 @@ const settle = async ({
 					)
 				);
 			}
-			if (reclaimAmount > rebateAmount) {
+			if (numEntries > 0) {
 				if (dryRun) {
 					console.log(green(`[DRY RUN] > Invoke settle()`));
 				} else {

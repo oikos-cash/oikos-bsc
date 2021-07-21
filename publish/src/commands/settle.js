@@ -4,6 +4,7 @@ const { gray, yellow, red, cyan, green } = require('chalk');
 const fs = require('fs');
 const path = require('path');
 const Web3 = require('web3');
+const minimist = require('minimist');
 
 const { getTarget, getSource, toBytes32 } = require('../../..');
 
@@ -26,6 +27,7 @@ const loadExchangesFromFile = ({ network, fromBlock }) => {
 
 const settle = async ({
 	network,
+	range=500,
 	fromBlock = fromBlockMap[network],
 	dryRun,
 	latest,
@@ -37,13 +39,12 @@ const settle = async ({
 	args,
 }) => {
 	ensureNetwork(network);
-	 
+	console.log(range)
 	console.log(gray('Using network:', yellow(network)));
 
 	const { providerUrl, privateKey: envPrivateKey, etherscanLinkPrefix } = loadConnections({
 		network,
 	});
-
 
 	privateKey = privateKey || envPrivateKey;
 
@@ -79,12 +80,13 @@ const settle = async ({
 			console.log(gray(`${etherscanLinkPrefix}/tx/${transactionHash}`));
 		}
 	}
- 
+
 	const { number: currentBlock } = await web3.eth.getBlock('latest');
+	
 	if (!isNaN(args[0])) {
 		fromBlock = args[0];
 	} else {
-		fromBlock = Number(currentBlock) - 500;
+		fromBlock = Number(currentBlock) - Number(range);
 	}
 	
 	const getContract = ({ label, source }) =>
@@ -105,7 +107,7 @@ const settle = async ({
 	const fetchAllEvents = ({ pageSize = 500e3, startingBlock = fromBlock, target }) => {
 		const innerFnc = async () => {
 			
-			console.log(`Starting block ${startingBlock} Current block ${currentBlock} ${startingBlock > currentBlock}`)
+			console.log(yellow(`Starting block ${startingBlock} Current block ${currentBlock} ${startingBlock > currentBlock} Range ${range}`))
 			
 			if (startingBlock > currentBlock) {
 				return [];
@@ -245,7 +247,7 @@ const settle = async ({
 							console.log(gray(`${etherscanLinkPrefix}/tx/${transactionHash}`))
 						)
 						.catch(err => {
-							console.log(err.toString())
+							//console.log(err.toString())
 							if (err.toString().indexOf("reverted") > -1){
 								console.log("tx reverted")
 							}
@@ -290,11 +292,14 @@ module.exports = {
 			.option('-v, --private-key <value>', 'Provide private key to settle from given account')
 			.option('-n, --network <value>', 'The network to run off.', x => x.toLowerCase(), 'testnet')
 			.option('-a, --latest', 'Always fetch the latest list of transactions')
+			.option('-r, --range  <value>', 'Block range')
 			.option(
-				'-r, --dry-run',
+				'-x, --dry-run',
 				'If enabled, will not run any transactions but merely report on them.'
 			)
 			.action(async (...args) => {
+				const parsedArgs = minimist(process.argv.slice(2))
+ 
 				try {
 					await settle(...args);
 				} catch (err) {
@@ -302,4 +307,5 @@ module.exports = {
 					console.error(red(err));
 					process.exitCode = 1;
 				}
+
 			}),};

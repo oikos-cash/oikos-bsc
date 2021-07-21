@@ -82,7 +82,8 @@ const settle = async ({
 			console.log(gray(`${etherscanLinkPrefix}/tx/${transactionHash}`));
 		}
 	}
-
+	let computed = Number(fromBlock) + 4000;
+	 
 	const { number: currentBlock } = await web3.eth.getBlock('latest');
 
 	const getContract = ({ label, source }) =>
@@ -157,16 +158,16 @@ const settle = async ({
 		const reclaimAmount = 0;
 		const rebateAmount = 0;
 		const numEntries = exchanges.length;
-
+*/
 		let _numEntries
 		if (numEntries == 0) {
 			_numEntries = exchanges.length;
 		} else {
 			_numEntries = numEntries;
 		}
-*/
-		//if (_numEntries > 0) {
-		if (numEntries > 0) {
+
+		if (_numEntries > 0) {
+		//if (numEntries > 0) {
 			process.stdout.write(
 				gray(
 					'Block',
@@ -232,20 +233,21 @@ const settle = async ({
 					.settle(account, toCurrencyKey)
 					.send({
 						from: user.address,
-						gas: Math.max(gas * numEntries, 500e3),
-						gasPrice,
+						gas: `${14000000}`,
+						gasPrice:5000000000,
 						nonce: nonce++,
 					})
 					.then(({ transactionHash }) =>
 						console.log(gray(`${etherscanLinkPrefix}/tx/${transactionHash}`))
 					)
 					.catch(err => {
-						console.error(
+						console.log(err)
+						/*console.error(
 							red('Error settling'),
 							yellow(account),
 							yellow(web3.utils.hexToAscii(toCurrencyKey)),
 							gray(`${etherscanLinkPrefix}/tx/${err.receipt.transactionHash}`)
-						);
+						);*/
 					});
 			}
 		} else if (process.env.DEBUG) {

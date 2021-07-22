@@ -236,31 +236,46 @@ const settle = async ({
 				} else {
 					console.log(green(`Invoking settle()`));
 
-					// do not await, just emit using the nonce
-					Exchanger.methods
+					try {
+						Exchanger.methods
 						.settle(account, toCurrencyKey)
-						.send({
-							from: user.address,
-							gas: `${14000000}`,
-							gasPrice:5000000000,
-							nonce: nonce++,
-						})
-						.then(({ transactionHash }) =>
-							console.log(gray(`${etherscanLinkPrefix}/tx/${transactionHash}`))
-						)
-						.catch(err => {
-							//console.log(err.toString())
-							if (err.toString().indexOf("reverted") > -1){
-								console.log("tx reverted")
+						.estimateGas({from: user.address,gas: 14000000}, function(error, gasAmount){
+							if (error) {
+								console.log(red(`Always failing transaction`))
+							} else {
+								// do not await, just emit using the nonce
+								Exchanger.methods
+									.settle(account, toCurrencyKey)
+									.send({
+										from: user.address,
+										gas: `${14000000}`,
+										gasPrice:5000000000,
+										nonce: nonce++,
+									})
+									.then(({ transactionHash }) =>
+										console.log(gray(`${etherscanLinkPrefix}/tx/${transactionHash}`))
+									)
+									.catch(err => {
+										//console.log(err.toString())
+										if (err.toString().indexOf("reverted") > -1){
+											console.log("tx reverted")
+										}
+										//console.log(err)
+										/*console.error(
+											red('Error settling'),
+											yellow(account),
+											yellow(web3.utils.hexToAscii(toCurrencyKey)),
+											gray(`${etherscanLinkPrefix}/tx/${err.receipt.transactionHash}`)
+										);*/
+									});
+
+
 							}
-							//console.log(err)
-							/*console.error(
-								red('Error settling'),
-								yellow(account),
-								yellow(web3.utils.hexToAscii(toCurrencyKey)),
-								gray(`${etherscanLinkPrefix}/tx/${err.receipt.transactionHash}`)
-							);*/
-						});
+						})
+					} catch(err) {
+						console.log(`Fatal error`)
+					}
+
 				}
 			}
 

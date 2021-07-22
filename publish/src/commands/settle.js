@@ -156,11 +156,11 @@ const settle = async ({
 		if (cache[account + toCurrencyKey]) continue;
 		cache[account + toCurrencyKey] = true;
 		
-		console.log({"acct":account, "cKey": toCurrencyKey})
+		//console.log({"acct":account, "cKey": toCurrencyKey})
 		const { reclaimAmount, rebateAmount, numEntries } = await Exchanger.methods
 			.settlementOwing(account, toCurrencyKey)
 			.call();
-		console.log(`Settlement owing ${reclaimAmount} ${rebateAmount} ${numEntries}`)
+		//console.log(`Settlement owing ${reclaimAmount} ${rebateAmount} ${numEntries}`)
 
 /*
 		const reclaimAmount = 0;
@@ -174,8 +174,8 @@ const settle = async ({
 			_numEntries = numEntries;
 		}
 
-		if (_numEntries > 0) {
-		//if (numEntries > 0) {
+		//if (_numEntries > 0) {
+		if (numEntries > 0) {
 			process.stdout.write(
 				gray(
 					'Block',

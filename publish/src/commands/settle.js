@@ -12,7 +12,7 @@ const { ensureNetwork, loadConnections, stringify } = require('../util');
 
 const fromBlockMap = {
 	testnet: 10367492,
-	bsc: 9350000,
+	bsc: 9352473,
 };
 
 const pathToLocal = name => path.join(__dirname, `${name}.json`);
@@ -27,7 +27,7 @@ const loadExchangesFromFile = ({ network, fromBlock }) => {
 
 const settle = async ({
 	network,
-	range=500,
+	range=0,
 	fromBlock = fromBlockMap[network],
 	dryRun,
 	latest,
@@ -86,7 +86,9 @@ const settle = async ({
 	if (!isNaN(args[0])) {
 		fromBlock = args[0];
 	} else {
-		fromBlock = Number(currentBlock) - Number(range);
+		if (range > 0) {
+			fromBlock = Number(currentBlock) - Number(range);
+		}
 	}
 	
 	const getContract = ({ label, source }) =>
@@ -158,7 +160,7 @@ const settle = async ({
 		const { reclaimAmount, rebateAmount, numEntries } = await Exchanger.methods
 			.settlementOwing(account, toCurrencyKey)
 			.call();
-
+		console.log(`Settlement owing ${reclaimAmount} ${rebateAmount} ${numEntries}`)
 
 /*
 		const reclaimAmount = 0;

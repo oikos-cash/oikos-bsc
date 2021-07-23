@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const Web3 = require('web3');
 const minimist = require('minimist');
+const cleanEntries = require("./cleanEntries");
 
 const { getTarget, getSource, toBytes32 } = require('../../..');
 
@@ -127,6 +128,7 @@ const settle = async ({
 
 	let methodology = gray('Loaded');
 	let exchanges;
+
 	try {
 		if (latest) {
 			throw Error('Must fetch latest');
@@ -148,150 +150,171 @@ const settle = async ({
 	// if we have to restart
 	const cache = {};
 	let debtTally = 0;
+	await cleanEntries.restore();
 
 	for (const {
 		blockNumber,
-		returnValues: { account, toCurrencyKey },
+		returnValues: { 
+			account, 
+			toCurrencyKey 
+		},
 	} of exchanges) {
+
 		if (cache[account + toCurrencyKey]) continue;
 		cache[account + toCurrencyKey] = true;
 		
-		//console.log({"acct":account, "cKey": toCurrencyKey})
-		const { reclaimAmount, rebateAmount, numEntries } = await Exchanger.methods
+		console.log({
+			"acct": account, 
+			"currencyKey": toCurrencyKey
+		})
+
+		try {
+
+			const { reclaimAmount, rebateAmount, numEntries } = await Exchanger.methods
 			.settlementOwing(account, toCurrencyKey)
 			.call();
-		//console.log(`Settlement owing ${reclaimAmount} ${rebateAmount} ${numEntries}`)
-
-/*
-		const reclaimAmount = 0;
-		const rebateAmount = 0;
-		const numEntries = exchanges.length;
-*/
-		let _numEntries
-		if (numEntries == 0) {
-			_numEntries = exchanges.length;
-		} else {
-			_numEntries = numEntries;
-		}
+			console.log(`Settlement owing ${reclaimAmount} ${rebateAmount} ${numEntries}`)
+			/*
+					const reclaimAmount = 0;
+					const rebateAmount = 0;
+					const numEntries = exchanges.length;
+			*/
+			let _numEntries
+			if (numEntries == 0) {
+				_numEntries = exchanges.length;
+			} else {
+				_numEntries = numEntries;
+}
 
 		//if (_numEntries > 0) {
-		if (numEntries > 0) {
-			process.stdout.write(
-				gray(
-					'Block',
-					cyan(blockNumber),
-					'processing',
-					yellow(account),
-					'into',
-					yellow(web3.utils.hexToAscii(toCurrencyKey))
-				)
-			);
-
-			const wasReclaimOrRebate = reclaimAmount > 0 || rebateAmount > 0;
-			if (showDebt) {
-				const valueInUSD = wasReclaimOrRebate
-					? web3.utils.fromWei(
-							await ExchangeRates.methods
-								.effectiveValue(
-									toCurrencyKey,
-									reclaimAmount > rebateAmount ? reclaimAmount.toString() : rebateAmount.toString(),
-									toBytes32('oUSD')
-								)
-								.call()
-					  )
-					: 0;
-
-				debtTally += Math.round(reclaimAmount > rebateAmount ? -valueInUSD : +valueInUSD);
-
-				console.log(
-					gray(
-						' > Found',
-						yellow(numEntries),
-						'entries.',
-						wasReclaimOrRebate
-							? (reclaimAmount > rebateAmount ? green : red)('USD $' + Math.round(valueInUSD))
-							: '($0)',
-						wasReclaimOrRebate ? 'Tally: ' + debtTally : '',
-						valueInUSD > 0 ? 'Settling...' : ''
-					)
-				);
-			} else {
-				console.log(
-					gray(
-						' > Found',
-						yellow(numEntries),
-						'entries.',
-						wasReclaimOrRebate
-							? (reclaimAmount > rebateAmount ? green : red)(
-									web3.utils.fromWei(reclaimAmount > rebateAmount ? reclaimAmount : rebateAmount)
-							  )
-							: '($0)',
-						'Settling...'
-					)
-				);
-			}
 			if (numEntries > 0) {
-				if (dryRun) {
-					console.log(green(`[DRY RUN] > Invoke settle()`));
-				} else {
-					console.log(green(`Invoking settle()`));
-
-					try {
-						Exchanger.methods
-						.settle(account, toCurrencyKey)
-						.estimateGas({from: user.address,gas: 14000000}, function(error, gasAmount){
-							if (error) {
-								console.log(red(`Always failing transaction`))
-							} else {
-								// do not await, just emit using the nonce
-								Exchanger.methods
-									.settle(account, toCurrencyKey)
-									.send({
-										from: user.address,
-										gas: `${14000000}`,
-										gasPrice:5000000000,
-										nonce: nonce++,
-									})
-									.then(({ transactionHash }) =>
-										console.log(gray(`${etherscanLinkPrefix}/tx/${transactionHash}`))
+				process.stdout.write(
+					gray(
+						'Block',
+						cyan(blockNumber),
+						'processing',
+						yellow(account),
+						'into',
+						yellow(web3.utils.hexToAscii(toCurrencyKey))
+					)
+				);
+	
+				const wasReclaimOrRebate = reclaimAmount > 0 || rebateAmount > 0;
+				if (showDebt) {
+					const valueInUSD = wasReclaimOrRebate
+						? web3.utils.fromWei(
+								await ExchangeRates.methods
+									.effectiveValue(
+										toCurrencyKey,
+										reclaimAmount > rebateAmount ? reclaimAmount.toString() : rebateAmount.toString(),
+										toBytes32('oUSD')
 									)
-									.catch(err => {
-										//console.log(err.toString())
-										if (err.toString().indexOf("reverted") > -1){
-											console.log("tx reverted")
-										}
-										//console.log(err)
-										/*console.error(
-											red('Error settling'),
-											yellow(account),
-											yellow(web3.utils.hexToAscii(toCurrencyKey)),
-											gray(`${etherscanLinkPrefix}/tx/${err.receipt.transactionHash}`)
-										);*/
-									});
-
-
-							}
-						})
-					} catch(err) {
-						console.log(`Fatal error`)
-					}
-
+									.call()
+						  )
+						: 0;
+	
+					debtTally += Math.round(reclaimAmount > rebateAmount ? -valueInUSD : +valueInUSD);
+	
+					console.log(
+						gray(
+							' > Found',
+							yellow(numEntries),
+							'entries.',
+							wasReclaimOrRebate
+								? (reclaimAmount > rebateAmount ? green : red)('USD $' + Math.round(valueInUSD))
+								: '($0)',
+							wasReclaimOrRebate ? 'Tally: ' + debtTally : '',
+							valueInUSD > 0 ? 'Settling...' : ''
+						)
+					);
+				} else {
+					console.log(
+						gray(
+							' > Found',
+							yellow(numEntries),
+							'entries.',
+							wasReclaimOrRebate
+								? (reclaimAmount > rebateAmount ? green : red)(
+										web3.utils.fromWei(reclaimAmount > rebateAmount ? reclaimAmount : rebateAmount)
+								  )
+								: '($0)',
+							'Settling...'
+						)
+					);
 				}
-			}
+				if (numEntries > 0) {
+					if (dryRun) {
+						console.log(green(`[DRY RUN] > Invoke settle()`));
+					} else {
+						console.log(green(`Invoking settle()`));
+	
+						try {
+							Exchanger.methods
+							.settle(account, toCurrencyKey)
+							.estimateGas({from: user.address,gas: 14000000}, function(error, gasAmount){
+								if (error) {
+									console.log(red(`Always failing transaction`))
+								} else {
+									// do not await, just emit using the nonce
+									Exchanger.methods
+										.settle(account, toCurrencyKey)
+										.send({
+											from: user.address,
+											gas: `${14000000}`,
+											gasPrice:5000000000,
+											nonce: nonce++,
+										})
+										.then(({ transactionHash }) =>
+											console.log(gray(`${etherscanLinkPrefix}/tx/${transactionHash}`))
+										)
+										.catch(err => {
+											//console.log(err.toString())
+											if (err.toString().indexOf("reverted") > -1){
+												console.log("tx reverted")
+											}
+											//console.log(err)
+											console.error(
+												red('Error settling'),
+												yellow(account),
+												yellow(web3.utils.hexToAscii(toCurrencyKey)),
+												gray(`${etherscanLinkPrefix}/tx/${err.receipt.transactionHash}`)
+											);
+										});
+	
+	
+								}
+							})
+						} catch(err) {
+							console.log(`Fatal error`)
+						}
+	
+					}
+				}
+	
+			} else if (process.env.DEBUG) {
+				console.log(
+					gray(
+						'Block',
+						cyan(blockNumber),
+						'processing',
+						yellow(account),
+						'into',
+						yellow(web3.utils.hexToAscii(toCurrencyKey)),
+						'> Nothing to settle.'
+					)
+				);
+			}			
+		} catch (err) {
 
-		} else if (process.env.DEBUG) {
-			console.log(
-				gray(
-					'Block',
-					cyan(blockNumber),
-					'processing',
-					yellow(account),
-					'into',
-					yellow(web3.utils.hexToAscii(toCurrencyKey)),
-					'> Nothing to settle.'
-				)
-			);
+			console.log(err)
+			await cleanEntries.run(account);
+
 		}
+
+
+
+
+
 	}
 };
 

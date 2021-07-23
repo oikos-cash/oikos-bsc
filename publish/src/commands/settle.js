@@ -272,13 +272,13 @@ const settle = async ({
 											if (err.toString().indexOf("reverted") > -1){
 												console.log("tx reverted")
 											}
-											//console.log(err)
-											console.error(
+											console.log(err)
+											/*console.error(
 												red('Error settling'),
 												yellow(account),
 												yellow(web3.utils.hexToAscii(toCurrencyKey)),
 												gray(`${etherscanLinkPrefix}/tx/${err.receipt.transactionHash}`)
-											);
+											);*/
 										});
 	
 	

@@ -86,7 +86,7 @@ const loadConnections = ({ network }) => {
 		providerUrl = 'http://127.0.0.1:8545';
 	} else {
 		if (network === 'bsc' ) {
-			providerUrl = 'https://bsc-dataseed.binance.org';
+			providerUrl = process.env.QUICKNODE_KEY ? process.env.QUICKNODE_KEY: "https://bsc-dataseed.binance.org";
 		} else {
 			providerUrl = 'https://data-seed-prebsc-1-s1.binance.org:8545';
 		}

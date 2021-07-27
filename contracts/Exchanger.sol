@@ -405,8 +405,8 @@ contract Exchanger is Owned, MixinResolver, IExchanger {
         require(maxSecsLeftInWaitingPeriod(from, currencyKey) == 0, "Cannot settle during waiting period");
 
         if (currencyKey == 0x6f45544800000000000000000000000000000000000000000000000000000000){
-            return (0, 0, 0);
-
+            exchangeState().removeEntries(from, currencyKey);
+            return (0, 0, 1);
         }
         (
             uint reclaimAmount,

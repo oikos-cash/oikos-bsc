@@ -246,7 +246,7 @@
 		"ProxyoUSD": {
 			"name": "ProxyoUSD",
 			"address": "0x6BF2Be9468314281cD28A94c35f967caFd388325",
-			"source": "Proxy",
+			"source": "ProxyERC20",
 			"link": "https://etherscan.io/address/0x6BF2Be9468314281cD28A94c35f967caFd388325",
 			"timestamp": "2021-03-15T21:36:34.000Z",
 			"txn": "https://bscscan.com/tx/0x2a939fa19a4e09d95b93ffe2d8ee17012075d170067b6860801d987d12559fab",
@@ -555,6 +555,60 @@
 			"source": "Synth",
 			"link": "https://etherscan.io/address/0x73D1dFE9200a7180dc5b4f315eC4bb5dCdabd208",
 			"timestamp": "2021-07-28T19:11:33.712Z",
+			"txn": "",
+			"network": "bsc"
+		},
+		"TokenStateoICP": {
+			"name": "TokenStateoICP",
+			"address": "0xc12aee93af25013D7A50001BdFA2847bE593C809",
+			"source": "TokenState",
+			"link": "https://etherscan.io/address/0xc12aee93af25013D7A50001BdFA2847bE593C809",
+			"timestamp": "2021-07-28T19:52:56.039Z",
+			"txn": "",
+			"network": "bsc"
+		},
+		"ProxyoICP": {
+			"name": "ProxyoICP",
+			"address": "0x64c58528f11AAB0f03F3b006B271Bd83036E7714",
+			"source": "ProxyERC20",
+			"link": "https://etherscan.io/address/0x64c58528f11AAB0f03F3b006B271Bd83036E7714",
+			"timestamp": "2021-07-28T19:55:49.511Z",
+			"txn": "",
+			"network": "bsc"
+		},
+		"SynthoICP": {
+			"name": "SynthoICP",
+			"address": "0xb880505ce1CF1437571Ff4e5B4dAF47248B4f838",
+			"source": "Synth",
+			"link": "https://etherscan.io/address/0xb880505ce1CF1437571Ff4e5B4dAF47248B4f838",
+			"timestamp": "2021-07-28T19:55:56.025Z",
+			"txn": "",
+			"network": "bsc"
+		},
+		"TokenStateoDOT": {
+			"name": "TokenStateoDOT",
+			"address": "0x34e3AeCCB6c7E1237CeC6827737c2f0988E2d882",
+			"source": "TokenState",
+			"link": "https://etherscan.io/address/0x34e3AeCCB6c7E1237CeC6827737c2f0988E2d882",
+			"timestamp": "2021-07-28T19:56:27.760Z",
+			"txn": "",
+			"network": "bsc"
+		},
+		"ProxyoDOT": {
+			"name": "ProxyoDOT",
+			"address": "0x2f189047F72E75Ea7c3935f97f95Ce6fF7a13F7d",
+			"source": "ProxyERC20",
+			"link": "https://etherscan.io/address/0x2f189047F72E75Ea7c3935f97f95Ce6fF7a13F7d",
+			"timestamp": "2021-07-28T19:57:02.307Z",
+			"txn": "",
+			"network": "bsc"
+		},
+		"SynthoDOT": {
+			"name": "SynthoDOT",
+			"address": "0x9211669b03778C9186491533eBf12e5904E9BF85",
+			"source": "Synth",
+			"link": "https://etherscan.io/address/0x9211669b03778C9186491533eBf12e5904E9BF85",
+			"timestamp": "2021-07-28T19:57:10.014Z",
 			"txn": "",
 			"network": "bsc"
 		}

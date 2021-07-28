@@ -172,5 +172,23 @@
 	},
 	"SynthoCAKE": {
 		"deploy": false
+	},
+	"TokenStateoICP": {
+		"deploy": false
+	},
+	"ProxyoICP": {
+		"deploy": false
+	},
+	"SynthoICP": {
+		"deploy": false
+	},
+	"TokenStateoDOT": {
+		"deploy": false
+	},
+	"ProxyoDOT": {
+		"deploy": false
+	},
+	"SynthoDOT": {
+		"deploy": false
 	}
 }

@@ -81,5 +81,19 @@
 		"category": "crypto",
 		"sign": "",
 		"desc": "PancakeSwap"
-	}
+	},
+	{
+		"name": "oICP",
+		"asset": "ICP",
+		"category": "crypto",
+		"sign": "",
+		"desc": "Internet Computer"
+	},
+	{
+		"name": "oDOT",
+		"asset": "DOT",
+		"category": "crypto",
+		"sign": "",
+		"desc": "Polkadot"
+	}	
 ]

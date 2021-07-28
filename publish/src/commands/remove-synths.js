@@ -55,7 +55,9 @@ const removeSynths = async ({
 	if (synthsToRemove.length < 1) {
 		console.log(gray('No synths provided. Please use --synths-to-remove option'));
 		return;
-	}
+	}	
+
+	console.log(synths)
 
 	// sanity-check the synth list
 	for (const synth of synthsToRemove) {

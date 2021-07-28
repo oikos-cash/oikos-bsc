@@ -866,8 +866,8 @@ const deploy = async ({
 		// https://docs.oikos.io/integrations/guide/#proxy-deprecation
 		// Until this time, on bsc we will still deploy ProxyERC20oUSD and ensure that
 		// SynthoUSD.proxy is ProxyERC20oUSD, SynthoUSD.integrationProxy is ProxyoUSD
-		const synthProxyIsLegacy = currencyKey === 'oUSD' && network === 'bsc';
-
+		//const synthProxyIsLegacy = currencyKey === 'oUSD' && network === 'bsc';
+		const synthProxyIsLegacy = false;
 		const proxyForSynth = await deployContract({
 			name: `Proxy${currencyKey}`,
 			source: synthProxyIsLegacy ? 'Proxy' : 'ProxyERC20',
@@ -977,14 +977,14 @@ const deploy = async ({
 				contract: `Synth${currencyKey}`,
 				target: synth,
 				read: 'proxy',
-				expected: input => input === addressOf(proxyERC20ForSynth || proxyForSynth),
+				expected: input => input === addressOf(proxyForSynth),
 				write: 'setProxy',
-				writeArg: addressOf(proxyERC20ForSynth || proxyForSynth),
+				writeArg: addressOf(proxyForSynth),
 			});
 
 			if (proxyERC20ForSynth) {
 				// Migration Phrase 2: if there's a ProxyERC20oUSD then the Synth's integration proxy must
-				await runStep({
+				/*await runStep({
 					contract: `Synth${currencyKey}`,
 					target: synth,
 					read: 'integrationProxy',
@@ -1001,7 +1001,7 @@ const deploy = async ({
 					expected: input => input === addressOf(synth),
 					write: 'setTarget',
 					writeArg: addressOf(synth),
-				});
+				});*/
 			}
 		}
 

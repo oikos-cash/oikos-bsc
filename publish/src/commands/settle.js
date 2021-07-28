@@ -367,7 +367,7 @@ const settle = async({
         } catch (err) {
 
             console.log(err)
-            await cleanEntries.run(account);
+            //await cleanEntries.run(account);
 
         }
 

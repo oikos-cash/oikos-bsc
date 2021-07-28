@@ -173,15 +173,6 @@
 	"SynthoCAKE": {
 		"deploy": false
 	},
-	"TokenStateoICP": {
-		"deploy": false
-	},
-	"ProxyoICP": {
-		"deploy": false
-	},
-	"SynthoICP": {
-		"deploy": false
-	},
 	"TokenStateoDOT": {
 		"deploy": false
 	},
@@ -189,6 +180,15 @@
 		"deploy": false
 	},
 	"SynthoDOT": {
+		"deploy": false
+	},
+	"TokenStateoICP": {
+		"deploy": false
+	},
+	"ProxyoICP": {
+		"deploy": false
+	},
+	"SynthoICP": {
 		"deploy": false
 	}
 }

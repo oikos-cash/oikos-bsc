@@ -19,7 +19,7 @@
 		"category": "commodity",
 		"sign": "Au",
 		"desc": "Gold"
-	},	
+	},
 	{
 		"name": "oETH",
 		"asset": "ETH",
@@ -44,7 +44,7 @@
 		"desc": "Inverse Bitcoin",
 		"subclass": "PurgeableSynth",
 		"inverted": {
-			"entryPoint": 34360.10,
+			"entryPoint": 34360.1,
 			"upperLimit": 51540.15,
 			"lowerLimit": 22906.73
 		}
@@ -80,20 +80,23 @@
 		"asset": "CAKE",
 		"category": "crypto",
 		"sign": "",
-		"desc": "PancakeSwap"
-	},
-	{
-		"name": "oICP",
-		"asset": "ICP",
-		"category": "crypto",
-		"sign": "",
-		"desc": "Internet Computer"
+		"desc": "PancakeSwap",
+		"subclass": "MultiCollateralSynth"
 	},
 	{
 		"name": "oDOT",
 		"asset": "DOT",
 		"category": "crypto",
 		"sign": "",
-		"desc": "Polkadot"
-	}	
+		"desc": "Polkadot",
+		"subclass": "MultiCollateralSynth"
+	},
+	{
+		"name": "oICP",
+		"asset": "ICP",
+		"category": "crypto",
+		"sign": "",
+		"desc": "Internet Computer",
+		"subclass": "MultiCollateralSynth"
+	}			
 ]

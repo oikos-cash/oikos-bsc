@@ -74,5 +74,12 @@
 			"upperLimit": 484.33,
 			"lowerLimit": 215.26
 		}
+	},
+	{
+		"name": "oCAKE",
+		"asset": "CAKE",
+		"category": "crypto",
+		"sign": "",
+		"desc": "PancakeSwap"
 	}
 ]

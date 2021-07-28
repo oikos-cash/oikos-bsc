@@ -160,5 +160,17 @@
 	},
 	"SynthiBNB": {
 		"deploy": false
+	},
+	"ProxyERC20oUSD": {
+		"deploy": false
+	},
+	"TokenStateoCAKE": {
+		"deploy": false
+	},
+	"ProxyoCAKE": {
+		"deploy": false
+	},
+	"SynthoCAKE": {
+		"deploy": false
 	}
 }

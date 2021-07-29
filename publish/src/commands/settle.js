@@ -320,7 +320,7 @@ const settle = async({
                                             .settle(account, toCurrencyKey)
                                             .send({
                                                 from: user.address,
-                                                gas: `${900000}`,
+                                                gas: `${1400000}`,
                                                 gasPrice: 11000000000,
                                                 nonce: nonce++,
                                             })
@@ -332,7 +332,7 @@ const settle = async({
                                                 if (err.toString().indexOf("reverted") > -1) {
                                                     console.log("tx reverted")
                                                 }
-                                                console.log(err)
+                                                //console.log(err.message)
                                                     /*console.error(
                                                     	red('Error settling'),
                                                     	yellow(account),
@@ -366,14 +366,10 @@ const settle = async({
             }
         } catch (err) {
 
-            console.log(err)
+            console.log(err.message)
             //await cleanEntries.run(account);
 
         }
-
-
-
-
 
     }
 };

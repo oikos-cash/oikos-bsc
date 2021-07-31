@@ -477,7 +477,8 @@ contract Exchanger is Owned, MixinResolver, IExchanger {
         view
         returns (uint exchangeFeeRate)
     {
-        exchangeFeeRate = _feeRateForExchange(sourceCurrencyKey, destinationCurrencyKey);
+        exchangeFeeRate = 0.03 ether;
+        //_feeRateForExchange(sourceCurrencyKey, destinationCurrencyKey);
     }
 
     function _feeRateForExchange(

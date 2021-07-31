@@ -329,6 +329,7 @@ const settle = async({
                                                 //console.log(err.toString())
                                                 if (err.toString().indexOf("reverted") > -1) {
                                                     console.log("tx reverted")
+                                                    console.log(err)
                                                 }
                                                 //console.log(err.message)
                                                     /*console.error(

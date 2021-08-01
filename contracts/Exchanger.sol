@@ -471,12 +471,20 @@ contract Exchanger is Owned, MixinResolver, IExchanger {
 
         return timestamp.add(waitingPeriodSecs).sub(now);
     }
- 
+
+    function feeRateForExchange(bytes32 sourceCurrencyKey, bytes32 destinationCurrencyKey)
+        external
+        view
+        returns (uint exchangeFeeRate)
+    {
+        _feeRateForExchange(sourceCurrencyKey, destinationCurrencyKey);
+    }
+
     function _feeRateForExchange(
-        bytes32, // API for source in case pricing model evolves to include source rate /* sourceCurrencyKey */
+        bytes32 sourceCurrencyKey, // API for source in case pricing model evolves to include source rate /* sourceCurrencyKey */
         bytes32 destinationCurrencyKey
     ) internal view returns (uint exchangeFeeRate) {
-        exchangeFeeRate = 0.003 ether;
+        exchangeFeeRate = 0.03 ether;
         //feePool().getExchangeFeeRateForSynth(destinationCurrencyKey);
     }
 

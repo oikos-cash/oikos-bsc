@@ -484,7 +484,7 @@ contract Exchanger is Owned, MixinResolver, IExchanger {
         bytes32 sourceCurrencyKey, // API for source in case pricing model evolves to include source rate /* sourceCurrencyKey */
         bytes32 destinationCurrencyKey
     ) internal view returns (uint exchangeFeeRate) {
-        exchangeFeeRate = 0.03 ether;
+        exchangeFeeRate = 0.003 ether;
         //feePool().getExchangeFeeRateForSynth(destinationCurrencyKey);
     }
 

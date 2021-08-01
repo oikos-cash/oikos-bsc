@@ -52,7 +52,7 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 	const tableData = [];
 
 	const contractNames = Object.keys(config);
-	const contractNames = ['Exchanger'];
+	//const contractNames = ['Exchanger'];
 	for (const name of contractNames) {
 		const { address } = deployment.targets[name];
 		// Check if this contract already has been verified.

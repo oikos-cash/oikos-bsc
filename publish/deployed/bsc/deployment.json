@@ -155,10 +155,10 @@
 		},
 		"Exchanger": {
 			"name": "Exchanger",
-			"address": "0xc1075030E1Fc5A1Da9d65A51084d175E41A4b05A",
+			"address": "0x4EbBBA10820E4F4EaD88743447346298c3bf5748",
 			"source": "Exchanger",
-			"link": "https://etherscan.io/address/0xc1075030E1Fc5A1Da9d65A51084d175E41A4b05A",
-			"timestamp": "2021-08-01T04:33:27.081Z",
+			"link": "https://etherscan.io/address/0x4EbBBA10820E4F4EaD88743447346298c3bf5748",
+			"timestamp": "2021-08-01T04:50:09.704Z",
 			"txn": "",
 			"network": "bsc"
 		},

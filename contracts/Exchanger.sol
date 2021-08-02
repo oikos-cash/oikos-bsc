@@ -118,6 +118,10 @@ contract Exchanger is Owned, MixinResolver, IExchanger {
         return IIssuer(resolver.requireAndGetAddress("Issuer", "Missing Issuer address"));
     }
 
+    function lowFeeTier() internal view returns (address) {
+        return resolver.requireAndGetAddress("AutoTrader", "Missing AutoTrader address");
+    }
+
     function maxSecsLeftInWaitingPeriod(address account, bytes32 currencyKey) public view returns (uint) {
         return secsLeftInWaitingPeriodForExchange(exchangeState().getMaxTimestamp(account, currencyKey));
     }
@@ -481,11 +485,14 @@ contract Exchanger is Owned, MixinResolver, IExchanger {
     }
 
     function _feeRateForExchange(
-        bytes32 sourceCurrencyKey, // API for source in case pricing model evolves to include source rate /* sourceCurrencyKey */
+        bytes32 sourceCurrencyKey, // API for source in case pricing model evolves to include source rate 
         bytes32 destinationCurrencyKey
     ) internal view returns (uint exchangeFeeRate) {
-        exchangeFeeRate = 0.003 ether;
-        //feePool().getExchangeFeeRateForSynth(destinationCurrencyKey);
+        if (tx.origin == lowFeeTier()) {
+            exchangeFeeRate = 0.0003 ether;
+        } else {
+            exchangeFeeRate = 0.003 ether;
+        }
     }
 
     function getAmountsForExchange(

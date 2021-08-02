@@ -319,7 +319,7 @@ const settle = async({
                                             .send({
                                                 from: user.address,
                                                 gas: `${1400000}`,
-                                                gasPrice: 11000000000,
+                                                gasPrice: 5001000000,
                                                 nonce: nonce++,
                                             })
                                             .then(({ transactionHash }) =>

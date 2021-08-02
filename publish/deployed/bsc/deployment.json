@@ -158,8 +158,8 @@
 			"address": "0xF2306Bfe229e13768b0b433285445CC388707C6f",
 			"source": "Exchanger",
 			"link": "https://etherscan.io/address/0xF2306Bfe229e13768b0b433285445CC388707C6f",
-			"timestamp": "2021-08-02T00:08:13.503Z",
-			"txn": "",
+			"timestamp": "2021-08-02T00:08:11.000Z",
+			"txn": "https://bscscan.com/tx/0xb80766ef7bdb5bd1c4c874fa90a8c9d472fcd5c6ace74f21e9d31e10d5b22226",
 			"network": "bsc"
 		},
 		"ExchangeState": {

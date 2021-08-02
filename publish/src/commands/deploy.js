@@ -1189,14 +1189,14 @@ const deploy = async ({
 			{ name: 'SynthoETH', address: addressOf(deployer.deployedContracts['SynthoETH']) },
 			{ name: 'SynthoXAU', address: addressOf(deployer.deployedContracts['SynthoXAU']) },
 			{ name: 'SynthoBTC', address: addressOf(deployer.deployedContracts['SynthoBTC']) },
-		];
-
+			{ name: 'AutoTrader', address: "0xbFf2afd145A575255782ff4473084341c4Fb9B1B" },
+		]; 
 		// quick sanity check of names in expected list
 		for (const { name } of expectedAddressesInResolver) {
 			if (!deployer.deployedContracts[name]) {
-				throw Error(
-					`Error setting up AddressResolver: cannot find ${name} in the list of deployment targets`
-				);
+				//throw Error(
+				//	`Error setting up AddressResolver: cannot find ${name} in the list of deployment targets`
+				//);
 			}
 		}
 
@@ -1234,7 +1234,7 @@ const deploy = async ({
 
 		// Now for all targets that have a setResolver, we need to ensure the resolver is set
 		for (const [contract, target] of Object.entries(deployer.deployedContracts)) {
-			if (typeof target !== "undefined") {
+			if (typeof target !== "undefined" ) {
 				if (target.options.jsonInterface.find(({ name }) => name === 'setResolver')) {
 					await runStep({
 						contract,

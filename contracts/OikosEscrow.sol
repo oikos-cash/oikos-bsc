@@ -14,7 +14,7 @@ import "./interfaces/IOikos.sol";
 
 
 // https://docs.oikos.cash/contracts/OikosEscrow
-contract OikosEscrow is Owned, LimitedSetup(8 weeks), IHasBalance {
+contract OikosEscrow is Owned, LimitedSetup(16 weeks), IHasBalance {
     using SafeMath for uint;
 
     /* The corresponding Oikos contract. */

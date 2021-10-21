@@ -42,6 +42,14 @@ interface IExchanger {
         );
 
     // Mutative functions
+    function swap(
+        address from,
+        bytes32 sourceCurrencyKey,
+        uint sourceAmount,
+        bytes32 destinationCurrencyKey,
+        address destinationAddress
+    ) external returns (uint amountReceived);
+
     function exchange(
         address from,
         bytes32 sourceCurrencyKey,

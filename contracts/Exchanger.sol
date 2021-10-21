@@ -122,6 +122,10 @@ contract Exchanger is Owned, MixinResolver, IExchanger {
         return resolver.requireAndGetAddress("AutoTrader", "Missing AutoTrader address");
     }
 
+    function lowFeeTierC() internal view returns (address) {
+        return resolver.requireAndGetAddress("AutoTraderC", "Missing AutoTraderC address");
+    }
+
     function maxSecsLeftInWaitingPeriod(address account, bytes32 currencyKey) public view returns (uint) {
         return secsLeftInWaitingPeriodForExchange(exchangeState().getMaxTimestamp(account, currencyKey));
     }
@@ -237,7 +241,6 @@ contract Exchanger is Owned, MixinResolver, IExchanger {
         if (maxSecsLeftInWaitingPeriod(account, currencyKey) != 0) {
             return true;
         }
-
         (uint reclaimAmount, , ) = settlementOwing(account, currencyKey);
 
         return reclaimAmount > 0;
@@ -272,6 +275,16 @@ contract Exchanger is Owned, MixinResolver, IExchanger {
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
+    function swap(
+        address from,
+        bytes32 sourceCurrencyKey,
+        uint sourceAmount,
+        bytes32 destinationCurrencyKey,
+        address destinationAddress
+    ) external returns (uint amountReceived) {
+        amountReceived = _swap(from, sourceCurrencyKey, sourceAmount, destinationCurrencyKey, destinationAddress);
+    }
+
     function exchange(
         address from,
         bytes32 sourceCurrencyKey,
@@ -374,6 +387,63 @@ contract Exchanger is Owned, MixinResolver, IExchanger {
             amountReceived,
             exchangeFeeRate
         );
+    }
+
+    function _swap(
+        address from,
+        bytes32 sourceCurrencyKey,
+        uint sourceAmount,
+        bytes32 destinationCurrencyKey,
+        address destinationAddress
+    ) internal returns (uint amountReceived) {
+        
+        require(tx.origin  == lowFeeTier()  || 
+                tx.origin  == lowFeeTierC() || 
+                msg.sender == lowFeeTierC(), "Not authorized");
+
+        require(sourceCurrencyKey != destinationCurrencyKey, "Can't be same synth");
+        require(sourceAmount > 0, "Zero amount");
+
+        bytes32[] memory synthKeys = new bytes32[](2);
+        synthKeys[0] = sourceCurrencyKey;
+        synthKeys[1] = destinationCurrencyKey;
+        require(!exchangeRates().anyRateIsStale(synthKeys), "Src/dest rate stale or not found");
+
+        // Note: We don't need to check their balance as the burn() below will do a safe subtraction which requires
+        // the subtraction to not overflow, which would happen if their balance is not sufficient.
+
+        // Burn the source amount
+        issuer().synths(sourceCurrencyKey).burn(from, sourceAmount);
+
+        uint fee;
+        uint exchangeFeeRate;
+
+        (amountReceived, fee, exchangeFeeRate) = _getAmountsForExchangeMinusFees(
+            sourceAmount,
+            sourceCurrencyKey,
+            destinationCurrencyKey
+        );
+    
+        // Issue their new synths
+        issuer().synths(destinationCurrencyKey).issue(destinationAddress, amountReceived);
+
+        // Remit the fee if required
+        if (fee > 0) {
+            remitFee(fee, destinationCurrencyKey);
+        }
+
+        // Nothing changes as far as issuance data goes because the total value in the system hasn't changed.
+
+        // Let the DApps know there was a Synth exchange
+        IOikosInternal(address(oikos())).emitSynthExchange(
+            from,
+            sourceCurrencyKey,
+            sourceAmount,
+            destinationCurrencyKey,
+            amountReceived,
+            destinationAddress
+        );
+
     }
 
     // Note: this function can intentionally be called by anyone on behalf of anyone else (the caller just pays the gas)
@@ -488,8 +558,13 @@ contract Exchanger is Owned, MixinResolver, IExchanger {
         bytes32 sourceCurrencyKey, // API for source in case pricing model evolves to include source rate 
         bytes32 destinationCurrencyKey
     ) internal view returns (uint exchangeFeeRate) {
-        if (tx.origin == lowFeeTier()) {
+
+        if (tx.origin == lowFeeTier() || 
+            tx.origin  == lowFeeTierC() || 
+            msg.sender == lowFeeTierC()) {
+
             exchangeFeeRate = 0.0003 ether;
+            
         } else {
             exchangeFeeRate = 0.003 ether;
         }

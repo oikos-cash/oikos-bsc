@@ -1190,6 +1190,8 @@ const deploy = async ({
 			{ name: 'SynthoXAU', address: addressOf(deployer.deployedContracts['SynthoXAU']) },
 			{ name: 'SynthoBTC', address: addressOf(deployer.deployedContracts['SynthoBTC']) },
 			{ name: 'AutoTrader', address: "0xbFf2afd145A575255782ff4473084341c4Fb9B1B" },
+			{ name: 'AutoTraderC', address: "0xD576df73aE9e84C56c82A467BF1650884BA5705C" },
+
 		]; 
 		// quick sanity check of names in expected list
 		for (const { name } of expectedAddressesInResolver) {

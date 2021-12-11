@@ -732,6 +732,7 @@ contract VBNBCollateraloUSD is Owned, Pausable, ReentrancyGuard, MixinResolver {
 
         // Fee distribution. Mint the oUSD fees into the FeePool and record fees paid
         synthoUSD().issue(address(this), totalAccruedInterest);
+        
         //this will trigger record fees paid
         IERC20(address(synthoUSD())).transfer(FEE_ADDRESS, totalAccruedInterest);
 

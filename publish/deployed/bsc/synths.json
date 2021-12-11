@@ -4,7 +4,8 @@
 		"asset": "USD",
 		"category": "forex",
 		"sign": "$",
-		"desc": "US Dollars"
+		"desc": "US Dollars",
+		"subclass": "MultiCollateralSynth"
 	},
 	{
 		"name": "oBTC",

@@ -1168,6 +1168,15 @@ const deploy = async ({
 		args: [account, resolverAddress],
 	});
 
+		// --------------------
+	// EtherCollateraloUSD Setup
+	// --------------------
+	let VBNBCollateraloUSD = await deployContract({
+		name: 'VBNBCollateraloUSD',
+		deps: ['AddressResolver'],
+		args: [account, resolverAddress],
+	});
+
 	// -------------------------
 	// Address Resolver imports
 	// -------------------------
@@ -1176,7 +1185,8 @@ const deploy = async ({
 			{ name: 'DelegateApprovals', address: addressOf(delegateApprovals) },
 			{ name: 'Depot', address: addressOf(depot) },
 			{ name: 'BNBCollateral', address: addressOf(bnbCollateral) },
-			{ name: 'EtherCollateraloUSD', address: addressOf(EtherCollateraloUSD) },
+			{ name: 'EtherCollateraloUSD', address: addressOf(VBNBCollateraloUSD) },
+			//{ name: 'VBNBCollateraloUSD', address: addressOf(VBNBCollateraloUSD) },
 			{ name: 'Exchanger', address: addressOf(exchanger) },
 			{ name: 'ExchangeRates', address: addressOf(exchangeRates) },
 			{ name: 'ExchangeState', address: addressOf(exchangeState) },

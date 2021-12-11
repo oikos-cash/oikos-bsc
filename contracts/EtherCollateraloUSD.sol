@@ -386,7 +386,7 @@ contract EtherCollateraloUSD is Owned, Pausable, ReentrancyGuard, MixinResolver 
 
  
 
-    function openLoan(uint256 _amount)
+    function openLoan(uint256 _loanAmount, uint256 _collateralAmount)
         external
         notPaused
         nonReentrant
@@ -396,10 +396,10 @@ contract EtherCollateraloUSD is Owned, Pausable, ReentrancyGuard, MixinResolver 
         systemStatus().requireIssuanceActive();
 
         //require vBNB to be transferred to the contract. Needs prior approval.
-        require(IERC20(vToken).transferFrom(msg.sender, address(this), _amount), 'vBNB transferFrom failed.');
+        require(IERC20(vToken).transferFrom(msg.sender, address(this), _collateralAmount), 'vBNB transferFrom failed.');
 
         //VBNB has 8 decimals precision
-        uint scaledAmount = _amount.mul((10**(OUSD_DECIMALS - VBNB_DECIMALS)));
+        uint scaledAmount = _collateralAmount.mul((10**(OUSD_DECIMALS - VBNB_DECIMALS)));
 
         // Require VBNB sent to be greater than minLoanCollateralSize
         require(
@@ -418,11 +418,10 @@ contract EtherCollateraloUSD is Owned, Pausable, ReentrancyGuard, MixinResolver 
 
         // Calculate issuance amount based on issuance ratio
         uint256 maxLoanAmount = loanAmountFromCollateral(vBNBValue);
-        uint _loanAmount = maxLoanAmount;
 
         // Require requested _loanAmount to be less than maxLoanAmount
         // Issuance ratio caps collateral to loan value at 150%
-        //require(_loanAmount <= maxLoanAmount, "Loan amount exceeds max borrowing power");
+        require(_loanAmount <= maxLoanAmount, "Loan amount exceeds max borrowing power");
 
         uint256 mintingFee = _calculateMintingFee(_loanAmount);
         uint256 loanAmountMinusFee = _loanAmount.sub(mintingFee);
@@ -438,7 +437,7 @@ contract EtherCollateraloUSD is Owned, Pausable, ReentrancyGuard, MixinResolver 
             SynthLoanStruct({
                 account: msg.sender,
                 collateralAmount: scaledAmount,
-                loanAmount: maxLoanAmount,
+                loanAmount: _loanAmount,
                 mintingFee: mintingFee,
                 timeCreated: block.timestamp,
                 loanID: loanID,

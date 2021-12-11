@@ -23,6 +23,9 @@
 	"EtherCollateraloUSD": {
 		"deploy": false
 	},
+	"VBNBCollateraloUSD": {
+		"deploy": false
+	},
 	"ExchangeRates": {
 		"deploy": false
 	},

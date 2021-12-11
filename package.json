@@ -102,6 +102,6 @@
 		"minimist": "^1.2.5",
 		"openzeppelin-solidity-2.3.0": "npm:openzeppelin-solidity@2.3.0",
 		"pretty-error": "^2.1.1",
-		"web3-utils": "1.2.2"
+		"web3-utils": "^1.2.2"
 	}
 }

@@ -984,7 +984,7 @@ const deploy = async ({
 
 			if (proxyERC20ForSynth) {
 				// Migration Phrase 2: if there's a ProxyERC20oUSD then the Synth's integration proxy must
-				/*await runStep({
+				await runStep({
 					contract: `Synth${currencyKey}`,
 					target: synth,
 					read: 'integrationProxy',
@@ -1001,7 +1001,7 @@ const deploy = async ({
 					expected: input => input === addressOf(synth),
 					write: 'setTarget',
 					writeArg: addressOf(synth),
-				});*/
+				});
 			}
 		}
 
@@ -1159,6 +1159,15 @@ const deploy = async ({
 		args: [account, resolverAddress],
 	});
 
+	// --------------------
+	// EtherCollateraloUSD Setup
+	// --------------------
+	let EtherCollateraloUSD = await deployContract({
+		name: 'EtherCollateraloUSD',
+		deps: ['AddressResolver'],
+		args: [account, resolverAddress],
+	});
+
 	// -------------------------
 	// Address Resolver imports
 	// -------------------------
@@ -1167,6 +1176,7 @@ const deploy = async ({
 			{ name: 'DelegateApprovals', address: addressOf(delegateApprovals) },
 			{ name: 'Depot', address: addressOf(depot) },
 			{ name: 'BNBCollateral', address: addressOf(bnbCollateral) },
+			{ name: 'EtherCollateraloUSD', address: addressOf(EtherCollateraloUSD) },
 			{ name: 'Exchanger', address: addressOf(exchanger) },
 			{ name: 'ExchangeRates', address: addressOf(exchangeRates) },
 			{ name: 'ExchangeState', address: addressOf(exchangeState) },

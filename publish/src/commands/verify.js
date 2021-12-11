@@ -52,7 +52,7 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 	const tableData = [];
 
 	//const contractNames = Object.keys(config);
-	const contractNames = ['DelegateApprovals'];
+	const contractNames = ['EtherCollateraloUSD'];
 	for (const name of contractNames) {
 		const { address } = deployment.targets[name];
 		// Check if this contract already has been verified.
@@ -65,7 +65,8 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 				apikey: process.env.BSCSCAN_KEY,
 			},
 		});
-
+		console.log(result.data)
+		
 		if (result.data.result === 'Contract source code not verified') {
 			const { source } = deployment.targets[name];
 			console.log(
@@ -180,7 +181,7 @@ const verify = async ({ buildPath, network, deploymentPath }) => {
 					},
 				});
 				status = result.data.result;
-
+				console.log(status)
 				console.log(gray(` - "${status}" response from BSCScan`));
 
 				if (status === 'Fail - Unable to verify') {

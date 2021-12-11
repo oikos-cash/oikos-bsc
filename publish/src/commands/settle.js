@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const Web3 = require('web3');
 const minimist = require('minimist');
-const cleanEntries = require("./cleanEntries");
+//const cleanEntries = require("./cleanEntries");
 
 const { getTarget, getSource, toBytes32 } = require('../../..');
 

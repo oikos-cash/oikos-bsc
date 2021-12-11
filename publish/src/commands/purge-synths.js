@@ -79,6 +79,7 @@ const purgeSynths = async ({
 	if (network !== 'local' || !privateKey) {
 		privateKey = envPrivateKey;
 	}
+	console.log(`Using provider url ${providerUrl}`)
 
 	const web3 = new Web3(new Web3.providers.HttpProvider(providerUrl));
 	web3.eth.accounts.wallet.add(privateKey);

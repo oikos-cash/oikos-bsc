@@ -20,6 +20,9 @@
 	"BNBCollateral": {
 		"deploy": false
 	},
+	"EtherCollateraloUSD": {
+		"deploy": false
+	},
 	"ExchangeRates": {
 		"deploy": false
 	},

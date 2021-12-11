@@ -13,7 +13,7 @@ import "./interfaces/IFeePool.sol";
 import "./interfaces/IOikos.sol";
 import "./interfaces/IExchanger.sol";
 import "./interfaces/IIssuer.sol";
-
+import "./interfaces/IEtherCollateraloUSD.sol";
 
 contract Synth is Owned, IERC20, ExternStateToken, MixinResolver, ISynth {
     /* ========== STATE VARIABLES ========== */
@@ -33,6 +33,7 @@ contract Synth is Owned, IERC20, ExternStateToken, MixinResolver, ISynth {
     bytes32 private constant CONTRACT_EXCHANGER = "Exchanger";
     bytes32 private constant CONTRACT_ISSUER = "Issuer";
     bytes32 private constant CONTRACT_FEEPOOL = "FeePool";
+    bytes32 private constant CONTRACT_ETHERCOLLATERALOUSD = "EtherCollateraloUSD";
 
     bytes32[24] internal addressesToCache = [
         CONTRACT_SYSTEMSTATUS,
@@ -208,6 +209,10 @@ contract Synth is Owned, IERC20, ExternStateToken, MixinResolver, ISynth {
         return IIssuer(resolver.requireAndGetAddress(CONTRACT_ISSUER, "Missing Issuer address"));
     }
 
+    function etherCollateraloUSD() internal view returns (IEtherCollateraloUSD) {
+        return IEtherCollateraloUSD(resolver.requireAndGetAddress(CONTRACT_ETHERCOLLATERALOUSD, "Missing EtherCollateraloUSD address"));
+    }
+
     function _ensureCanTransfer(address from, uint value) internal view {
         require(exchanger().maxSecsLeftInWaitingPeriod(from, currencyKey) == 0, "Cannot transfer during waiting period");
         require(transferableSynths(from) >= value, "Insufficient balance after any settlement owing");
@@ -253,10 +258,11 @@ contract Synth is Owned, IERC20, ExternStateToken, MixinResolver, ISynth {
         bool isFeePool = msg.sender == address(feePool());
         bool isExchanger = msg.sender == address(exchanger());
         bool isIssuer = msg.sender == address(issuer());
+        bool isEtherCollateraloUSD = msg.sender == address(etherCollateraloUSD());
 
         require(
-            isOikos || isFeePool || isExchanger || isIssuer,
-            "Only Oikos, FeePool, Exchanger or Issuer contracts allowed"
+            isOikos || isFeePool || isExchanger || isIssuer || isEtherCollateraloUSD,
+            "Only Oikos, FeePool, Exchanger, Issuer or EtherCollateraloUSD contracts allowed"
         );
         _;
     }

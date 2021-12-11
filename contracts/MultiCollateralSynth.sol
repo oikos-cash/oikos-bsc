@@ -3,10 +3,10 @@ pragma solidity ^0.5.16;
 // Inheritance
 import "./Synth.sol";
 
-
 // https://docs.oikos.cash/contracts/MultiCollateralSynth
 contract MultiCollateralSynth is Synth {
     bytes32 public multiCollateralKey;
+    bytes32 private constant CONTRACT_ETHERCOLLATERALOUSD = "EtherCollateraloUSD";
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -32,6 +32,9 @@ contract MultiCollateralSynth is Synth {
         return requireAndGetAddress(multiCollateralKey, "Resolver is missing multiCollateral address");
     }
 
+    function etherCollateraloUSD() internal view returns (IEtherCollateraloUSD) {
+        return IEtherCollateraloUSD(resolver.requireAndGetAddress(CONTRACT_ETHERCOLLATERALOUSD, "Missing EtherCollateraloUSD address"));
+    }
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     /**
@@ -61,9 +64,10 @@ contract MultiCollateralSynth is Synth {
         bool isExchanger = msg.sender == address(exchanger());
         bool isIssuer = msg.sender == address(issuer());
         bool isMultiCollateral = msg.sender == address(multiCollateral());
+        bool isEtherCollateraloUSD = msg.sender == address(etherCollateraloUSD());
 
         require(
-            isOikos || isFeePool || isExchanger || isIssuer || isMultiCollateral,
+            isOikos || isFeePool || isExchanger || isIssuer || isMultiCollateral || isEtherCollateraloUSD,
             "Only Oikos, FeePool, Exchanger, Issuer or MultiCollateral contracts allowed"
         );
         _;

@@ -18,7 +18,7 @@ import "./interfaces/IExchangeRates.sol";
 
 
 // VBNB Collateral v0.1 (oUSD)
-contract EtherCollateraloUSD is Owned, Pausable, ReentrancyGuard, MixinResolver {
+contract VBNBCollateraloUSD is Owned, Pausable, ReentrancyGuard, MixinResolver {
     using SafeMath for uint256;
     using SafeDecimalMath for uint256;
 
@@ -732,7 +732,6 @@ contract EtherCollateraloUSD is Owned, Pausable, ReentrancyGuard, MixinResolver 
 
         // Fee distribution. Mint the oUSD fees into the FeePool and record fees paid
         synthoUSD().issue(address(this), totalAccruedInterest);
-        
         //this will trigger record fees paid
         IERC20(address(synthoUSD())).transfer(FEE_ADDRESS, totalAccruedInterest);
 

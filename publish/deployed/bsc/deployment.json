@@ -626,8 +626,8 @@
 			"address": "0xFcA47F59719e2Fb4d8870E76328eD35A67BC681e",
 			"source": "VBNBCollateraloUSD",
 			"link": "https://etherscan.io/address/0xFcA47F59719e2Fb4d8870E76328eD35A67BC681e",
-			"timestamp": "2021-12-11T23:52:36.580Z",
-			"txn": "",
+			"timestamp": "2021-12-11T23:52:36.000Z",
+			"txn": "https://bscscan.com/tx/0xe888970fa70781edf95c0742b0f6df9c6d45798ac289fe13ccdb20988dd25ca1",
 			"network": "bsc"
 		}
 	},

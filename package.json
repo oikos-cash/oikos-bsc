@@ -44,7 +44,7 @@
 		"publish/deployed/*/deployment.json"
 	],
 	"bin": {
-		"oks": "bin.js"
+		"snx": "bin.js"
 	},
 	"main": "index.js",
 	"bugs": {

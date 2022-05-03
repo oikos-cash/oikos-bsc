@@ -71,6 +71,9 @@
 	"OikosEscrow": {
 		"deploy": false
 	},
+	"OikosEscrowVx": {
+		"deploy": false
+	},
 	"OikosState": {
 		"deploy": false
 	},

@@ -97,7 +97,7 @@ contract OikosDebtShare is Owned, MixinResolver, IOikosDebtShare {
     ];
 
     constructor(address _owner, address _resolver) public Owned(_owner) MixinResolver(_resolver, addressesToCache) {
-        name = "Oikos Debt Shares (v0.1)";
+        name = "Oikos Debt Shares (v0.2)";
         symbol = "ODS";
         decimals = 18;
 

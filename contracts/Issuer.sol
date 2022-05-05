@@ -22,6 +22,7 @@ import "./interfaces/IRewardEscrow.sol";
 import "./interfaces/IHasBalance.sol";
 import "./interfaces/IERC20.sol";
 import "./interfaces/ILiquidations.sol";
+import "./interfaces/IOikosDebtShare.sol";
 
 
 // https://docs.oikos.cash/contracts/Issuer
@@ -43,7 +44,6 @@ contract Issuer is Owned, MixinResolver, IIssuer {
     mapping(address => bytes32) public synthsByAddress;
 
     /* ========== ADDRESS RESOLVER CONFIGURATION ========== */
-
     bytes32 private constant CONTRACT_OIKOS = "Oikos";
     bytes32 private constant CONTRACT_EXCHANGER = "Exchanger";
     bytes32 private constant CONTRACT_EXRATES = "ExchangeRates";
@@ -55,6 +55,9 @@ contract Issuer is Owned, MixinResolver, IIssuer {
     bytes32 private constant CONTRACT_REWARDESCROW = "RewardEscrow";
     bytes32 private constant CONTRACT_OIKOSESCROW = "OikosEscrow";
     bytes32 private constant CONTRACT_LIQUIDATIONS = "Liquidations";
+    bytes32 private constant CONTRACT_ESCROW_VX = "OikosEscrowVx";
+    bytes32 private constant CONTRACT_OIKOSDEBTSHARE = "OikosDebtShare";
+
 
     bytes32[24] private addressesToCache = [
         CONTRACT_OIKOS,
@@ -67,7 +70,8 @@ contract Issuer is Owned, MixinResolver, IIssuer {
         CONTRACT_ETHERCOLLATERAL,
         CONTRACT_REWARDESCROW,
         CONTRACT_OIKOSESCROW,
-        CONTRACT_LIQUIDATIONS
+        CONTRACT_LIQUIDATIONS,
+        CONTRACT_OIKOSDEBTSHARE
     ];
 
     constructor(address _owner, address _resolver) public Owned(_owner) MixinResolver(_resolver, addressesToCache) {}
@@ -105,6 +109,10 @@ contract Issuer is Owned, MixinResolver, IIssuer {
         return IDelegateApprovals(resolver.requireAndGetAddress(CONTRACT_DELEGATEAPPROVALS, "Missing DelegateApprovals address"));
     }
 
+    function oikosDebtShare() internal view returns (IOikosDebtShare) {
+        return IOikosDebtShare(resolver.requireAndGetAddress(CONTRACT_OIKOSDEBTSHARE, "Missing OikosDebtShare address"));
+    }
+
     function issuanceEternalStorage() internal view returns (IssuanceEternalStorage) {
         return
             IssuanceEternalStorage(
@@ -122,6 +130,10 @@ contract Issuer is Owned, MixinResolver, IIssuer {
 
     function oikosEscrow() internal view returns (IHasBalance) {
         return IHasBalance(resolver.requireAndGetAddress(CONTRACT_OIKOSESCROW, "Missing OikosEscrow address"));
+    }
+
+    function oikosEscrowVx() internal view returns (IHasBalance) {
+        return IHasBalance(resolver.requireAndGetAddress(CONTRACT_ESCROW_VX, "Missing OikosEscrowVx address"));
     }
 
     function _availableCurrencyKeysWithOptionalOKS(bool withOKS) internal view returns (bytes32[] memory) {
@@ -248,6 +260,16 @@ contract Issuer is Owned, MixinResolver, IIssuer {
         }
     }
 
+    function getDebt(address issuer) 
+        public 
+        view 
+    returns (
+        uint debtBalance,
+        uint totalSystemDebt
+    ) {
+        (debtBalance, totalSystemDebt, ) = _debtBalanceOfAndTotalDebt(issuer, oUSD);
+    }
+
     function _maxIssuableSynths(address _issuer) internal view returns (uint) {
         // What is the value of their OKS balance in oUSD
         uint destinationValue = exchangeRates().effectiveValue("OKS", _collateral(_issuer), oUSD);
@@ -272,6 +294,10 @@ contract Issuer is Owned, MixinResolver, IIssuer {
 
         if (address(oikosEscrow()) != address(0)) {
             balance = balance.add(oikosEscrow().balanceOf(account));
+        }
+
+        if (address(oikosEscrowVx()) != address(0)) {
+            balance = balance.add(oikosEscrowVx().balanceOf(account));
         }
 
         if (address(rewardEscrow()) != address(0)) {
@@ -336,6 +362,19 @@ contract Issuer is Owned, MixinResolver, IIssuer {
 
         (debtBalance, , ) = _debtBalanceOfAndTotalDebt(_issuer, currencyKey);
     }
+
+    function debtBalanceOfAndTotalDebt(address _issuer) external view returns (uint debtBalance, uint totalDebt) {
+        IOikosState state = oikosState();
+
+        // What was their initial debt ownership?
+        (uint initialDebtOwnership, ) = state.issuanceData(_issuer);
+
+        // If it's zero, they haven't issued, and they have no debt.
+        if (initialDebtOwnership == 0) return (0, 0);
+
+        (debtBalance, totalDebt, ) = _debtBalanceOfAndTotalDebt(_issuer, oUSD);
+    }
+
 
     function remainingIssuableSynths(address _issuer)
         external
@@ -507,13 +546,10 @@ contract Issuer is Owned, MixinResolver, IIssuer {
     ) internal {
         // Keep track of the debt they're about to create
         _addToDebtRegister(from, amount, existingDebt, totalSystemDebt);
-
         // record issue timestamp
         _setLastIssueEvent(from);
-
         // Create their synths
         synths[oUSD].issue(from, amount);
-
         // Store their locked OKS amount to determine their fee % for the period
         _appendAccountIssuanceRecord(from);
     }
@@ -700,7 +736,10 @@ contract Issuer is Owned, MixinResolver, IIssuer {
         uint existingDebt,
         uint totalDebtIssued
     ) internal {
+        IOikosDebtShare ods = oikosDebtShare();
         IOikosState state = oikosState();
+
+        uint currentDebtShare = ods.balanceOf(from);
 
         // What will the new total be including the new value?
         uint newTotalDebtIssued = amount.add(totalDebtIssued);
@@ -726,6 +765,10 @@ contract Issuer is Owned, MixinResolver, IIssuer {
 
         // Save the debt entry parameters
         state.setCurrentIssuanceData(from, debtPercentage);
+        
+        //Mint debt shares
+        uint _bal = (currentDebtShare.mul(newTotalDebtIssued)).div(totalDebtIssued);
+        ods.mintShare(from, (_bal - currentDebtShare));
 
         // And if we're the first, push 1 as there was no effect to any other holders, otherwise push
         // the change for the rest of the debt holders. The debt ledger holds high precision integers.
@@ -742,20 +785,24 @@ contract Issuer is Owned, MixinResolver, IIssuer {
         uint existingDebt,
         uint totalDebtIssued
     ) internal {
-        IOikosState state = oikosState();
+        IOikosDebtShare ods = oikosDebtShare();
 
         uint debtToRemove = amount;
 
         // What will the new total after taking out the withdrawn amount
         uint newTotalDebtIssued = totalDebtIssued.sub(debtToRemove);
+        uint currentDebtShare = ods.balanceOf(from);
+
+        IOikosState state = oikosState();
 
         uint delta = 0;
+        uint debtPercentage = 0;
 
         // What will the debt delta be if there is any debt left?
         // Set delta to 0 if no more debt left in system after user
         if (newTotalDebtIssued > 0) {
             // What is the percentage of the withdrawn debt (as a high precision int) of the total debt after?
-            uint debtPercentage = debtToRemove.divideDecimalRoundPrecise(newTotalDebtIssued);
+            debtPercentage = debtToRemove.divideDecimalRoundPrecise(newTotalDebtIssued);
 
             // And what effect does this percentage change have on the global debt holding of other issuers?
             // The delta specifically needs to not take into account any existing debt as it's already
@@ -767,6 +814,8 @@ contract Issuer is Owned, MixinResolver, IIssuer {
         if (debtToRemove == existingDebt) {
             state.setCurrentIssuanceData(from, 0);
             state.decrementTotalIssuerCount();
+            ods.burnShare(from, ods.balanceOf(from));
+
         } else {
             // What percentage of the debt will they be left with?
             uint newDebt = existingDebt.sub(debtToRemove);
@@ -774,6 +823,12 @@ contract Issuer is Owned, MixinResolver, IIssuer {
 
             // Store the debt percentage and debt ledger as high precision integers
             state.setCurrentIssuanceData(from, newDebtPercentage);
+
+            // Burn shares
+            //newDebtPercentage = newDebtPercentage.preciseDecimalToDecimal();
+            uint _bal = (currentDebtShare.mul(newTotalDebtIssued)).div(totalDebtIssued);
+            ods.burnShare(from, (currentDebtShare - _bal));
+
         }
 
         // Update our cumulative ledger. This is also a high precision integer.

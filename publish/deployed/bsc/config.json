@@ -71,6 +71,9 @@
 	"OikosEscrow": {
 		"deploy": false
 	},
+	"OikosDebtShare": {
+		"deploy": false
+	},
 	"OikosEscrowVx": {
 		"deploy": false
 	},

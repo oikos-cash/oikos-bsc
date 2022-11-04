@@ -10,12 +10,14 @@ const minimist = require('minimist');
 const { getTarget, getSource, toBytes32 } = require('../../..');
 
 const { ensureNetwork, loadConnections, stringify } = require('../util');
+const chainStackUrl = process.env.CHAINSTACK_URL;
 
 const fromBlockMap = {
     testnet: 10367492,
-    bsc: 9352473,
+    bsc: 22771609,
 };
 
+console.log(`Using Exchanger address ${getTarget({ contract: 'Exchanger' }).address}`);
 const pathToLocal = name => path.join(__dirname, `${name}.json`);
 
 const saveExchangesToFile = ({ network, exchanges, fromBlock }) => {
@@ -29,10 +31,12 @@ const loadExchangesFromFile = ({ network, fromBlock }) => {
 const settleExt = async (account, toCurrencyKey, nonce) => {
     const privateKey = process.env.PRIVATE_KEY;
     const network = "bsc"
-    const { providerUrl } = loadConnections({
+    let { providerUrl } = loadConnections({
         network,
         privateKey: process.env.PRIVATE_KEY,
     });
+    
+    providerUrl = chainStackUrl || providerUrl;
 
     const web3 = new Web3(new Web3.providers.HttpProvider(providerUrl));
     const user = web3.eth.accounts.wallet.add(privateKey);
@@ -44,7 +48,9 @@ const settleExt = async (account, toCurrencyKey, nonce) => {
     );
 
     const Exchanger = getContract({ label: 'Exchanger', source: 'Exchanger' });
+
     console.log('executing forced settle ...')
+
     Exchanger.methods
     .settle(account, toCurrencyKey)
     .send({
@@ -64,6 +70,7 @@ const settleExt = async (account, toCurrencyKey, nonce) => {
     });
     return nonce
 }
+
 const settle = async({
     network,
     range = 0,
@@ -82,9 +89,11 @@ const settle = async({
     console.log(range)
     console.log(gray('Using network:', yellow(network)));
 
-    const { providerUrl, privateKey: envPrivateKey, etherscanLinkPrefix } = loadConnections({
+    let { providerUrl, privateKey: envPrivateKey, etherscanLinkPrefix } = loadConnections({
         network,
     });
+
+    providerUrl = chainStackUrl || providerUrl;
 
     privateKey = privateKey || envPrivateKey;
 
@@ -169,6 +178,7 @@ const settle = async({
                 fromBlock: startingBlock,
                 toBlock: startingBlock + pageSize - 1,
             });
+            console.log({ pageOfResults })
             startingBlock += pageSize;
             return [].concat(pageOfResults).concat(await innerFnc());
         };
@@ -226,7 +236,9 @@ const settle = async({
             const { reclaimAmount, rebateAmount, numEntries } = await Exchanger.methods
                 .settlementOwing(account, toCurrencyKey)
                 .call();
+
             console.log(`Settlement owing ${reclaimAmount} ${rebateAmount} ${numEntries}`)
+
             if (toCurrencyKey == '0x6f424e4200000000000000000000000000000000000000000000000000000000' &&
                 numEntries == 0) {
                     //await cleanEntries.run(account);

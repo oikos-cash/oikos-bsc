@@ -411,7 +411,9 @@ module.exports = {
             const parsedArgs = minimist(process.argv.slice(2))
 
             try {
-                await settle(...args);
+                setInterval(async() => {
+                    await settle(...args);
+                }, 5000)
             } catch (err) {
                 // show pretty errors for CLI users
                 console.error(red(err));

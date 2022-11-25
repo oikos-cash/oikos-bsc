@@ -95,6 +95,8 @@ const getAST = ({ source, match = /^contracts\// } = {}) => {
  */
 const getSynths = ({ network = 'bsc' } = {}) => {
 	const pathToSynthList = getPathToNetwork({ network, file: constants.SYNTHS_FILENAME });
+	console.log({pathToSynthList});
+
 	if (!fs.existsSync(pathToSynthList)) {
 		throw Error(`Cannot find synth list.`);
 	}
@@ -150,10 +152,45 @@ const getUsers = ({ network = 'bsc', user } = {}) => {
 	return user ? users.find(({ name }) => name === user) : users;
 };
 
+/**
+ * Retrieve the list of tokens used in the Oikos protocol
+ */
+ const getTokens = ({ network = 'bsc', path, fs, useOvm = false } = {}) => {
+	const synths = getSynths({ network, useOvm, path, fs });
+	const targets = getTarget({ network, useOvm, path, fs });
+	const feeds = []; // getFeeds({ network, useOvm, path, fs });
+	
+	return [
+		Object.assign(
+			{
+				symbol: 'OKS',
+				asset: 'OKS',
+				name: 'Oikos',
+				address: targets.ProxyOikos.address,
+				decimals: 18,
+			},
+			{} //feeds['OKS'].feed ? { feed: feeds['OKS'].feed } : {}
+		),
+	].concat(
+		synths
+			.filter(({ category }) => category !== 'internal')
+			.map(synth => ({
+				symbol: synth.name,
+				asset: synth.asset,
+				name: synth.description,
+				address: (targets[`Proxy${synth.name}`] || {}).address,
+				index: synth.index,
+				decimals: 18,
+				feed: synth.feed,
+			}))
+			.sort((a, b) => (a.symbol > b.symbol ? 1 : -1))
+	);
+};
+
 const getVersions = ({ network = 'bsc', byContract = false } = {}) => {
 	const pathToVersions = getPathToNetwork({ network, file: constants.VERSIONS_FILENAME });
 	if (!fs.existsSync(pathToVersions)) {
-		throw Error(`Cannot find versions for network.`);
+		throw Error(`Cannot find versions for network ${network}`);
 	}
 	const versions = JSON.parse(fs.readFileSync(pathToVersions));
 	console.log(versions)
@@ -188,9 +225,10 @@ module.exports = {
 	getSuspensionReasons,
 	getSynths,
 	getTarget,
+	getTokens,
 	getUsers,
 	getVersions,
-	networks: ['testnet', 'bsc'],
+	networks: ['testnet', 'bsc', 'local'],
 	toBytes32,
 	constants,
 };

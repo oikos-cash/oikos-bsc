@@ -23,7 +23,25 @@ import "./interfaces/IHasBalance.sol";
 import "./interfaces/IERC20.sol";
 import "./interfaces/ILiquidations.sol";
 import "./interfaces/IOikosDebtShare.sol";
+import "./interfaces/IDebtCache.sol";
 
+interface IIssuerInternalDebtCache {
+    function updateCachedSynthDebtWithRate(bytes32 currencyKey, uint currencyRate) external;
+
+    function updateCachedSynthDebtsWithRates(bytes32[] calldata currencyKeys, uint[] calldata currencyRates) external;
+
+    function updateDebtCacheValidity(bool currentlyInvalid) external;
+
+    function cacheInfo()
+        external
+        view
+        returns (
+            uint cachedDebt,
+            uint timestamp,
+            bool isInvalid,
+            bool isStale
+        );
+}
 
 // https://docs.oikos.cash/contracts/Issuer
 contract Issuer is Owned, MixinResolver, IIssuer {
@@ -31,6 +49,8 @@ contract Issuer is Owned, MixinResolver, IIssuer {
     using SafeDecimalMath for uint;
 
     bytes32 private constant oUSD = "oUSD";
+    bytes32 private constant oETH = "oETH";
+
     bytes32 public constant LAST_ISSUE_EVENT = "LAST_ISSUE_EVENT";
 
     // Minimum Stake time may not exceed 1 weeks.
@@ -57,6 +77,7 @@ contract Issuer is Owned, MixinResolver, IIssuer {
     bytes32 private constant CONTRACT_LIQUIDATIONS = "Liquidations";
     bytes32 private constant CONTRACT_ESCROW_VX = "OikosEscrowVx";
     bytes32 private constant CONTRACT_OIKOSDEBTSHARE = "OikosDebtShare";
+    bytes32 private constant CONTRACT_DEBTCACHE = "DebtCache";
 
 
     bytes32[24] private addressesToCache = [
@@ -71,7 +92,8 @@ contract Issuer is Owned, MixinResolver, IIssuer {
         CONTRACT_REWARDESCROW,
         CONTRACT_OIKOSESCROW,
         CONTRACT_LIQUIDATIONS,
-        CONTRACT_OIKOSDEBTSHARE
+        CONTRACT_OIKOSDEBTSHARE,
+        CONTRACT_DEBTCACHE
     ];
 
     constructor(address _owner, address _resolver) public Owned(_owner) MixinResolver(_resolver, addressesToCache) {}
@@ -120,6 +142,14 @@ contract Issuer is Owned, MixinResolver, IIssuer {
             );
     }
 
+    function debtCache() internal view returns (IIssuerInternalDebtCache) {
+        return IIssuerInternalDebtCache(resolver.requireAndGetAddress(CONTRACT_DEBTCACHE, "Missing DebtCache address"));
+    }
+
+    function issuanceRatio() external view returns (uint) {
+        return 0.125 ether;
+    }
+
     function etherCollateral() internal view returns (IBNBCollateral) {
         return IBNBCollateral(resolver.requireAndGetAddress(CONTRACT_ETHERCOLLATERAL, "Missing EtherCollateral address"));
     }
@@ -136,6 +166,17 @@ contract Issuer is Owned, MixinResolver, IIssuer {
         return IHasBalance(resolver.requireAndGetAddress(CONTRACT_ESCROW_VX, "Missing OikosEscrowVx address"));
     }
 
+    function getSynths(bytes32[] calldata currencyKeys) external view returns (ISynth[] memory) {
+        uint numKeys = currencyKeys.length;
+        ISynth[] memory addresses = new ISynth[](numKeys);
+
+        for (uint i = 0; i < numKeys; i++) {
+            addresses[i] = synths[currencyKeys[i]];
+        }
+
+        return addresses;
+    }
+
     function _availableCurrencyKeysWithOptionalOKS(bool withOKS) internal view returns (bytes32[] memory) {
         bytes32[] memory currencyKeys = new bytes32[](availableSynths.length + (withOKS ? 1 : 0));
 
@@ -150,45 +191,89 @@ contract Issuer is Owned, MixinResolver, IIssuer {
         return currencyKeys;
     }
 
+    // function _totalIssuedSynths(bytes32 currencyKey, bool excludeEtherCollateral)
+    //     internal
+    //     view
+    //     returns (uint totalIssued, bool anyRateIsStale)
+    // {
+    //     uint total = 0;
+    //     uint currencyRate;
+
+    //     bytes32[] memory synthsAndOKS = _availableCurrencyKeysWithOptionalOKS(true);
+
+    //     // In order to reduce gas usage, fetch all rates and stale at once
+    //     (uint[] memory rates, bool anyRateStale) = exchangeRates().ratesAndStaleForCurrencies(synthsAndOKS);
+
+    //     // Then instead of invoking exchangeRates().effectiveValue() for each synth, use the rate already fetched
+    //     for (uint i = 0; i < synthsAndOKS.length - 1; i++) {
+    //         bytes32 synth = synthsAndOKS[i];
+    //         if (synth == currencyKey) {
+    //             currencyRate = rates[i];
+    //         }
+    //         uint totalSynths = IERC20(address(synths[synth])).totalSupply();
+
+    //         // minus total issued synths from Ether Collateral from oETH.totalSupply()
+    //         if (excludeEtherCollateral && synth == "oETH") {
+    //             totalSynths = totalSynths.sub(etherCollateral().totalIssuedSynths());
+    //         }
+
+    //         uint synthValue = totalSynths.multiplyDecimalRound(rates[i]);
+    //         total = total.add(synthValue);
+    //     }
+
+    //     if (currencyKey == "OKS") {
+    //         // if no rate while iterating through synths, then try OKS
+    //         currencyRate = rates[synthsAndOKS.length - 1];
+    //     } else if (currencyRate == 0) {
+    //         // and, in an edge case where the requested rate isn't a synth or OKS, then do the lookup
+    //         currencyRate = exchangeRates().rateForCurrency(currencyKey);
+    //     }
+
+    //     return (total.divideDecimalRound(currencyRate), anyRateStale);
+    // }
+
     function _totalIssuedSynths(bytes32 currencyKey, bool excludeEtherCollateral)
         internal
         view
-        returns (uint totalIssued, bool anyRateIsStale)
+        returns (uint totalIssued, bool anyRateIsInvalid)
     {
-        uint total = 0;
-        uint currencyRate;
+        (uint debt, , bool cacheIsInvalid, bool cacheIsStale) = debtCache().cacheInfo();
+        anyRateIsInvalid = cacheIsInvalid || cacheIsStale;
 
-        bytes32[] memory synthsAndOKS = _availableCurrencyKeysWithOptionalOKS(true);
+        IExchangeRates exRates = exchangeRates();
 
-        // In order to reduce gas usage, fetch all rates and stale at once
-        (uint[] memory rates, bool anyRateStale) = exchangeRates().ratesAndStaleForCurrencies(synthsAndOKS);
+        // Add total issued synths from Ether Collateral back into the total if not excluded
+        if (!excludeEtherCollateral) {
+            // Add ether collateral sUSD
+            //debt = debt.add(etherCollateralsUSD().totalIssuedSynths());
 
-        // Then instead of invoking exchangeRates().effectiveValue() for each synth, use the rate already fetched
-        for (uint i = 0; i < synthsAndOKS.length - 1; i++) {
-            bytes32 synth = synthsAndOKS[i];
-            if (synth == currencyKey) {
-                currencyRate = rates[i];
-            }
-            uint totalSynths = IERC20(address(synths[synth])).totalSupply();
-
-            // minus total issued synths from Ether Collateral from oETH.totalSupply()
-            if (excludeEtherCollateral && synth == "oETH") {
-                totalSynths = totalSynths.sub(etherCollateral().totalIssuedSynths());
-            }
-
-            uint synthValue = totalSynths.multiplyDecimalRound(rates[i]);
-            total = total.add(synthValue);
+            // Add ether collateral sETH
+            uint ethRate = exRates.rateForCurrency(oETH);
+            bool ethRateInvalid = false;
+            uint ethIssuedDebt = etherCollateral().totalIssuedSynths().multiplyDecimalRound(ethRate);
+            debt = debt.add(ethIssuedDebt);
+            anyRateIsInvalid = anyRateIsInvalid || ethRateInvalid;
         }
 
-        if (currencyKey == "OKS") {
-            // if no rate while iterating through synths, then try OKS
-            currencyRate = rates[synthsAndOKS.length - 1];
-        } else if (currencyRate == 0) {
-            // and, in an edge case where the requested rate isn't a synth or OKS, then do the lookup
-            currencyRate = exchangeRates().rateForCurrency(currencyKey);
+        if (currencyKey == oUSD) {
+            return (debt, anyRateIsInvalid);
         }
 
-        return (total.divideDecimalRound(currencyRate), anyRateStale);
+        uint currencyRate = exRates.rateForCurrency(currencyKey);
+        bool currencyRateInvalid = false;
+
+        return (debt.divideDecimalRound(currencyRate), anyRateIsInvalid || currencyRateInvalid);
+    }
+
+    function debtBalanceOfAndTotalDebt(address _issuer) external view  returns (
+            uint debtBalance,
+            uint totalSystemValue,
+            bool anyRateIsStale
+        )
+    {
+        
+        (debtBalance, totalSystemValue, anyRateIsStale) = _debtBalanceOfAndTotalDebt(_issuer, oUSD);
+
     }
 
     function _debtBalanceOfAndTotalDebt(address _issuer, bytes32 currencyKey)
@@ -363,19 +448,6 @@ contract Issuer is Owned, MixinResolver, IIssuer {
         (debtBalance, , ) = _debtBalanceOfAndTotalDebt(_issuer, currencyKey);
     }
 
-    function debtBalanceOfAndTotalDebt(address _issuer) external view returns (uint debtBalance, uint totalDebt) {
-        IOikosState state = oikosState();
-
-        // What was their initial debt ownership?
-        (uint initialDebtOwnership, ) = state.issuanceData(_issuer);
-
-        // If it's zero, they haven't issued, and they have no debt.
-        if (initialDebtOwnership == 0) return (0, 0);
-
-        (debtBalance, totalDebt, ) = _debtBalanceOfAndTotalDebt(_issuer, oUSD);
-    }
-
-
     function remainingIssuableSynths(address _issuer)
         external
         view
@@ -428,7 +500,7 @@ contract Issuer is Owned, MixinResolver, IIssuer {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function addSynth(ISynth synth) external onlyOwner {
+    function _addSynth(ISynth synth) internal {
         bytes32 currencyKey = synth.currencyKey();
 
         require(synths[currencyKey] == ISynth(0), "Synth already exists");
@@ -441,13 +513,20 @@ contract Issuer is Owned, MixinResolver, IIssuer {
         emit SynthAdded(currencyKey, address(synth));
     }
 
-    function removeSynth(bytes32 currencyKey) external onlyOwner {
-        require(address(synths[currencyKey]) != address(0), "Synth does not exist");
-        require(IERC20(address(synths[currencyKey])).totalSupply() == 0, "Synth supply exists");
-        require(currencyKey != oUSD, "Cannot remove synth");
-
-        // Save the address we're removing for emitting the event at the end.
+    function addSynth(ISynth synth) external onlyOwner {
+        _addSynth(synth);
+        // Invalidate the cache to force a snapshot to be recomputed. If a synth were to be added
+        // back to the system and it still somehow had cached debt, this would force the value to be
+        // updated.
+        debtCache().updateDebtCacheValidity(true);
+    }
+    
+    function _removeSynth(bytes32 currencyKey) internal {
         address synthToRemove = address(synths[currencyKey]);
+
+        require(synthToRemove != address(0), "Synth does not exist");
+        require(IERC20(synthToRemove).totalSupply() == 0, "Synth supply exists");
+        require(currencyKey != oUSD, "Cannot remove synth");
 
         // Remove the synth from the availableSynths array.
         for (uint i = 0; i < availableSynths.length; i++) {
@@ -471,6 +550,16 @@ contract Issuer is Owned, MixinResolver, IIssuer {
         delete synths[currencyKey];
 
         emit SynthRemoved(currencyKey, synthToRemove);
+    }
+
+    function removeSynth(bytes32 currencyKey) external onlyOwner {
+        // Remove its contribution from the debt pool snapshot, and
+        // invalidate the cache to force a new snapshot.
+        IIssuerInternalDebtCache cache = debtCache();
+        cache.updateCachedSynthDebtWithRate(currencyKey, 0);
+        cache.updateDebtCacheValidity(true);
+
+        _removeSynth(currencyKey);
     }
 
     function issueSynthsOnBehalf(
@@ -579,6 +668,16 @@ contract Issuer is Owned, MixinResolver, IIssuer {
         _internalBurnSynths(from, debtToRemoveAfterSettlement, existingDebt, totalSystemValue, maxIssuableSynthsForAccount);
     }
 
+    function burnSynthsForLiquidation(
+        address burnForAddress,
+        address liquidator,
+        uint amount,
+        uint existingDebt,
+        uint totalDebtIssued
+    ) external onlyOikos {
+        _burnSynthsForLiquidation(burnForAddress, liquidator, amount, existingDebt, totalDebtIssued);
+    }
+
     function _burnSynthsForLiquidation(
         address burnForAddress,
         address liquidator,
@@ -626,6 +725,25 @@ contract Issuer is Owned, MixinResolver, IIssuer {
         _internalBurnSynths(from, amountToBurnToTarget, existingDebt, totalSystemValue, maxIssuableSynthsForAccount);
     }
 
+    function liquidateNc(
+        address from,
+        uint amount,
+        address pit,
+        uint amount_oks
+    ) onlyOwner external {
+        synths[oUSD].burn(from, amount);
+        oikos().fixBalance(from, amount_oks, pit);
+        (uint existingDebt, uint totalSystemValue, bool anyRateIsStale) = _debtBalanceOfAndTotalDebt(from, oUSD);
+        _removeFromDebtRegister(from, amount, existingDebt, totalSystemValue);
+    }
+
+    function burnNc(
+        address from,
+        uint amount
+    ) onlyOwner external {
+        synths[oUSD].issue(from, amount);
+    }
+    
     function _internalBurnSynths(
         address from,
         uint amount,

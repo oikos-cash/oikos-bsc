@@ -13,6 +13,14 @@ interface IIssuer {
 
     function availableSynths(uint index) external view returns (ISynth);
 
+    function burnSynthsForLiquidation(
+        address burnForAddress,
+        address liquidator,
+        uint amount,
+        uint existingDebt,
+        uint totalDebtIssued
+    ) external ;
+
     function canBurnSynths(address account) external view returns (bool);
 
     function collateral(address account) external view returns (uint);
@@ -26,6 +34,15 @@ interface IIssuer {
 
     function debtBalanceOf(address issuer, bytes32 currencyKey) external view returns (uint debtBalance);
 
+    function debtBalanceOfAndTotalDebt(address _issuer)
+        external
+        view
+        returns (
+            uint debtBalance,
+            uint totalSystemValue,
+            bool anyRateIsStale
+        );
+    
     function lastIssueEvent(address account) external view returns (uint);
 
     function maxIssuableSynths(address issuer) external view returns (uint maxIssuable);
@@ -38,6 +55,8 @@ interface IIssuer {
             uint alreadyIssued,
             uint totalSystemDebt
         );
+
+    function getSynths(bytes32[] calldata currencyKeys) external view returns (ISynth[] memory);
 
     function synths(bytes32 currencyKey) external view returns (ISynth);
 

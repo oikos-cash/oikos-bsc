@@ -189,13 +189,15 @@ const getUsers = ({ network = 'bsc', user } = {}) => {
 
 const getVersions = ({ network = 'bsc', byContract = false } = {}) => {
 	const pathToVersions = getPathToNetwork({ network, file: constants.VERSIONS_FILENAME });
+
 	if (!fs.existsSync(pathToVersions)) {
+		console.log(`Path is ${pathToVersions}`);
 		throw Error(`Cannot find versions for network ${network}`);
 	}
 	const versions = JSON.parse(fs.readFileSync(pathToVersions));
 	console.log(versions)
 	if (byContract) {
-		// compile from the contract perspective
+		// compile from the contract perspectives
 		return Object.values(versions).reduce((memo, entry) => {
 			for (const [contract, contractEntry] of Object.entries(entry.contracts)) {
 				memo[contract] = memo[contract] || [];

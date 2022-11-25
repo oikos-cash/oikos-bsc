@@ -883,7 +883,7 @@ const deploy = async ({
 			});
 		//}
 	}
-	if (addressResolver) {
+	if (addressResolver && debtCache) {
 		const expectedAddressesInResolver = [
 			{ name: 'DebtCache', address: addressOf(debtCache) },
 			{ name: 'Issuer', address: addressOf(issuer) },
@@ -1289,7 +1289,6 @@ const deploy = async ({
 			{ name: 'Exchanger', address: addressOf(exchanger) },
 			{ name: 'ExchangeRates', address: addressOf(exchangeRates) },
 			{ name: 'ExchangeState', address: addressOf(exchangeState) },
-			{ name: 'DebtCache', address: addressOf(debtCache) },
 			{ name: 'FeePool', address: addressOf(feePool) },
 			{ name: 'FeePoolEternalStorage', address: addressOf(feePoolEternalStorage) },
 			{ name: 'FeePoolState', address: addressOf(feePoolState) },
@@ -1563,96 +1562,98 @@ const deploy = async ({
 			});
 		}
 	}*/
-	console.log(gray(`\n------ CHECKING DEBT CACHE ------\n`));
+	if (debtCache) {
+		console.log(gray(`\n------ CHECKING DEBT CACHE ------\n`));
 
-	const refreshSnapshotIfPossible = async (wasInvalid, isInvalid, force = false) => {
-		const validityChanged = wasInvalid !== isInvalid;
+		const refreshSnapshotIfPossible = async (wasInvalid, isInvalid, force = false) => {
+			const validityChanged = wasInvalid !== isInvalid;
 
-		if (force || validityChanged) {
-			console.log(yellow(`Refreshing debt snapshot...`));
-			await runStep({
-				gasLimit: 2.5e6, // About 1.7 million gas is required to refresh the snapshot with ~40 synths
-				contract: 'DebtCache',
-				target: debtCache,
-				write: 'takeDebtSnapshot',
-				writeArg: [],
-			});
-		} else if (!validityChanged) {
-			console.log(
-				red('⚠⚠⚠ WARNING: Deployer attempted to refresh the debt cache, but it cannot be.')
-			);
-		}
-	};
+			if (force || validityChanged) {
+				console.log(yellow(`Refreshing debt snapshot...`));
+				await runStep({
+					gasLimit: 2.5e6, // About 1.7 million gas is required to refresh the snapshot with ~40 synths
+					contract: 'DebtCache',
+					target: debtCache,
+					write: 'takeDebtSnapshot',
+					writeArg: [],
+				});
+			} else if (!validityChanged) {
+				console.log(
+					red('⚠⚠⚠ WARNING: Deployer attempted to refresh the debt cache, but it cannot be.')
+				);
+			}
+		};
 
-	const checkSnapshot = async () => {
-		const [cacheInfo, currentDebt] = await Promise.all([
-			debtCache.methods.cacheInfo().call(),
-			debtCache.methods.currentDebt().call(),
-		]);
+		const checkSnapshot = async () => {
+			const [cacheInfo, currentDebt] = await Promise.all([
+				debtCache.methods.cacheInfo().call(),
+				debtCache.methods.currentDebt().call(),
+			]);
 
-		// Check if the snapshot is stale and can be fixed.
-		if (cacheInfo.isStale && !currentDebt.anyRateIsInvalid) {
-			console.log(yellow('Debt snapshot is stale, and can be refreshed.'));
-			await refreshSnapshotIfPossible(
-				cacheInfo.isInvalid,
-				currentDebt.anyRateIsInvalid,
-				cacheInfo.isStale
-			);
-			return true;
-		}
-
-		// Otherwise, if the rates are currently valid,
-		// we might still need to take a snapshot due to invalidity or deviation.
-		if (!currentDebt.anyRateIsInvalid) {
-			if (cacheInfo.isInvalid) {
-				console.log(yellow('Debt snapshot is invalid, and can be refreshed.'));
+			// Check if the snapshot is stale and can be fixed.
+			if (cacheInfo.isStale && !currentDebt.anyRateIsInvalid) {
+				console.log(yellow('Debt snapshot is stale, and can be refreshed.'));
 				await refreshSnapshotIfPossible(
 					cacheInfo.isInvalid,
 					currentDebt.anyRateIsInvalid,
 					cacheInfo.isStale
 				);
 				return true;
-			} else {
-				const cachedDebtEther = w3utils.fromWei(cacheInfo.debt);
-				const currentDebtEther = w3utils.fromWei(currentDebt.debt);
-				const deviation =
-					(Number(currentDebtEther) - Number(cachedDebtEther)) / Number(cachedDebtEther);
-				const maxDeviation = DEFAULTS.debtSnapshotMaxDeviation;
+			}
 
-				if (maxDeviation <= Math.abs(deviation)) {
-					console.log(
-						yellow(
-							`Debt cache deviation is ${deviation * 100}% >= ${maxDeviation *
-								100}%; refreshing it...`
-						)
-					);
+			// Otherwise, if the rates are currently valid,
+			// we might still need to take a snapshot due to invalidity or deviation.
+			if (!currentDebt.anyRateIsInvalid) {
+				if (cacheInfo.isInvalid) {
+					console.log(yellow('Debt snapshot is invalid, and can be refreshed.'));
 					await refreshSnapshotIfPossible(
 						cacheInfo.isInvalid,
 						currentDebt.anyRateIsInvalid,
-						true
+						cacheInfo.isStale
 					);
 					return true;
+				} else {
+					const cachedDebtEther = w3utils.fromWei(cacheInfo.debt);
+					const currentDebtEther = w3utils.fromWei(currentDebt.debt);
+					const deviation =
+						(Number(currentDebtEther) - Number(cachedDebtEther)) / Number(cachedDebtEther);
+					const maxDeviation = DEFAULTS.debtSnapshotMaxDeviation;
+
+					if (maxDeviation <= Math.abs(deviation)) {
+						console.log(
+							yellow(
+								`Debt cache deviation is ${deviation * 100}% >= ${maxDeviation *
+									100}%; refreshing it...`
+							)
+						);
+						await refreshSnapshotIfPossible(
+							cacheInfo.isInvalid,
+							currentDebt.anyRateIsInvalid,
+							true
+						);
+						return true;
+					}
 				}
 			}
+
+			// Finally, if the debt cache is currently valid, but needs to be invalidated, we will also perform a snapshot.
+			if (!cacheInfo.isInvalid && currentDebt.anyRateIsInvalid) {
+				console.log(yellow('Debt snapshot needs to be invalidated.'));
+				await refreshSnapshotIfPossible(cacheInfo.isInvalid, currentDebt.anyRateIsInvalid, false);
+				return true;
+			}
+			return false;
+		};
+
+		const performedSnapshot = await checkSnapshot();
+
+		if (performedSnapshot) {
+			console.log(gray('Snapshot complete.'));
+		} else {
+			console.log(gray('No snapshot required.'));
 		}
-
-		// Finally, if the debt cache is currently valid, but needs to be invalidated, we will also perform a snapshot.
-		if (!cacheInfo.isInvalid && currentDebt.anyRateIsInvalid) {
-			console.log(yellow('Debt snapshot needs to be invalidated.'));
-			await refreshSnapshotIfPossible(cacheInfo.isInvalid, currentDebt.anyRateIsInvalid, false);
-			return true;
-		}
-		return false;
-	};
-
-	const performedSnapshot = await checkSnapshot();
-
-	if (performedSnapshot) {
-		console.log(gray('Snapshot complete.'));
-	} else {
-		console.log(gray('No snapshot required.'));
 	}
-
+	
 	console.log(green(`\nSuccessfully deployed ${newContractsDeployed.length} contracts!\n`));
 
 	const tableData = newContractsDeployed.map(({ name, address }) => [

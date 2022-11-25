@@ -172,14 +172,14 @@ const deploy = async ({
 		currentLastMintEvent =
 			inflationStartDate + currentWeekOfInflation * secondsInWeek + mintingBuffer;
 	} catch (err) {
-		if (network === 'local' || network === "testnet" ) {
+		if (/*network === 'local' ||*/ network === "testnet" ) {
 			currentOikosSupply = w3utils.toWei((100e6).toString());
 			currentWeekOfInflation = 0;
 			currentLastMintEvent = 0;
 		} else {
 			console.error(
 				red(
-					'Cannot connect to existing Oikos contract. Please double check the deploymentPath is correct for the network allocated'
+					`Network ${network} Cannot connect to existing Oikos contract. Please double check the deploymentPath is correct for the network allocated`
 				)
 			);
 			process.exitCode = 1;
@@ -425,6 +425,11 @@ const deploy = async ({
 		args: [account, ZERO_ADDRESS],
 	});
 
+	const oikosEscrowVx = await deployContract({
+		name: 'OikosEscrowVx',
+		args: [account, ZERO_ADDRESS],
+	});
+
 	const oikosState = await deployContract({
 		name: 'OikosState',
 		args: [account, account],
@@ -435,6 +440,12 @@ const deploy = async ({
 		source: 'Proxy',
 		args: [account],
 	});
+
+	const OikosDebtShare = await deployContract({
+		name: 'OikosDebtShare',
+		args: [account, resolverAddress],
+	});
+
 
 	const delegateApprovalsEternalStorage = await deployContract({
 		name: 'DelegateApprovalsEternalStorage',
@@ -687,6 +698,13 @@ const deploy = async ({
 		});
 	}
 
+	const debtCache =  await deployContract({
+		name: 'DebtCache',
+		source: /*useOvm ? 'RealtimeDebtCache' : */ 'DebtCache',
+		deps: ['AddressResolver'],
+		args: [account, addressOf(readProxyForResolver)],
+	});
+
 	const issuer = await deployContract({
 		name: 'Issuer',
 		deps: ['AddressResolver'],
@@ -729,6 +747,14 @@ const deploy = async ({
 			name: 'EscrowChecker',
 			deps: ['OikosEscrow'],
 			args: [addressOf(oikosEscrow)],
+		});
+	}
+
+	if (oikosEscrowVx) {
+		await deployContract({
+			name: 'EscrowChecker',
+			deps: ['OikosEscrowVx'],
+			args: [addressOf(oikosEscrowVx)],
 		});
 	}
 
@@ -826,7 +852,7 @@ const deploy = async ({
 	// ----------------
 
 	// Skip setting unless redeploying either of these,
-	if (config['Oikos'].deploy || config['OikosEscrow'].deploy) {
+	if (config['Oikos'].deploy || config['OikosEscrow'].deploy || config['OikosEscrowVx'].deploy) {
 		// Note: currently on bsc OikosEscrow.methods.oikos() does NOT exist
 		// it is "havven" and the ABI we have here is not sufficient
 		//if (network === 'bsc') {
@@ -847,7 +873,80 @@ const deploy = async ({
 				write: 'setOikos',
 				writeArg: addressOf(proxyERC20Oikos),
 			});
+			await runStep({
+				contract: 'OikosEscrowVx',
+				target: oikosEscrowVx,
+				read: 'oikos',
+				expected: input => input === addressOf(proxyERC20Oikos),
+				write: 'setOikos',
+				writeArg: addressOf(proxyERC20Oikos),
+			});
 		//}
+	}
+	if (addressResolver) {
+		const expectedAddressesInResolver = [
+			{ name: 'DebtCache', address: addressOf(debtCache) },
+			{ name: 'Issuer', address: addressOf(issuer) },
+		]; 
+
+		// quick sanity check of names in expected list
+		for (const { name } of expectedAddressesInResolver) {
+			if (!deployer.deployedContracts[name]) {
+				//throw Error(
+				//	`Error setting up AddressResolver: cannot find ${name} in the list of deployment targets`
+				//);
+			}
+		}
+
+		// Count how many addresses are not yet in the resolver
+		const addressesNotInResolver = (
+			await Promise.all(
+				expectedAddressesInResolver.map(async ({ name, address }) => {
+					const foundAddress = addressResolver.methods.getAddress(toBytes32(name)).call();
+					 
+					return { name, address, found: address === foundAddress }; // return name if not found
+				})
+			)
+		).filter(entry => !entry.found);
+
+		// and add everything if any not found (will overwrite any conflicts)
+		if (addressesNotInResolver.length > 0) {
+			console.log(
+				gray(
+					`Detected ${addressesNotInResolver.length} / ${expectedAddressesInResolver.length} missing or incorrect in the AddressResolver.\n\t` +
+						addressesNotInResolver.map(({ name, address }) => `${name} ${address}`).join('\n\t') +
+						`\nAdding all addresses in one transaction.`
+				)
+			);
+			await runStep({
+				gasLimit: 750e3, // higher gas required
+				contract: `AddressResolver`,
+				target: addressResolver,
+				write: 'importAddresses',
+				writeArg: [
+					addressesNotInResolver.map(({ name }) => toBytes32(name)),
+					addressesNotInResolver.map(({ address }) => address),
+				],
+			});
+		}
+
+		// Now for all targets that have a setResolver, we need to ensure the resolver is set
+		for (const [contract, target] of Object.entries(deployer.deployedContracts)) {
+			if (typeof target !== "undefined" ) {
+				if (target.options.jsonInterface.find(({ name }) => name === 'setResolver')) {
+					await runStep({
+						contract,
+						target,
+						read: 'resolver',
+						expected: input => input === resolverAddress,
+						write: 'setResolver',
+						writeArg: resolverAddress,
+					});
+				}
+			} else {
+				console.log(red(`Error with ${contract}`))
+			}
+		}
 	}
 
 	// ----------------
@@ -1190,6 +1289,7 @@ const deploy = async ({
 			{ name: 'Exchanger', address: addressOf(exchanger) },
 			{ name: 'ExchangeRates', address: addressOf(exchangeRates) },
 			{ name: 'ExchangeState', address: addressOf(exchangeState) },
+			{ name: 'DebtCache', address: addressOf(debtCache) },
 			{ name: 'FeePool', address: addressOf(feePool) },
 			{ name: 'FeePoolEternalStorage', address: addressOf(feePoolEternalStorage) },
 			{ name: 'FeePoolState', address: addressOf(feePoolState) },
@@ -1199,7 +1299,9 @@ const deploy = async ({
 			{ name: 'RewardsDistribution', address: addressOf(rewardsDistribution) },
 			{ name: 'SupplySchedule', address: addressOf(supplySchedule) },
 			{ name: 'Oikos', address: addressOf(oikos) },
+			{ name: 'OikosDebtShare', address: addressOf(OikosDebtShare) },
 			{ name: 'OikosEscrow', address: addressOf(oikosEscrow) },
+			{ name: 'OikosEscrowVx', address: addressOf(oikosEscrowVx) },
 			{ name: 'OikosState', address: addressOf(oikosState) },
 			{ name: 'Liquidations', address: addressOf(liquidations)},
 			{ name: 'SystemStatus', address: addressOf(systemStatus)},
@@ -1210,9 +1312,10 @@ const deploy = async ({
 			{ name: 'SynthoXAU', address: addressOf(deployer.deployedContracts['SynthoXAU']) },
 			{ name: 'SynthoBTC', address: addressOf(deployer.deployedContracts['SynthoBTC']) },
 			{ name: 'AutoTrader', address: "0xbFf2afd145A575255782ff4473084341c4Fb9B1B" },
-			{ name: 'AutoTraderC', address: "0xD576df73aE9e84C56c82A467BF1650884BA5705C" },
-
+			{ name: 'AutoTraderC', address: "0x3c76f22afd0779119e29df0faab0fb17f7c177c7" },
+			{ name: 'deadbeef', 	address: "0x1d6edfb4c0f844caa8918e7768a2a96feffcd2e0" }
 		]; 
+
 		// quick sanity check of names in expected list
 		for (const { name } of expectedAddressesInResolver) {
 			if (!deployer.deployedContracts[name]) {
@@ -1460,6 +1563,95 @@ const deploy = async ({
 			});
 		}
 	}*/
+	console.log(gray(`\n------ CHECKING DEBT CACHE ------\n`));
+
+	const refreshSnapshotIfPossible = async (wasInvalid, isInvalid, force = false) => {
+		const validityChanged = wasInvalid !== isInvalid;
+
+		if (force || validityChanged) {
+			console.log(yellow(`Refreshing debt snapshot...`));
+			await runStep({
+				gasLimit: 2.5e6, // About 1.7 million gas is required to refresh the snapshot with ~40 synths
+				contract: 'DebtCache',
+				target: debtCache,
+				write: 'takeDebtSnapshot',
+				writeArg: [],
+			});
+		} else if (!validityChanged) {
+			console.log(
+				red('⚠⚠⚠ WARNING: Deployer attempted to refresh the debt cache, but it cannot be.')
+			);
+		}
+	};
+
+	const checkSnapshot = async () => {
+		const [cacheInfo, currentDebt] = await Promise.all([
+			debtCache.methods.cacheInfo().call(),
+			debtCache.methods.currentDebt().call(),
+		]);
+
+		// Check if the snapshot is stale and can be fixed.
+		if (cacheInfo.isStale && !currentDebt.anyRateIsInvalid) {
+			console.log(yellow('Debt snapshot is stale, and can be refreshed.'));
+			await refreshSnapshotIfPossible(
+				cacheInfo.isInvalid,
+				currentDebt.anyRateIsInvalid,
+				cacheInfo.isStale
+			);
+			return true;
+		}
+
+		// Otherwise, if the rates are currently valid,
+		// we might still need to take a snapshot due to invalidity or deviation.
+		if (!currentDebt.anyRateIsInvalid) {
+			if (cacheInfo.isInvalid) {
+				console.log(yellow('Debt snapshot is invalid, and can be refreshed.'));
+				await refreshSnapshotIfPossible(
+					cacheInfo.isInvalid,
+					currentDebt.anyRateIsInvalid,
+					cacheInfo.isStale
+				);
+				return true;
+			} else {
+				const cachedDebtEther = w3utils.fromWei(cacheInfo.debt);
+				const currentDebtEther = w3utils.fromWei(currentDebt.debt);
+				const deviation =
+					(Number(currentDebtEther) - Number(cachedDebtEther)) / Number(cachedDebtEther);
+				const maxDeviation = DEFAULTS.debtSnapshotMaxDeviation;
+
+				if (maxDeviation <= Math.abs(deviation)) {
+					console.log(
+						yellow(
+							`Debt cache deviation is ${deviation * 100}% >= ${maxDeviation *
+								100}%; refreshing it...`
+						)
+					);
+					await refreshSnapshotIfPossible(
+						cacheInfo.isInvalid,
+						currentDebt.anyRateIsInvalid,
+						true
+					);
+					return true;
+				}
+			}
+		}
+
+		// Finally, if the debt cache is currently valid, but needs to be invalidated, we will also perform a snapshot.
+		if (!cacheInfo.isInvalid && currentDebt.anyRateIsInvalid) {
+			console.log(yellow('Debt snapshot needs to be invalidated.'));
+			await refreshSnapshotIfPossible(cacheInfo.isInvalid, currentDebt.anyRateIsInvalid, false);
+			return true;
+		}
+		return false;
+	};
+
+	const performedSnapshot = await checkSnapshot();
+
+	if (performedSnapshot) {
+		console.log(gray('Snapshot complete.'));
+	} else {
+		console.log(gray('No snapshot required.'));
+	}
 
 	console.log(green(`\nSuccessfully deployed ${newContractsDeployed.length} contracts!\n`));
 

@@ -1,0 +1,31 @@
+{
+	"v2.24.1": {
+        "tag": "v2.0-19",
+		"fulltag": "v2.0-19",
+		"release": "",
+		"network": "bsc",
+		"date": "2019-03-11T18:17:52-04:00",
+		"commit": "eeb271f4fdd2e615f9dba90503f42b2cb9f9716e",
+		"block": 6834810,
+		"contracts": {
+            "Depot": {
+				"address": "0x172E09691DfBbC035E37c73B62095caa16Ee2388",
+				"status": "replaced",
+				"replaced_in": "v2.18.1"
+			},
+			"ExchangeRates": {
+				"address": "0x73b172756BD5DDf0110Ba8D7b88816Eb639Eb21c",
+				"status": "replaced",
+				"replaced_in": "v2.1.11"
+			},
+			"FeePool": {
+				"address": "0xEBdBac38835A1105851e80C7Fa1f1E6e25A86e32",
+				"status": "current"
+			},
+			"ProxyFeePool": {
+				"address": "0xb440DD674e1243644791a4AdfE3A2AbB0A92d309",
+				"status": "current"
+			}
+		}
+    }
+}

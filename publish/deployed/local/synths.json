@@ -1,0 +1,103 @@
+[
+	{
+		"name": "oUSD",
+		"asset": "USD",
+		"category": "forex",
+		"sign": "$",
+		"desc": "US Dollars",
+		"subclass": "MultiCollateralSynth"
+	},
+	{
+		"name": "oBTC",
+		"asset": "BTC",
+		"category": "crypto",
+		"sign": "฿",
+		"desc": "Bitcoin"
+	},
+	{
+		"name": "oXAU",
+		"asset": "XAU",
+		"category": "commodity",
+		"sign": "Au",
+		"desc": "Gold"
+	},
+	{
+		"name": "oETH",
+		"asset": "ETH",
+		"category": "crypto",
+		"sign": "Ξ",
+		"desc": "Ether",
+		"subclass": "MultiCollateralSynth"
+	},
+	{
+		"name": "oBNB",
+		"asset": "BNB",
+		"category": "crypto",
+		"sign": "",
+		"desc": "Binance Coin",
+		"subclass": "MultiCollateralSynth"
+	},
+	{
+		"name": "iBTC",
+		"asset": "BTC",
+		"category": "crypto",
+		"sign": "₿",
+		"desc": "Inverse Bitcoin",
+		"subclass": "PurgeableSynth",
+		"inverted": {
+			"entryPoint": 34360.1,
+			"upperLimit": 51540.15,
+			"lowerLimit": 22906.73
+		}
+	},
+	{
+		"name": "iETH",
+		"asset": "ETH",
+		"category": "crypto",
+		"sign": "Ξ",
+		"desc": "Inverse Ether",
+		"subclass": "PurgeableSynth",
+		"inverted": {
+			"entryPoint": 2111.65,
+			"upperLimit": 3167.47,
+			"lowerLimit": 1407.76
+		}
+	},
+	{
+		"name": "iBNB",
+		"asset": "BNB",
+		"category": "crypto",
+		"sign": "",
+		"desc": "Inverse Binance Coin",
+		"subclass": "PurgeableSynth",
+		"inverted": {
+			"entryPoint": 322.89,
+			"upperLimit": 484.33,
+			"lowerLimit": 215.26
+		}
+	},
+	{
+		"name": "oCAKE",
+		"asset": "CAKE",
+		"category": "crypto",
+		"sign": "",
+		"desc": "PancakeSwap",
+		"subclass": "MultiCollateralSynth"
+	},
+	{
+		"name": "oDOT",
+		"asset": "DOT",
+		"category": "crypto",
+		"sign": "",
+		"desc": "Polkadot",
+		"subclass": "MultiCollateralSynth"
+	},
+	{
+		"name": "oICP",
+		"asset": "ICP",
+		"category": "crypto",
+		"sign": "",
+		"desc": "Internet Computer",
+		"subclass": "MultiCollateralSynth"
+	}			
+]

@@ -4,7 +4,7 @@
 		"asset": "USD",
 		"category": "forex",
 		"sign": "$",
-		"desc": "US Dollars",
+		"description": "US Dollars",
 		"subclass": "MultiCollateralSynth"
 	},
 	{
@@ -12,21 +12,21 @@
 		"asset": "BTC",
 		"category": "crypto",
 		"sign": "฿",
-		"desc": "Bitcoin"
+		"description": "Bitcoin"
 	},
 	{
 		"name": "oXAU",
 		"asset": "XAU",
 		"category": "commodity",
 		"sign": "Au",
-		"desc": "Gold"
+		"description": "Gold"
 	},
 	{
 		"name": "oETH",
 		"asset": "ETH",
 		"category": "crypto",
 		"sign": "Ξ",
-		"desc": "Ether",
+		"description": "Ether",
 		"subclass": "MultiCollateralSynth"
 	},
 	{
@@ -34,7 +34,7 @@
 		"asset": "BNB",
 		"category": "crypto",
 		"sign": "",
-		"desc": "Binance Coin",
+		"description": "Binance Coin",
 		"subclass": "MultiCollateralSynth"
 	},
 	{
@@ -42,7 +42,7 @@
 		"asset": "BTC",
 		"category": "crypto",
 		"sign": "₿",
-		"desc": "Inverse Bitcoin",
+		"description": "Inverse Bitcoin",
 		"subclass": "PurgeableSynth",
 		"inverted": {
 			"entryPoint": 34360.1,
@@ -55,7 +55,7 @@
 		"asset": "ETH",
 		"category": "crypto",
 		"sign": "Ξ",
-		"desc": "Inverse Ether",
+		"description": "Inverse Ether",
 		"subclass": "PurgeableSynth",
 		"inverted": {
 			"entryPoint": 2111.65,
@@ -68,7 +68,7 @@
 		"asset": "BNB",
 		"category": "crypto",
 		"sign": "",
-		"desc": "Inverse Binance Coin",
+		"description": "Inverse Binance Coin",
 		"subclass": "PurgeableSynth",
 		"inverted": {
 			"entryPoint": 322.89,
@@ -81,7 +81,7 @@
 		"asset": "CAKE",
 		"category": "crypto",
 		"sign": "",
-		"desc": "PancakeSwap",
+		"description": "PancakeSwap",
 		"subclass": "MultiCollateralSynth"
 	},
 	{
@@ -89,7 +89,7 @@
 		"asset": "DOT",
 		"category": "crypto",
 		"sign": "",
-		"desc": "Polkadot",
+		"description": "Polkadot",
 		"subclass": "MultiCollateralSynth"
 	},
 	{
@@ -97,7 +97,7 @@
 		"asset": "ICP",
 		"category": "crypto",
 		"sign": "",
-		"desc": "Internet Computer",
+		"description": "Internet Computer",
 		"subclass": "MultiCollateralSynth"
 	}			
 ]
